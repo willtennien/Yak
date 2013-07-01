@@ -1,15 +1,8 @@
 #lang racket
+#lang racket
+
+
 ;;;                Personal Library
-
-
-;;;;begin not translating
-(define (matches a b)
-  (or (and (equal? a "")
-           (equal? b ""))
-      (ormap (lambda (result)
-               (not (equal? result b)))
-             (string-split b a))))
-;;;;end not translating
 
 (define (is-in-string str)
   (lambda (matched)
@@ -37,7 +30,6 @@
       (append (car xs)
               (partial-flatten (cdr xs)))))
 
-;;;;begin selective translating
 (define (substring-no-max str . indexes)
   (cond 
     [(< (string-length str) 
@@ -49,25 +41,11 @@
      (substring-no-max str (car indexes))]
     [else
      (apply substring (cons str indexes))]))
-;;;;end selective translating
 
 (define (assert check message)
   (if check
       'ok
       (raise message)))
-
-;;;;begin not translating
-(define (p . args)
-  (apply display args)
-  (newline))
-
-(define (deep-stream->list s)
-  (if (not (stream? s))
-      s
-      (map deep-stream->list (stream->list s))))
-
-(define dsl deep-stream->list)
-;;;;end not translating
 
 (define (parens->spaces str)
   (string-replace (string-replace str
@@ -107,49 +85,6 @@
 
 ;;;    Possibility Procedures
 
-;;;;begin not translating
-(define-syntax possibility
-  (syntax-rules ()
-    [(possibility) (stream '())]
-    [(possibility a ...) (stream (list a ...))]))
-
-(define (impossibility) (stream))
-(define (possible? s) (not (stream-empty? s)))
-(define (impossible? s) (stream-empty? s))
-
-(define (given possibilities proc)
-  ;(p (stream->list possibilities))
-  (stream-shallow-flatten (stream-map (lambda (xs) 
-                                        (proc (car xs)
-                                              (cadr xs)))
-                                      possibilities)))
-
-(define (stream-shallow-flatten s)
-  (cond 
-    [(stream-empty? s)
-     (stream)]
-    [(stream-empty? (stream-first s))
-     (stream-shallow-flatten (stream-rest s))]
-    [else
-     (stream-cons (stream-first (stream-first s))
-                  (stream-shallow-flatten (stream-cons (stream-rest (stream-first s))
-                                                       (stream-rest s))))]))
-
-(define-syntax also
-  (syntax-rules ()
-    [(also) (stream)]
-    [(also a ...) (stream-shallow-flatten (stream a ...))]))
-
-(define (given-seq possibilities . procs)
-  (define (iter possibilities procs)
-    (if (empty? procs)
-        possibilities
-        (given possibilities
-               (lambda (_ str)
-                 (iter ((car procs) str)
-                       (cdr procs))))))
-  (iter possibilities procs))
-;;;;end not translating
 
 
 (define (no-indent x) (= x 0))
@@ -162,14 +97,6 @@
 ;;;    Basic Syntax
 
 ;;;least-acceptable-indent
-
-;;;;begin not translating
-(define (least-acceptable-indent indent max)
-  (define candidates (filter indent (range 0 (+ 1 max))))
-  (if (empty? candidates)
-      #f
-      (make-string (car candidates) #\ )))
-;;;;end not translating
 
 ;;;parse-white (force all; do not entertain the possibility of fewer than all possible spaces)
 
@@ -321,10 +248,6 @@
                                          (lambda (str)
                                            (possibility exp str)))))))
         (parse-not-beginning-with-exp str indent)))
-
-;;;;begin not translating
-(define pdsl (compose dsl parse-exp))
-;;;;end not translating
 
 ;;;parse-not-beginning-with-exp
 
@@ -631,6 +554,7 @@
                                                                                  (lambda (str)
                                                                                    (possibility (tokenize 'Funject-literal pairs) str)))))))))))))))))))
            
+
 
 
 
