@@ -1,0 +1,128 @@
+
+A (Very) Informal (and Incomplete) Specification of the Yak Language
+
+Yak is the first language to conform to the funject paradigm. In the funject paradigm, neither functions nor objects exist; rather, the roles of these two concepts are merged into the idea of a "funject". Absolutely everything in Yak is a funject, including numbers, strings, booleans, and the "nil" funject. In the following three examples I will give a breezy, high level introduction funjects. Later I will adopt some rigor. Consider the following Yak code:
+
+foo = {[0]: 1}
+
+foo[0] is 1
+
+foo['bar'] = 'quux'
+
+foo['bar'] is 'quux'
+
+foo[dot, 'baz'] = 'qux'
+
+foo[dot, 'baz'] is 'qux'
+
+foo.baz is 'qux'
+
+Here, foo appears to act like an object from JavaScript, Ruby, or possibly Python, except for the queer square brackets around the property name. Note the syntactic sugar: foo.baz is equivalent foo[dot, 'baz'], and dot is just a special funject made made to allow this syntactic sugar. Now consider the following Yak.
+
+factorial = {
+    [0]: 1
+    [@x]: times[@x, factorial[minus[@x, 1]]]
+}
+
+factorial[0] is 1
+
+factorial[1] is 1
+
+factorial[2] is 2
+
+factorial[5] is 120
+
+The Yak interpreter evaluates factorial[0] by attempting to match [0] to one of the "property names" of the funject named factorial. Since it matches the first key-value pair, factorial[0] evaluates to the value part of the first pair: 1. For factorial[1], the first key fails to match and the interpreter "falls through" to the second key-value pair. The second key contains a "matching variable", @x. This "matches" the number 1, and becomes available in the environment of the value. The value times[@x, factorial[minus[@x, 1]]] may be more familiar to you as @x * factorial[@x - 1]. Since @x is 1, this evaluates to 1 * factorial[1 - 1], or 1. We now see the cute, recursive definition of factorial we know and love. If we saw only this example, we would say that funjects are functions with Haskell-style pattern matching (if we knew Haskell, and who does?). But funjects, unlike functions, can be modified:
+
+factorial = {
+    [0]: 1
+    [@x]: times[@x, factorial[minus[@x, 1]]]
+}
+
+factorial['a string'] = 'another string'
+
+factorial[6] is 720
+
+factorial['a string'] is 'another string'
+
+When you modify a funject like this, the new key value pair is "pushed" on top of the others. So this:
+
+foo = {
+    [1]: 'qux'
+    [2]: 'quux'
+}
+foo[0] = 'baz'
+
+is equivalent to this:
+
+foo = {
+    [0]: 'baz'
+    [1]: 'qux'
+    [2]: 'quux'
+}
+
+Now for some rigor. Yak contains eight builtin funject types:
+
+Funject
+Number
+String
+Boolean
+List
+Nil
+Dot
+Unknown
+
+Funject is God. Everything inherits from Funject. Number, String, and Boolean, are what they sound like. Lists are like Arrays. Nil is like null in Java, None in Python, or nil in Ruby. Dot exists solely to allow the cool syntactic sugar foo.bar => foo[dot, 'bar']. (For those interested, I could not adopt JavaScript-style syntactic sugar (foo.bar => foo['bar']) because some funjects take strings as "arguments", and so it would become difficult for them to have "properties". ex: capitalize.prop => capitalize['prop'] => 'Prop'.) Unknown has to two with pattern matching. (Later versions of Yak may include a Regex type, an Undefined type, or Class type). 
+
+Numbers are written as you might expect. These are all valid Numbers:
+
+1
+
+3.14159
+
+1e80
+
+2.997e+8
+
+1.213e-5
+
+String can be surrounded in single or double quotes. These are all valid Strings:
+
+'This is a "String".'
+
+"This is a \"String\"."
+
+The two Boolean funjects are true and false. They look like variables, but can't be reassigned.
+
+Lists are written like Lists in Haskell, lists in Python, or Arrays in JavaScript and Ruby.
+
+[1, 2, 3]
+
+[]
+
+[[1, 2], [3, 4]]
+
+Nil is the type of "nil", which stands for nothing. For example, nil might be returned by a request for a database connection that fails to connect. 
+
+Dot is the type of "dot", which exists only to allow the convenient syntax (foo.bar => foo[dot, 'bar']). You can pass it around like any other funject, but it performs no other operation.
+
+Unknown has to do with pattern matching. I will discuss it later. 
+
+Funject literals are like object literals in JavaScript or Ruby (the newer, symbol-based syntax), but with two crucial differences. Key-value pairs are separated not by commas, but by newline characters and equal indentation. This is to encourage (force) programmers to make their code more readable—especially since the values of key-value pairs are generally longer in funject than in other languages. The values of funject literals can be on the same line as the key, or on subsequent lines at the same level of indentation. Everytime a funject is "invoked", the value of the key-value pair is reevaluated. If the value contains multiple lines, the last line is returned as the result. (Later versions of Yak will probably include a "return" keyword). These are all valid funject literals:
+
+minimalist = {}
+
+foo = {['bar']: 'baz'}
+
+integer-times = {
+    [@x, 0]: 0
+    [@x, 1]: 
+        redundant-variable = @x
+        redundant-variable
+    [@x, @y]: 
+        y-minus-one = minus[@y, 1]
+        answer-minus-x = integer-times[@x, y-minus-one]
+        plus[@x, answer-minus-x]
+}
+
+This specification is incomplete. Later versions will discuss pattern matching, scoping, and funject's rich diversity of assignment operators. 
