@@ -1017,14 +1017,7 @@
 
 (define (display-all . args)
   (for-each display args))
-;;;;end not translating
 
-(define (partial f . args)
-  (define (result . more-args)
-    (apply f (append args more-args)))
-  result)
-
-;;;;begin not translating
 (define (deep-stream->list s)
                    (if (not (stream? s))
                        s
@@ -1042,7 +1035,12 @@
 
 
 (define deep-stream->mlist (compose deep-list->mlist deep-stream->list))
-;;;;end-not-translating
+;;;;end not translating
+
+(define (partial f . args)
+  (define (result . more-args)
+    (apply f (append args more-args)))
+  result)
 
 
 (define (contents xs f)
@@ -1567,6 +1565,9 @@
                                                   (lambda (str)
                                                     (cond 
                                                       [(equal? str "plus") (create-primitive-number-plus (mcadr receiver))]
+                                                      [(equal? str "minus") (create-primitive-number-minus (mcadr receiver))]
+                                                      [(equal? str "times") (create-primitive-number-times (mcadr receiver))]
+                                                      [(equal? str "div") (create-primitive-number-div (mcadr receiver))]
                                                       [else (user-error-no-matching-pattern receiver arg)]))))))))
                                           
                  
@@ -1587,7 +1588,9 @@
                  (bindings (choice-bindings-from-matching pattern arg env)))
             (if bindings
                 (if (lang? 'Analyzed-lazy-expressions consequent)
-                    (force-lazy-expressions (bind-lazy-expressions consequent bindings))
+                    (force-lazy-expressions (bind-lazy-expressions consequent 
+                                                                   (env-extend (env-pairs (env-pair "own" (bind-as-though-lazy-expressions receiver)))
+                                                                               bindings)))
                     consequent)
                 (iter (mcdr apairs))))))
     (iter apairs)))
@@ -1879,34 +1882,43 @@
   (assert (primitive? prim)) ;to optimize, remove this line.
   (apply f (mlist->list (mcdr prim))))
 
-(define (create-primitive-number-plus augend)
-  (create-primitive (lambda (other)
-                      (unless (lang? 'List other)
-                        (invoke primitive-funject-god other)
-                        (lang-contents other
-                                       (lambda (elems)
-                                         (unless (and (= 1 (mlength elems))
-                                                      (lang? 'Number (mcar elems)))
-                                           (invoke primitive-funject-god other)
-                                           (lang-contents (mcar elems)
-                                                          (lambda (addend) 
-                                                            (create-lang 'Number (+ augend 
-                                                                                    addend)))))))))
-                    (lambda (result--arg)
-                      (unless (lang? 'List result--arg) (invoke primitive-funject-inverse-god result--arg)
-                        (lang-contents result--arg
-                                       (lambda (elems)
-                                         (mlist-contents elems
-                                                         (lambda (result arg)
-                                                           (unless (and (lang? 'List result)
-                                                                        (= 1 (mlength (mcadr result)))
-                                                                        (lang? 'Number (mcaadr result))
-                                                                        (number? (mcadaadr result))
-                                                                        (lang? 'List arg)
-                                                                        (= 1 (mlength (mcadr arg)))
-                                                                        (lang? 'Unknown (mcaadr arg)))
-                                                             (invoke primitive-funject-inverse-god result--arg)
-                                                             (create-lang 'List (mlist (create-lang 'Number (- (mcadaadr result) augend)))))))))))))
+(define (create-primitive-infix-operation type1 type2 result-type op op-inv)
+  (lambda (left)
+    (create-primitive (lambda (other)
+                        (unless (lang? 'List other)
+                          (invoke primitive-funject-god other)
+                          (lang-contents other
+                                         (lambda (elems)
+                                           (unless (and (= 1 (mlength elems))
+                                                        (lang? type2 (mcar elems)))
+                                             (invoke primitive-funject-god other)
+                                             (lang-contents (mcar elems)
+                                                            (lambda (right) 
+                                                              (create-lang result-type (op left 
+                                                                                           right)))))))))
+                      (lambda (result--arg)
+                        (unless (lang? 'List result--arg) (invoke primitive-funject-inverse-god result--arg)
+                          (lang-contents result--arg
+                                         (lambda (elems)
+                                           (mlist-contents elems
+                                                           (lambda (result arg)
+                                                             (unless (and (lang? 'List result)
+                                                                          (= 1 (mlength (mcadr result)))
+                                                                          (lang? result-type (mcaadr result))
+                                                                          (number? (mcadaadr result))
+                                                                          (lang? 'List arg)
+                                                                          (= 1 (mlength (mcadr arg)))
+                                                                          (lang? 'Unknown (mcaadr arg)))
+                                                               (invoke primitive-funject-inverse-god result--arg)
+                                                               (create-lang 'List (mlist (create-lang type2 (op-inv (mcadaadr result) left))))))))))))))
+
+(define create-primitive-number-plus (create-primitive-infix-operation 'Number 'Number 'Number + -))
+
+(define create-primitive-number-minus (create-primitive-infix-operation 'Number 'Number 'Number - +))
+
+(define create-primitive-number-times (create-primitive-infix-operation 'Number 'Number 'Number * /))
+
+(define create-primitive-number-div (create-primitive-infix-operation 'Number 'Number 'Number / *))
 
                     
 
@@ -2014,5 +2026,14 @@
   (mmap (lambda (exp)
          (eval exp global-env))
        (mmap analyze (deep-list->mlist (p1 str)))))
-(define i interpret)
+(define (interpret-verbose str)
+  (display "I parse the syntax...\n")
+  (let ((parsed (p1 str)))
+    (display "Then I analyze the expressions...\n")
+    (let ((analyzed (mmap analyze (deep-list->mlist parsed))))
+      (display "And finally I evaluate them:\n")
+      (mmap (lambda (exp)
+              (eval exp global-env))
+            analyzed))))
+(define i interpret-verbose)
 (define j (compose deep-mlist->list i))

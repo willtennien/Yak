@@ -1,7 +1,7 @@
 
-A (Very) Informal (and Incomplete) Specification of the Yak Language
+A (Very) Informal Specification of the Yak Language
 
-Yak is the first language to conform to the funject paradigm. In the funject paradigm, neither functions nor objects exist; rather, the roles of these two concepts are merged into the idea of a "funject". Absolutely everything in Yak is a funject, including numbers, strings, booleans, and the "nil" funject. In the following three examples I will give a breezy, high level introduction funjects. Later I will adopt some rigor. Consider the following Yak code:
+Yak is the first language to conform to the funject paradigm. In the funject paradigm, neither functions nor objects exist; rather, the roles of these two concepts are merged into the idea of a "funject". Absolutely everything in Yak is a funject, including numbers, strings, booleans, and the "nil" funject. In the following three examples I will give a breezy, high level introduction funjects. Later I will adopt some rigor. Now consider the following Yak code:
 
 foo = {[0]: 1}
 
