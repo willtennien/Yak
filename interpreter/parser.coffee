@@ -256,7 +256,7 @@ parse = do ->
         e = expression tokens, true
         return if not e
         if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance assignment'
-            if e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'inheritance assignment' or assignment isnt 'reset strict assignment' or assignment.type isnt 'reset lazy assignment')
+            if e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type is 'inheritance assignment' or assignment.type is 'reset strict assignment' or assignment.type is 'reset lazy assignment')
                 parseError assignment, 'Invalid left-hand side of assignment'
             e =
                 type: 'assignment'
@@ -334,24 +334,12 @@ parse = do ->
             if not tokens.match 'funject end'
                 if tokens.match 'indent'
                     loop
-                        pattern = expression tokens
-                        tokens.require 'pattern match'
-                        result = expression tokens
-                        patterns.push {
-                            pattern
-                            value: result
-                        }
+                        patterns.push pattern tokens
                         break if tokens.match 'outdent'
                         tokens.require 'newline'
                     tokens.require 'funject end'
                 else
-                    pattern = expression tokens
-                    tokens.require 'pattern match'
-                    result = expression tokens
-                    patterns.push {
-                        pattern
-                        result
-                    }
+                    patterns.push pattern tokens
                     tokens.require 'funject end'
             return {
                 line: t.line
@@ -361,6 +349,36 @@ parse = do ->
             }
         if t = tokens.match 'identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'dot', 'unknown'
             return t
+
+    pattern = (tokens) ->
+        if t = tokens.match 'dot application'
+            name = tokens.require 'identifier'
+            match =
+                type: 'list'
+                line: t.line
+                character: t.character
+                values: [
+                    {
+                        type: 'dot'
+                        value: '.'
+                        line: t.line
+                        character: t.character
+                    }
+                    {
+                        type: 'string'
+                        value: name.value
+                        line: name.line
+                        character: name.character
+                    }
+                ]
+        else
+            match = expression tokens
+        tokens.require 'pattern match'
+        result = expression tokens
+        {
+            pattern: match
+            value: result
+        }
 
     parse
 
