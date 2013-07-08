@@ -280,28 +280,27 @@ parse = do ->
                     line: t.line
                     character: t.character
                     funject: e
-                    arguments: [
-                        {
-                            type: 'dot'
-                            line: t.line
-                            character: t.character
-                        }
-                        name
-                    ]
+                    argument:
+                        type: 'list'
+                        line: t.line
+                        character: t.character
+                        values: [
+                            {
+                                type: 'dot'
+                                line: t.line
+                                character: t.character
+                            }
+                            name
+                        ]
                 continue
-            if t = tokens.match 'list start'
-                args = []
-                if not tokens.match 'list end'
-                    loop
-                        args.push expression tokens
-                        break if tokens.match 'list end'
-                        tokens.require 'list delimiter'
+            if -1 isnt ['identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'dot', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
+                t = tokens.here()
                 e =
                     type: 'application'
                     line: t.line
                     character: t.character
                     funject: e
-                    arguments: args
+                    argument: value tokens
                 continue
             break
         e
@@ -378,4 +377,5 @@ printTokens = (s) ->
                 console.log "#{indent}(:#{t.line}:#{t.character}) <#{t.type}> #{t.value}"
 
 if process # node parser.js <path>
-    console.log JSON.stringify parse(require('fs').readFileSync(process.argv[2]).toString()), undefined, 2
+    #console.log JSON.stringify parse(require('fs').readFileSync(process.argv[2]).toString()), undefined, 2
+    console.log parse(require('fs').readFileSync(process.argv[2]).toString()), undefined, 2

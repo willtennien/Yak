@@ -377,7 +377,7 @@
       return e;
     };
     expression = function(tokens, optional) {
-      var args, e, name, result, t;
+      var e, name, result, t;
       if (t = tokens.match('indent')) {
         result = statements(tokens);
         tokens.require('outdent');
@@ -404,33 +404,29 @@
             line: t.line,
             character: t.character,
             funject: e,
-            "arguments": [
-              {
-                type: 'dot',
-                line: t.line,
-                character: t.character
-              }, name
-            ]
+            argument: {
+              type: 'list',
+              line: t.line,
+              character: t.character,
+              values: [
+                {
+                  type: 'dot',
+                  line: t.line,
+                  character: t.character
+                }, name
+              ]
+            }
           };
           continue;
         }
-        if (t = tokens.match('list start')) {
-          args = [];
-          if (!tokens.match('list end')) {
-            while (true) {
-              args.push(expression(tokens));
-              if (tokens.match('list end')) {
-                break;
-              }
-              tokens.require('list delimiter');
-            }
-          }
+        if (-1 !== ['identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'dot', 'unknown', 'funject start', 'group start', 'list start'].indexOf(tokens.here().type)) {
+          t = tokens.here();
           e = {
             type: 'application',
             line: t.line,
             character: t.character,
             funject: e,
-            "arguments": args
+            argument: value(tokens)
           };
           continue;
         }
@@ -536,7 +532,7 @@
   };
 
   if (process) {
-    console.log(JSON.stringify(parse(require('fs').readFileSync(process.argv[2]).toString()), void 0, 2));
+    console.log(parse(require('fs').readFileSync(process.argv[2]).toString()), void 0, 2);
   }
 
 }).call(this);
