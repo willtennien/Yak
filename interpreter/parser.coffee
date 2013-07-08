@@ -256,7 +256,7 @@ parse = do ->
         e = expression tokens, true
         return if not e
         if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance'
-            if e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type is 'inheritance' or assignment is 'reset strict assignment' or assignment.type is 'reset lazy assignment')
+            if e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'inheritance' or assignment isnt 'reset strict assignment' or assignment.type isnt 'reset lazy assignment')
                 parseError assignment, 'Invalid left-hand side of assignment'
             e =
                 type: 'assignment'
@@ -400,4 +400,10 @@ if module?
         if i < argc or not expression?
             console.error 'Usage: coffee parser.coffee [ <filename> | -e <expression> ]'
             return
-        console.log JSON.stringify parse(expression), undefined, 2
+        try
+            console.log JSON.stringify parse(expression), undefined, 2
+        catch e
+            if e instanceof SyntaxError
+                console.error e.message
+            else
+                throw e
