@@ -349,7 +349,9 @@
                      (also (parse-associating-left-beginning-with-exp-with (stream-first (stream-first possi)) str indent)
                            possi))
                  
+                 ;;;;begin not translating
                  (define pdsl (compose dsl parse-exp))
+                 ;;;;end not translating
                  
                  
                  ;;;parse-not-beginning-with-exp
@@ -551,7 +553,7 @@
                  
                  ;You may need these depending on how you define legal identifiers: "1" "2" "3" "4" "5" "6" "7" "8" "9"
                  (define numbers "1234567890")
-                 (define legal-variable-characters "-+=0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
+                 (define legal-variable-characters "-+=_0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
                  (define numbers-and-legal-variable-characters (string-append numbers legal-variable-characters))
                  
                  (define (parse-identifier str indent)
@@ -868,8 +870,9 @@
                                                                   f-inverse) 
                                                         str)))))))
                  
-                 
+                 ;;;;begin not translating
                  (set! odsl dsl)
+                 ;;;;end not translating
                  
                  (define (parse str)
                    (parse-exps str base-indent))
@@ -915,7 +918,7 @@
 
 ;;;;    Personal Library
 
-;;;;begin not translating
+
 (define mcadr (compose mcar mcdr))
 (define mcaddr (compose mcar mcdr mcdr))
 (define mcadddr (compose mcar mcdr mcdr mcdr))
@@ -998,12 +1001,14 @@
 (define (set-mcaadddddddar! xs x) (set-mcar! (mcadddddddar xs) x))
 (define (set-mcaaddddddddar! xs x) (set-mcar! (mcaddddddddar xs) x))
 (define (set-mcdar! xs x) (set-mcdr! (mcar xs) x)) 
-(define (mapply f mxs)
-  (apply f (mlist->list mxs)))
 (define (mlast xs)
   (if (empty? (mcdr xs))
       (mcar xs)
       (mlast (mcdr xs))))
+
+;;;;begin not translating
+(define (mapply f mxs)
+  (apply f (mlist->list mxs)))
 
 (define-syntax-rule (unless a b c) (if (not a) b c))
 
@@ -1783,7 +1788,7 @@
                               (possibility new-bindings))]
                            [(lang-equal? arg (env-get name bindings))
                             (possibility bindings)]
-                           [(impossibility)]))))
+                           [else (impossibility)]))))
                            
      
      (define (bindings-from-matching-identifier pattern arg bindings env)
@@ -2019,6 +2024,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Testing
 
+;;;begin not translating
 (define v deep-mlist->list)
 (define p1 (compose car stream-first parse))
 (define (t str) (deep-list->mlist (p1 str)))
@@ -2037,3 +2043,4 @@
             analyzed))))
 (define i interpret-verbose)
 (define j (compose deep-mlist->list i))
+;;;;end not translating
