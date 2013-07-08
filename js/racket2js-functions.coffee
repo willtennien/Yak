@@ -1,36 +1,3 @@
-Symbol = (->
-  prototypeOfSymbol = {}
-  prototypeOfSymbol.toString = ->
-    "'|" + String(@_val) + "|"
-
-  prototypeOfSymbol.isSymbol = ->
-    true
-
-  Symbol = (str) ->
-    result = Object.create(prototypeOfSymbol)
-    result._val = str
-    result
-
-  symbols = {}
-  (str) ->
-    symbols[str] or (symbols[str] = Symbol(str))
-)()
-
-empty = []
-cons = (x, ys) ->
-  [x].concat ys
-
-car = (xs) ->
-  xs[0]
-
-cdr = (xs) ->
-  xs.slice 1
-
-list = ->
-  Array::slice.call arguments_, 0
-
-not_ = (x) ->
-  not x
 
 string_to_number = Number
 number_to_string = String
@@ -60,6 +27,15 @@ is_boolean = (x) -> x.constructor is Boolean
 
 is_number = (x) -> x.constructor is Number
 
+#number functions
+_racket_plus_symbol = (a, b) -> a + b
+
+_racket_minus_symbol = (a, b) -> a - b
+
+_racket_mult_symbol = (a, b) -> a * b
+
+_racket_division_symbol = (a, b) -> a / b
+
 #string functions
 matches = (a, b) -> b.indexOf(a) isnt -1
 
@@ -72,12 +48,26 @@ string_replace = (str, a, b) -> str.replace(a, b)
 substring = (str, start, end) -> str.slice(start, end)
 
 #list functions
+empty = []
+cons = mcons = (a, b) -> [a, b]
+car = mcar = (xs) -> xs[0]
+cdr = mcdr = (xs) -> xs[1]
+set_car_racket_exclamation_point = (xs, x) -> xs[0] = x
+set_cdr_racket_exclamation_point = (xs, x) -> xs[1] = x
+
+###More efficient list functions, that assumes cdr always returns a list.
+empty = []
+
+list = mlist = ->
+  Array::slice.call arguments_, 0
+
 count = (f, xs) -> xs.filter(f).length
 
 is_empty = (xs) -> xs.length is 0
 
 append = () -> Array.prototype.reduce.call(arguments, (rest, next) -> rest.concat(next))
 
+car = (xs) -> xs[0]
 cadr = (xs) -> xs[1]
 caddr = (xs) -> xs[2]
 cadddr = (xs) -> xs[3]
@@ -88,6 +78,18 @@ cadddddddr = (xs) -> xs[7]
 caddddddddr = (xs) -> xs[8]
 cadddddddddr = (xs) -> xs[9]
 caddddddddddr = (xs) -> xs[10]
+cdr = (xs) -> xs.slice 1
+cddr = (xs) -> xs.slice 2
+cdddr = (xs) -> xs.slice 3
+cddddr = (xs) -> xs.slice 4
+cdddddr = (xs) -> xs.slice 5
+cddddddr = (xs) -> xs.slice 6
+cdddddddr = (xs) -> xs.slice 7
+cddddddddr = (xs) -> xs.slice 8
+cdddddddddr = (xs) -> xs.slice 9
+cddddddddddr = (xs) -> xs.slice 10
+cdddddddddddr = (xs) -> xs.slice 11
+cddddddddddddr = (xs) -> xs.slice 12
 caar = (xs) -> xs[0][0]
 caadr = (xs) -> xs[1][0]
 caaddr = (xs) -> xs[2][0]
@@ -99,6 +101,73 @@ caadddddddr = (xs) -> xs[7][0]
 caaddddddddr = (xs) -> xs[8][0]
 caadddddddddr = (xs) -> xs[9][0]
 caaddddddddddr = (xs) -> xs[10][0]
+set_cadr_racket_exclamation_point = (xs, x) -> xs[1] = x
+set_caddr_racket_exclamation_point = (xs, x) -> xs[2] = x
+set_cadddr_racket_exclamation_point = (xs, x) -> xs[3] = x
+set_caddddr_racket_exclamation_point = (xs, x) -> xs[4] = x
+set_cadddddr_racket_exclamation_point = (xs, x) -> xs[5] = x
+set_caddddddr_racket_exclamation_point = (xs, x) -> xs[6] = x
+set_cadddddddr_racket_exclamation_point = (xs, x) -> xs[7] = x
+set_caddddddddr_racket_exclamation_point = (xs, x) -> xs[8] = x
+set_cadddddddddr_racket_exclamation_point = (xs, x) -> xs[9] = x
+set_caddddddddddr_racket_exclamation_point = (xs, x) -> xs[10] = x
+set_caar_racket_exclamation_point = (xs, x) -> xs[0][0] = x
+set_caadr_racket_exclamation_point = (xs, x) -> xs[1][0] = x
+set_caaddr_racket_exclamation_point = (xs, x) -> xs[2][0] = x
+set_caadddr_racket_exclamation_point = (xs, x) -> xs[3][0] = x
+set_caaddddr_racket_exclamation_point = (xs, x) -> xs[4][0] = x
+set_caadddddr_racket_exclamation_point = (xs, x) -> xs[5][0] = x
+set_caaddddddr_racket_exclamation_point = (xs, x) -> xs[6][0] = x
+set_caadddddddr_racket_exclamation_point = (xs, x) -> xs[7][0] = x
+set_caaddddddddr_racket_exclamation_point = (xs, x) -> xs[8][0] = x
+set_caadddddddddr_racket_exclamation_point = (xs, x) -> xs[9][0] = x
+set_caaddddddddddr_racket_exclamation_point = (xs, x) -> xs[10][0] = x
+
+
+
+mcadr = cadr
+mcaddr = caddr
+mcadddr = cadddr
+mcaddddr = caddddr
+mcadddddr = cadddddr
+mcaddddddr = caddddddr
+mcadddddddr = cadddddddr
+mcaddddddddr = caddddddddr
+mcadddddddddr = cadddddddddr
+mcaddddddddddr = caddddddddddr
+mcaar = caar
+mcaadr = caadr
+mcaaddr = caaddr
+mcaadddr = caadddr
+mcaaddddr = caaddddr
+mcaadddddr = caadddddr
+mcaaddddddr = caaddddddr
+mcaadddddddr = caadddddddr
+mcaaddddddddr = caaddddddddr
+mcaadddddddddr = caadddddddddr
+mcaaddddddddddr = caaddddddddddr
+set_mcadr_racket_exclamation_point = set_cadr_racket_exclamation_point
+set_mcaddr_racket_exclamation_point = set_caddr_racket_exclamation_point
+set_mcadddr_racket_exclamation_point = set_cadddr_racket_exclamation_point
+set_mcaddddr_racket_exclamation_point = set_caddddr_racket_exclamation_point
+set_mcadddddr_racket_exclamation_point = set_cadddddr_racket_exclamation_point
+set_mcaddddddr_racket_exclamation_point = set_caddddddr_racket_exclamation_point
+set_mcadddddddr_racket_exclamation_point = set_cadddddddr_racket_exclamation_point
+set_mcaddddddddr_racket_exclamation_point = set_caddddddddr_racket_exclamation_point
+set_mcadddddddddr_racket_exclamation_point = set_cadddddddddr_racket_exclamation_point
+set_mcaddddddddddr_racket_exclamation_point = set_caddddddddddr_racket_exclamation_point
+set_mcaar_racket_exclamation_point = set_caar_racket_exclamation_point
+set_mcaadr_racket_exclamation_point = set_caadr_racket_exclamation_point
+set_mcaaddr_racket_exclamation_point = set_caaddr_racket_exclamation_point
+set_mcaadddr_racket_exclamation_point = set_caadddr_racket_exclamation_point
+set_mcaaddddr_racket_exclamation_point = set_caaddddr_racket_exclamation_point
+set_mcaadddddr_racket_exclamation_point = set_caadddddr_racket_exclamation_point
+set_mcaaddddddr_racket_exclamation_point = set_caaddddddr_racket_exclamation_point
+set_mcaadddddddr_racket_exclamation_point = set_caadddddddr_racket_exclamation_point
+set_mcaaddddddddr_racket_exclamation_point = set_caaddddddddr_racket_exclamation_point
+set_mcaadddddddddr_racket_exclamation_point = set_caadddddddddr_racket_exclamation_point
+set_mcaaddddddddddr_racket_exclamation_point = set_caaddddddddddr_racket_exclamation_point
+###
 
 #interpreter:
 possibility = (result, str) -> [[result, str]]

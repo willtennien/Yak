@@ -1,0 +1,20 @@
+Rewrite the syntax parser (it now consumes 99+% of the time required to interpret Yak)
+
+Give funjects access to the variable "self". 
+    It would be like "own", except when parent funjects are invoked because their children failed to match it would refer not the the parent but funject originally invoked.
+
+Have all funjects (other than builtin types) carry an ID (not accessible to the programmer) so that they can be compared for equality.
+    Now only Numbers, Strings, Booleans, Nil, Dot, Unknown, and Lists can be compared.
+
+Fix errors
+    They are currently very ad-hoc, look ugly, and provide no stack trace. We should also allow the user to throw their own errors.
+
+Write library functions
+    The user can now only add, multiply, and divide numbers. We still need to add map, string concatenation, JS style "apply", and others. We should also decide on a uniform naming scheme.
+    
+Consider adding a "Date" funject type
+
+Consider adding class declarations or some form of prototypal inheritance. 
+    Yak now has quite primitive prototypal inheritance:
+        heir << inherited
+    Makes inherited the parent funject of heir. When heir fails to match a pattern, the interpreter invokes inherited.

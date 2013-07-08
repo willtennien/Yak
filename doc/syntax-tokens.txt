@@ -1,0 +1,45 @@
+<Token-type> = (List of symbols--or in JS Array of Strings--that the token needs to become)
+
+<Number> = (Number <internal number>)
+
+<String> = (String <internal string>)
+
+<Boolean> = (Boolean <internal boolean>)
+
+<Nil> = (Nil)
+
+<Dot> = (Dot)
+
+<Unknown> = (Unknown)
+
+<Identifier> = (Identifier <internal string>)
+
+<Parameter> = (Parameter <internal string>)
+
+<List-literal> = (List-literal (<Exp>, ...))
+
+<Funject-literal> = (Funject-literal ((<Pattern> <Lazy-exps>), ...))
+
+    <Pattern> = <Exp-perhaps-containing-parameter>
+
+    <Lazy-exp> = (Lazy-exp <Exp>)
+    
+    <Lazy-exps> = (Lazy-exps (<Lazy-exp>, ...))
+
+<Strict-assignment>  = (Strict-assignment>  <Exp> <Exp>)
+
+<Lazy-assignment> = (Lazy-assignment> <Exp> <Lazy-exps>)
+
+<Reset-strict-assignment> = (Reset-strict-assignment> <Exp> <Exp>)
+
+<Reset-lazy-assignment> = (Reset-lazy-assignment> <Exp> <Lazy-exps>)
+
+<Funject-strict-assignment> = (Funject-strict-assignment> <Exp> <Lazy-exps>)
+
+<Funject-lazy-assignment> = (Funject-lazy-assignment> <Exp> <Lazy-exps>)
+
+<Invocation> = (Invocation <Exp> <Exp>)
+
+<Funject-inheritance> = (Funject-inheritance <Exp> <Exp>)
+
+<Inverse-definition> = (Inverse-definition <Exp> <Exp>)
