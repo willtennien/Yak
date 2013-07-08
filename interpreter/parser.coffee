@@ -293,10 +293,16 @@ parse = do ->
                         values: [
                             {
                                 type: 'dot'
+                                value: '.'
                                 line: t.line
                                 character: t.character
                             }
-                            name
+                            {
+                                type: 'string'
+                                value: name.value
+                                line: name.line
+                                character: name.character
+                            }
                         ]
                 continue
             if -1 isnt ['identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'dot', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
