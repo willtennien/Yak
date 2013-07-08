@@ -172,9 +172,13 @@ tokenizer = do ->
                 ++i
                 c = s[i]
                 loop
+                    break if c is delimiter
+                    if c is '\\'
+                        ++i
+                        c = s[i]
+                        escape = true
                     if not c
                         syntaxError 'Unterminated string'
-                    break if c is delimiter
                     value += c
                     ++i
                     c = s[i]
