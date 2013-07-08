@@ -376,8 +376,22 @@ printTokens = (s) ->
             else
                 console.log "#{indent}(:#{t.line}:#{t.character}) <#{t.type}> #{t.value}"
 
-if process # node parser.js <path>
-    console.log JSON.stringify parse(require('fs').readFileSync(process.argv[2]).toString()), undefined, 2
-if exports
+if module?
     exports.parse = parse
     exports.tokenizer = tokenizer
+    if not module.parent
+        expression = null
+        i = 2
+        argc = process.argv.length
+        while i < argc
+            switch process.argv[i++]
+                when '-e'
+                    expression = process.argv[i++]
+                    break
+                else
+                    expression = require('fs').readFileSync argc
+                    break
+        if i < argc or not expression?
+            console.error 'Usage: coffee parser.coffee [ <filename> | -e <expression> ]'
+            return
+        console.log JSON.stringify parse(expression), undefined, 2
