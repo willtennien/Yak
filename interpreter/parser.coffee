@@ -175,8 +175,17 @@ tokenizer = do ->
                     break if c is delimiter
                     if c is '\\'
                         ++i
+                        switch c = s[i]
+                            when '"', "'", '\\' then value += c
+                            when 'n' then value += '\n'
+                            when 'r' then value += '\r'
+                            when 't' then value += '\t'
+                            else
+                                character = 1 + i - lastNewline
+                                syntaxError 'Invalid escape sequence'
+                        ++i
                         c = s[i]
-                        escape = true
+                        continue
                     if not c
                         syntaxError 'Unterminated string'
                     value += c
