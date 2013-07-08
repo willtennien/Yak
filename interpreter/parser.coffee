@@ -150,7 +150,7 @@ tokenizer = do ->
                     i = start
                     c = s[i]
                 else
-                    return token 'number', value
+                    return token 'number', +value
 
             if c is '@' or isIdentifier c
                 type = if c is '@' then 'formal parameter' else 'identifier'
@@ -377,5 +377,4 @@ printTokens = (s) ->
                 console.log "#{indent}(:#{t.line}:#{t.character}) <#{t.type}> #{t.value}"
 
 if process # node parser.js <path>
-    #console.log JSON.stringify parse(require('fs').readFileSync(process.argv[2]).toString()), undefined, 2
-    console.log parse(require('fs').readFileSync(process.argv[2]).toString()), undefined, 2
+    console.log JSON.stringify parse(require('fs').readFileSync(process.argv[2]).toString()), undefined, 2

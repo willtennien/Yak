@@ -216,7 +216,7 @@
             i = start;
             c = s[i];
           } else {
-            return token('number', value);
+            return token('number', +value);
           }
         }
         if (c === '@' || isIdentifier(c)) {
@@ -532,7 +532,7 @@
   };
 
   if (process) {
-    console.log(parse(require('fs').readFileSync(process.argv[2]).toString()), void 0, 2);
+    console.log(JSON.stringify(parse(require('fs').readFileSync(process.argv[2]).toString()), void 0, 2));
   }
 
 }).call(this);
