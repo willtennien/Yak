@@ -256,10 +256,11 @@ parse = do ->
         e = expression tokens, true
         return if not e
         if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance'
-            if e.type isnt 'identifier' and e.type isnt 'application'
+            if e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type is 'inheritance' or assignment is 'lazy assignment' or assignment.type is 'reset lazy assignment')
                 parseError assignment, 'Invalid left-hand side of assignment'
             e =
-                type: assignment.type
+                type: 'assignment'
+                operator: assignment.type
                 line: assignment.line
                 character: assignment.character
                 left: e
