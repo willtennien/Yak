@@ -121,12 +121,13 @@ tokenizer = do ->
                     ++i
                     c = s[i]
                     if not isDigit c
-                        t = token 'dot application', '.'
+                        character =
                         if value isnt '.'
-                            tokens.push t
-                            return token 'number', +value.substr 0, value.length - 1
-                        else
-                            return t
+                            t = token 'number', +value.substr 0, value.length - 1
+                        character = i - lastNewline
+                        d = token 'dot application', '.'
+                        tokens.push d if t
+                        return t ? d
                     loop
                         value += c
                         ++i
