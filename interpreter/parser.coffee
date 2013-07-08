@@ -378,3 +378,6 @@ printTokens = (s) ->
 
 if process # node parser.js <path>
     console.log JSON.stringify parse(require('fs').readFileSync(process.argv[2]).toString()), undefined, 2
+if exports
+    exports.parse = parse
+    exports.tokenizer = tokenizer
