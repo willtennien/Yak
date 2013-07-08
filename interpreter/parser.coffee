@@ -389,12 +389,12 @@ if module?
         i = 2
         argc = process.argv.length
         while i < argc
-            switch process.argv[i++]
+            switch arg = process.argv[i++]
                 when '-e'
                     expression = process.argv[i++]
                     break
                 else
-                    expression = require('fs').readFileSync argc
+                    expression = '' + require('fs').readFileSync arg
                     break
         if i < argc or not expression?
             console.error 'Usage: coffee parser.coffee [ <filename> | -e <expression> ]'
