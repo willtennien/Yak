@@ -18,7 +18,7 @@ tokenizer = do ->
         '|=': 'reset strict assignment'
         '|:=': 'reset lazy assignment'
         '<-': 'inverse assignment'
-        '<<': 'inheritance'
+        '<<': 'inheritance assignment'
 
     isSpace = (c) -> c is ' ' or c is '\t'
 
@@ -255,8 +255,8 @@ parse = do ->
     statement = (tokens) ->
         e = expression tokens, true
         return if not e
-        if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance'
-            if e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'inheritance' or assignment isnt 'reset strict assignment' or assignment.type isnt 'reset lazy assignment')
+        if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance assignment'
+            if e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'inheritance assignment' or assignment isnt 'reset strict assignment' or assignment.type isnt 'reset lazy assignment')
                 parseError assignment, 'Invalid left-hand side of assignment'
             e =
                 type: 'assignment'
