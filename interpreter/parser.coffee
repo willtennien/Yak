@@ -238,13 +238,19 @@ parse = do ->
         result
 
     statements = (tokens) ->
+        n = tokens.here()
         result = []
         loop
             s = statement tokens
             break unless s
             result.push s
             break if not tokens.match 'newline'
-        result
+        {
+            line: n.line
+            character: n.character
+            type: 'sequence'
+            statements: result
+        }
 
     statement = (tokens) ->
         e = expression tokens, true
@@ -264,12 +270,7 @@ parse = do ->
         if t = tokens.match 'indent'
             result = statements tokens
             tokens.require 'outdent'
-            return {
-                line: t.line
-                character: t.character
-                type: 'sequence'
-                statements: result
-            }
+            return result
         e = value tokens
         if not e
             if optional
