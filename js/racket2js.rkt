@@ -291,9 +291,9 @@
                                  (join ", " (map translate named-args))
                                  ") { \n    var "
                                  (translate args-collector)
-                                 " = Array.prototype.slice.call(arguments, " 
-                                 (number->string (length named-args))
-                                 "); \n    ")))
+                                 " = array2nested_pairs(Array.prototype.slice.call(arguments, " ; if I revert to Racket list -> JS Array, change this line to " = Array.prototype.slice.call(arguments, "
+                                 (number->string (length named-args))                           ; and change the line two down to have only one paren.
+                                 ")); \n    ")))
             (join "; \n    " (map translate body-exps))
             (if (empty? body-exps) "\n" ";\n")
             "    return ("
