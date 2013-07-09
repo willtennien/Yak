@@ -557,7 +557,6 @@
 
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Syntax Parser
 
 (define odsl 'doesnt-matter)
@@ -609,7 +608,7 @@
                        'ok
                        (raise message)))
                  
-                 
+
                  (define (parens->spaces str)
                    (string-replace (string-replace str
                                                    ")"
@@ -1390,6 +1389,94 @@
 
 
 ;;;;    Personal Library
+
+
+(define mcadr (compose mcar mcdr))
+(define mcaddr (compose mcar mcdr mcdr))
+(define mcadddr (compose mcar mcdr mcdr mcdr))
+(define mcaddddr (compose mcar mcdr mcdr mcdr mcdr))
+(define mcadddddr (compose mcar mcdr mcdr mcdr mcdr mcdr))
+(define mcaddddddr (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcadddddddr (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaddddddddr (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaadr (compose mcar mcar mcdr))
+(define mcaaddr (compose mcar mcar mcdr mcdr))
+(define mcaadddr (compose mcar mcar mcdr mcdr mcdr))
+(define mcaaddddr (compose mcar mcar mcdr mcdr mcdr mcdr))
+(define mcaadddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr))
+(define mcaaddddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaadddddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaaddddddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaar (compose mcar mcar))
+(define mcadar (compose mcar mcdr mcar))
+(define mcaddar (compose mcar mcdr mcdr mcar))
+(define mcadddar (compose mcar mcdr mcdr mcdr mcar))
+(define mcaddddar (compose mcar mcdr mcdr mcdr mcdr mcar))
+(define mcadddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcadddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaddddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaadar (compose mcar mcar mcdr mcar))
+(define mcaaddar (compose mcar mcar mcdr mcdr mcar))
+(define mcaadddar (compose mcar mcar mcdr mcdr mcdr mcar))
+(define mcaaddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcar))
+(define mcaadddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaaddddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaadddddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaaddddddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcddr (compose mcdr mcdr))
+(define mcdddr (compose mcdr mcdr mcdr))
+(define mcddddr (compose mcdr mcdr mcdr mcdr))
+(define mcdddddr (compose mcdr mcdr mcdr mcdr mcdr))
+(define mcddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcdddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcddddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcdar (compose mcdr mcar))
+(define mcddar (compose mcdr mcdr mcar))
+(define mcdddar (compose mcdr mcdr mcdr mcar))
+(define mcddddar (compose mcdr mcdr mcdr mcdr mcar))
+(define mcdddddar (compose mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcdddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcddddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcadaadr (compose mcar mcdr mcar mcar mcdr))
+(define (set-mcadr! xs x) (set-mcar! (mcdr xs) x))
+(define (set-mcaddr! xs x) (set-mcar! (mcddr xs) x))
+(define (set-mcadddr! xs x) (set-mcar! (mcdddr xs) x))
+(define (set-mcaddddr! xs x) (set-mcar! (mcddddr xs) x))
+(define (set-mcadddddr! xs x) (set-mcar! (mcdddddr xs) x))
+(define (set-mcaddddddr! xs x) (set-mcar! (mcddddddr xs) x))
+(define (set-mcadddddddr! xs x) (set-mcar! (mcdddddddr xs) x))
+(define (set-mcaddddddddr! xs x) (set-mcar! (mcddddddddr xs) x))
+(define (set-mcaadr! xs x) (set-mcar! (mcadr xs) x))
+(define (set-mcaaddr! xs x) (set-mcar! (mcaddr xs) x))
+(define (set-mcaadddr! xs x) (set-mcar! (mcadddr xs) x))
+(define (set-mcaaddddr! xs x) (set-mcar! (mcaddddr xs) x))
+(define (set-mcaadddddr! xs x) (set-mcar! (mcadddddr xs) x))
+(define (set-mcaaddddddr! xs x) (set-mcar! (mcaddddddr xs) x))
+(define (set-mcaadddddddr! xs x) (set-mcar! (mcadddddddr xs) x))
+(define (set-mcaaddddddddr! xs x) (set-mcar! (mcaddddddddr xs) x))
+(define (set-mcadar! xs x) (set-mcar! (mcdar xs) x))
+(define (set-mcaddar! xs x) (set-mcar! (mcddar xs) x))
+(define (set-mcadddar! xs x) (set-mcar! (mcdddar xs) x))
+(define (set-mcaddddar! xs x) (set-mcar! (mcddddar xs) x))
+(define (set-mcadddddar! xs x) (set-mcar! (mcdddddar xs) x))
+(define (set-mcaddddddar! xs x) (set-mcar! (mcddddddar xs) x))
+(define (set-mcadddddddar! xs x) (set-mcar! (mcdddddddar xs) x))
+(define (set-mcaddddddddar! xs x) (set-mcar! (mcddddddddar xs) x))
+(define (set-mcaadar! xs x) (set-mcar! (mcadar xs) x))
+(define (set-mcaaddar! xs x) (set-mcar! (mcaddar xs) x))
+(define (set-mcaadddar! xs x) (set-mcar! (mcadddar xs) x))
+(define (set-mcaaddddar! xs x) (set-mcar! (mcaddddar xs) x))
+(define (set-mcaadddddar! xs x) (set-mcar! (mcadddddar xs) x))
+(define (set-mcaaddddddar! xs x) (set-mcar! (mcaddddddar xs) x))
+(define (set-mcaadddddddar! xs x) (set-mcar! (mcadddddddar xs) x))
+(define (set-mcaaddddddddar! xs x) (set-mcar! (mcaddddddddar xs) x))
+(define (set-mcdar! xs x) (set-mcdr! (mcar xs) x)) 
+(define (mlast xs)
+  (if (empty? (mcdr xs))
+      (mcar xs)
+      (mlast (mcdr xs))))
 
 
 
@@ -2219,11 +2306,10 @@
          (if (impossible? possibilities)
              false
              (env-extend (env-all-pairs-of (possibility-first possibilities)) env))))
-     
      choice-bindings-from-matching)))
 
 
-#|
+
 
 ;;;;    Primitives
 
@@ -2349,7 +2435,7 @@
 
 
 
-|#
+
 
 
 
@@ -2375,5 +2461,6 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Testing
+
 
 ))
