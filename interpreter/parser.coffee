@@ -121,12 +121,13 @@ tokenizer = do ->
                     ++i
                     c = s[i]
                     if not isDigit c
-                        t = token 'dot application', '.'
+                        character =
                         if value isnt '.'
-                            tokens.push t
-                            return token 'number', +value.substr 0, value.length - 1
-                        else
-                            return t
+                            t = token 'number', +value.substr 0, value.length - 1
+                        character = i - lastNewline
+                        d = token 'dot application', '.'
+                        tokens.push d if t
+                        return t ? d
                     loop
                         value += c
                         ++i
@@ -244,43 +245,26 @@ parse = do ->
 
     parse = (s) ->
         tokens = tokenizer s
-        result = statements tokens
+        result = sequence tokens
         tokens.require 'end'
         result
 
-    statements = (tokens) ->
+    sequence = (tokens) ->
         n = tokens.here()
         result = []
         loop
-            s = statement tokens
+            s = expression tokens, true
             break unless s
             result.push s
             break if not tokens.match 'newline'
-        {
-            line: n.line
-            character: n.character
-            type: 'sequence'
-            statements: result
-        }
-
-    statement = (tokens) ->
-        e = expression tokens, true
-        return if not e
-        if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance assignment'
-            if assignment.type isnt 'inheritance assignment' and assignment.type isnt 'inverse assignment' and e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'strict assignment' and assignment.type isnt 'lazy assignment')
-                parseError assignment, 'Invalid left-hand side of assignment'
-            e =
-                type: 'assignment'
-                operator: assignment.type
-                line: assignment.line
-                character: assignment.character
-                left: e
-                right: expression tokens
-        e
+        line: n.line
+        character: n.character
+        type: 'sequence'
+        expressions: result
 
     expression = (tokens, optional) ->
-        if t = tokens.match 'indent'
-            result = statements tokens
+        if tokens.match 'indent'
+            result = sequence tokens
             tokens.require 'outdent'
             return result
         e = value tokens
@@ -290,6 +274,24 @@ parse = do ->
             else
                 parseError tokens.here(), "Expected expression"
         loop
+            if -1 isnt ['identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'dot', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
+                t = tokens.here()
+                e =
+                    type: 'application'
+                    line: t.line
+                    character: t.character
+                    funject: e
+                    argument: value tokens
+                continue
+            if 'indent' is tokens.here().type
+                t = tokens.here()
+                e =
+                    type: 'application'
+                    line: t.line
+                    character: t.character
+                    funject: e
+                    argument: expression tokens
+                # do not continue, since we cannot directly apply sequences to values which would normally be expressions
             if t = tokens.match 'dot application'
                 name = tokens.require 'identifier'
                 e =
@@ -316,16 +318,17 @@ parse = do ->
                             }
                         ]
                 continue
-            if -1 isnt ['identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'dot', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
-                t = tokens.here()
-                e =
-                    type: 'application'
-                    line: t.line
-                    character: t.character
-                    funject: e
-                    argument: value tokens
-                continue
             break
+        if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance assignment'
+            if assignment.type isnt 'inheritance assignment' and assignment.type isnt 'inverse assignment' and e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'strict assignment' and assignment.type isnt 'lazy assignment')
+                parseError assignment, 'Invalid left-hand side of assignment'
+            e =
+                type: 'assignment'
+                operator: assignment.type
+                line: assignment.line
+                character: assignment.character
+                left: e
+                right: expression tokens
         e
 
     value = (tokens) ->
