@@ -1063,8 +1063,11 @@
 ;;;;    Environment
 ;;;;    env-<specifier>
 
-(define env-pair mcons)
+(define create-env-pair mlist)
 
+(define env-pair-key-of mcar)
+
+(define env-pair-value-of mcadr)
 
 (define env-pairs mlist)
 
@@ -1104,7 +1107,7 @@
     (cond 
       [(empty? ps)
        (env-has? name (env-parent-of env))]
-      [(equal? name (mcaar ps))
+      [(equal? name (env-pair-key-of (mcar ps)))
        true]
       [else (iter (mcdr ps))]))
   (if (env-empty? env)
@@ -1118,8 +1121,8 @@
         (if (env-empty? (env-parent-of env))
             (user-error-cannot-find-variable name)
             (env-get name (env-parent-of env)))
-        (if (equal? name (mcaar ps))
-            (mcdar ps)
+        (if (equal? name (env-pair-key-of (mcar ps)))
+            (env-pair-value-of (mcar ps))
             (iter (mcdr ps)))))
   (iter (mcadr env)))
 
@@ -1129,7 +1132,7 @@
     (cond 
       [(empty? ps)
        (set-mcadr! env
-                   (mcons (env-pair key value) 
+                   (mcons (create-env-pair key value) 
                           (mcadr env)))
         env]
       [(equal? key (mcaar ps))
@@ -1546,11 +1549,14 @@
 
 ;;;;    invoke
 
-(define (invoke receiver arg)
+(define (invoke receiver arg . maybe-own)
+  (define own (if (empty? maybe-own)
+                  receiver
+                  (car maybe-own)))
   (cond 
     [(primitive? receiver) (invoke-primitive receiver arg)]
     [(lang? 'Number receiver) (invoke-number receiver arg)]
-    [(lang? 'Funject receiver) (invoke-funject receiver arg)]
+    [(lang? 'Funject receiver) (invoke-funject receiver arg own)]
     [else (error "invoke: I know not how to invoke " receiver "!")]))
 
 (define (invoke-primitive receiver arg)
@@ -1577,14 +1583,14 @@
                                           
                  
 
-(define (invoke-funject receiver arg)
+(define (invoke-funject receiver arg own)
   (let ((apairs (funject-pairs-of receiver))
         (parent (funject-parent-of receiver))
         (inverse (funject-inverse-of receiver)))
     (define (iter apairs)
       (if (empty? apairs)
           (if parent
-              (invoke parent arg)
+              (invoke parent arg receiver)
               (user-error-no-matching-pattern receiver arg))
           (let* ((pair (mcar apairs))
                  (pattern (mcar pair))
@@ -1594,7 +1600,7 @@
             (if bindings
                 (if (lang? 'Analyzed-lazy-expressions consequent)
                     (force-lazy-expressions (bind-lazy-expressions consequent 
-                                                                   (env-extend (env-pairs (env-pair "own" (bind-as-though-lazy-expressions receiver)))
+                                                                   (env-extend (env-pairs (create-env-pair "own" (bind-as-though-lazy-expressions own)))
                                                                                bindings)))
                     consequent)
                 (iter (mcdr apairs))))))
@@ -1959,8 +1965,8 @@
 (define lang-unknown (create-lang 'Unknown))
 (define lang-equal? equal?)
 
-(define global-env (env-create (env-pairs (env-pair "Yin" lang-funject-god)
-                                          (env-pair "Yang" lang-funject-inverse-god))))
+(define global-env (env-create (env-pairs (create-env-pair "Yin" lang-funject-god)
+                                          (create-env-pair "Yang" lang-funject-inverse-god))))
 
 
 

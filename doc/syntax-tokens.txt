@@ -1,4 +1,4 @@
-<Token-type> = (List of symbols--or in JS Array of Strings--that the token needs to become)
+<Token-type> = (list of symbols)
 
 <Number> = (Number <internal number>)
 
@@ -16,27 +16,25 @@
 
 <Parameter> = (Parameter <internal string>)
 
-<List-literal> = (List-literal (<Exp>, ...))
+<List> = (List (<Exp>, ...))
 
-<Funject-literal> = (Funject-literal ((<Pattern> <Lazy-exps>), ...))
+<Funject> = (Funject ((<Pattern> <Sequence>), ...))
 
     <Pattern> = <Exp-perhaps-containing-parameter>
 
-    <Lazy-exp> = (Lazy-exp <Exp>)
-    
-    <Lazy-exps> = (Lazy-exps (<Lazy-exp>, ...))
+<Sequence> = (Sequence (<Exp>, ...))
 
-<Strict-assignment>  = (Strict-assignment>  <Exp> <Exp>)
+<Strict-assignment>  = (Strict-assignment> <Exp> <Exp>)
 
-<Lazy-assignment> = (Lazy-assignment> <Exp> <Lazy-exps>)
+<Lazy-assignment> = (Lazy-assignment> <Exp> <Sequence>)
 
 <Reset-strict-assignment> = (Reset-strict-assignment> <Exp> <Exp>)
 
-<Reset-lazy-assignment> = (Reset-lazy-assignment> <Exp> <Lazy-exps>)
+<Reset-lazy-assignment> = (Reset-lazy-assignment> <Exp> <Sequence>)
 
-<Funject-strict-assignment> = (Funject-strict-assignment> <Exp> <Lazy-exps>)
+<Funject-strict-assignment> = (Funject-strict-assignment> <Exp> <Exp>)
 
-<Funject-lazy-assignment> = (Funject-lazy-assignment> <Exp> <Lazy-exps>)
+<Funject-lazy-assignment> = (Funject-lazy-assignment> <Exp> <Sequence>)
 
 <Invocation> = (Invocation <Exp> <Exp>)
 
