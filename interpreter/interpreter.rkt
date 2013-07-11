@@ -553,7 +553,7 @@
                  
                  ;You may need these depending on how you define legal identifiers: "1" "2" "3" "4" "5" "6" "7" "8" "9"
                  (define numbers "1234567890")
-                 (define legal-variable-characters "-+=_0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
+                 (define legal-variable-characters "-+*/%_$<>0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
                  (define numbers-and-legal-variable-characters (string-append numbers legal-variable-characters))
                  
                  (define (parse-identifier str indent)
@@ -863,12 +863,12 @@
                                        (lambda (str)
                                          (parse-white str no-indent))
                                        (lambda (str)
-                                         (parse-exp str indent)
-                                         (lambda (f-inverse str)
-                                           (possibility (tokenize 'Inverse-definition 
-                                                                  f 
-                                                                  f-inverse) 
-                                                        str)))))))
+                                         (given (parse-exp str indent)
+                                                (lambda (f-inverse str)
+                                                  (possibility (tokenize 'Inverse-definition 
+                                                                         f 
+                                                                         f-inverse) 
+                                                               str))))))))
                  
                  ;;;;begin not translating
                  (set! odsl dsl)
@@ -1005,8 +1005,15 @@
   (if (empty? (mcdr xs))
       (mcar xs)
       (mlast (mcdr xs))))
+(define (mcopy xs)
+  (if (empty? xs)
+      '()
+      (mcons (mcar xs) (mcopy (mcdr xs)))))
 
 ;;;;begin not translating
+(define (mfoldl f init xs) 
+  (foldl f init (mlist->list xs)))
+
 (define (mapply f mxs)
   (apply f (mlist->list mxs)))
 
@@ -1064,6 +1071,8 @@
 ;;;;    env-<specifier>
 
 (define create-env-pair mlist)
+
+(define env-pair-count mlength)
 
 (define env-pair-key-of mcar)
 
@@ -1185,7 +1194,8 @@
       empty
       (mappend (env-pairs-of env) (env-all-pairs-of (env-parent-of env)))))
 
-
+(define (env-copy-youngest-scope env)
+  (env-extend (mcopy (env-pairs-of env)) (env-parent-of env)))
 
 
 ;;;;    Token types
@@ -1702,6 +1712,9 @@
 (define choice-bindings-from-matching 
   ((lambda () 
      
+     
+     
+     
      ;;;;    Possibility procedures
      
      (define possibility list)
@@ -1713,13 +1726,61 @@
        (flatten (map iterator possibilities)))
      (define also append)
      (define lang-list->possibilities (compose mlist->list mcadr))
-      
      
      
      
-     ;;;;    Bindings-from-matching itself
      
-     (define (bindings-from-matching pattern arg bindings env)
+     ;;;;    Find unknown parameters
+     
+     (define find-unknown-parameters
+       ((lambda ()
+          (define (find-unknown-parameters pattern bindings env found)
+            (cond [(token-matching-identifier? pattern)
+                   (if (or (env-has? (mcadr pattern) bindings)
+                           (mmember (mcadr pattern) found))
+                       found
+                       (mcons (mcadr pattern) found))]
+                  [(token-invocation? pattern)
+                   (find-unknown-parameters (mcadr pattern)  ;I search the mcadr (receiver) only for the day when the programmer can include parameters there.
+                                            bindings
+                                            env
+                                            (find-unknown-parameters (mcaddr pattern)
+                                                                     bindings
+                                                                     env
+                                                                     found))]
+                  [(token-list-literal? pattern)
+                   (mfoldl (lambda (e found)
+                            (find-unknown-parameters e bindings env found))
+                           found
+                           (mcadr pattern))]
+                  [(or (token-number? pattern)
+                       (token-string? pattern)
+                       (token-boolean? pattern)
+                       (token-nil? pattern)
+                       (token-dot? pattern)
+                       (token-unknown? pattern)
+                       (not (token-any? pattern))
+                       (token-identifier? pattern))
+                   found]
+                  [(or (token-strict-assignment? pattern)
+                       (token-lazy-assignment? pattern)
+                       (token-funject-strict-assignment? pattern)
+                       (token-funject-lazy-assignment? pattern)
+                       (token-inverse-definition? pattern)
+                       (token-funject-inheritance? pattern)
+                       (token-funject-literal? pattern))
+                   (user-error-funject-pattern-cannot-contain pattern)]
+                  [else (error "find-unknown-parameters: I fail to account for the type of " pattern "!")]))
+          
+          (lambda (pattern bindings env)
+            (find-unknown-parameters pattern bindings env '())))))
+     
+     
+     
+     
+     ;;;;    Bindings-from-matching-once: a mega proc
+     
+     (define (bindings-from-matching-once pattern arg bindings env)
        (cond 
          [(or (token-number? pattern)
               (token-string? pattern)
@@ -1764,10 +1825,10 @@
                 (if (empty? arg-elems)
                     (possibility bindings)
                     (impossibility))
-                (given (bindings-from-matching (mcar elems)
-                                               (mcar arg-elems)
-                                               bindings
-                                               env)
+                (given (bindings-from-matching-once (mcar elems)
+                                                    (mcar arg-elems)
+                                                    bindings
+                                                    env)
                        (lambda (bindings)
                          (iter (mcdr elems)
                                (mcdr arg-elems)
@@ -1789,13 +1850,13 @@
                        (lambda (name)
                          (cond 
                            [(not (env-has? name bindings)) 
-                            (let ((new-bindings (env-extend (env-pairs) bindings)))
+                            (let ((new-bindings (env-copy-youngest-scope bindings)))
                               (assign-strict-identifier! name arg new-bindings)
                               (possibility new-bindings))]
-                           [(lang-equal? arg (env-get name bindings))
+                           [(lang-equal? arg (lookup-identifier name bindings))
                             (possibility bindings)]
                            [else (impossibility)]))))
-                           
+     
      
      (define (bindings-from-matching-identifier pattern arg bindings env)
        (if (lang-equal? (eval (analyze pattern) env) 
@@ -1805,28 +1866,29 @@
      
      
      (define (bindings-from-matching-invocation pattern arg bindings env)
-       (token-contents pattern
-                       (lambda (receiver pattern-arg)
-                         (let* ((ereceiver (eval (analyze receiver) env))
-                                (unknowns-epattern-arg (eval-pattern-arg pattern-arg bindings env))
-                                (unknowns (car unknowns-epattern-arg))
-                                (epattern-arg (cadr unknowns-epattern-arg))
-                                (inverse (invoke (funject-inverse-of ereceiver) (create-lang 'List (mlist arg epattern-arg))))
-                                ;(e (error "" inverse))
-                                (possibilities (lang-list->possibilities inverse))
-                                (to-match (if (= 1 (mlength unknowns))
-                                              (mcar unknowns)
-                                              (user-error-multiple-unknowns-in-pattern-arg))))
-                           (given possibilities
-                                  (lambda (value)
-                                    (let ((new-bindings (env-extend (env-pairs) bindings)))
-                                      (assign-strict-identifier! to-match value new-bindings)
-                                      new-bindings)))))))
-
+       (if (< 1 (mlength (find-unknown-parameters pattern bindings env)))
+           (possibility bindings)
+           (token-contents pattern
+                           (lambda (receiver pattern-arg)
+                             (let* ((ereceiver (eval (analyze receiver) env))
+                                    (unknowns-epattern-arg (eval-pattern-arg pattern-arg bindings env))
+                                    (unknowns (car unknowns-epattern-arg))
+                                    (epattern-arg (cadr unknowns-epattern-arg))
+                                    (inverse (invoke (funject-inverse-of ereceiver) (create-lang 'List (mlist arg epattern-arg))))
+                                    (possibilities (lang-list->possibilities inverse)))
+                               (if (not (= 1 (length unknowns)))
+                                   (possibility bindings)
+                                   (let ((to-match (car unknowns)))
+                                     (given possibilities
+                                            (lambda (value)
+                                              (let ((new-bindings (env-copy-youngest-scope bindings)))
+                                                (assign-strict-identifier! to-match value new-bindings)
+                                                new-bindings))))))))))
      
      
      
-     ;;;;    Eval-pattern-arg
+     
+     ;;;;    Eval-pattern-arg :: tokens -> env -> env -> (list (list) lang)
      
      (define eval-pattern-arg
        ((lambda ()
@@ -1840,13 +1902,13 @@
               [(token-unknown? pattern-arg) (list empty (create-lang 'Unknown))]
               [(token-matching-identifier? pattern-arg) 
                (if (env-has? (mcadr pattern-arg) bindings)
-                   (list empty (env-get (mcadr pattern-arg) bindings))
-                   (list (mcadr pattern-arg) lang-unknown))]
+                   (list empty (lookup-identifier (mcadr pattern-arg) bindings))
+                   (list (list (mcadr pattern-arg)) lang-unknown))]
               [(token-identifier? pattern-arg)
-               (list empty (env-get (mcadr pattern-arg) env))]
+               (list empty (lookup-identifier (mcadr pattern-arg) env))]
               [(token-list-literal? pattern-arg) 
                (eval-pattern-arg-list-literal pattern-arg bindings env)]            
-              [else (error "analyze: I fail to recognize the token " (deep-stream->list pattern-arg))]))
+              [else (error "eval-pattern-arg: I fail to recognize the token " (deep-stream->list pattern-arg))]))
           
           (define (eval-pattern-arg-list-literal pattern-arg bindings env)
             (define (iter elems)
@@ -1858,7 +1920,7 @@
                          (rest-unknowns--rest-evaled (iter (mcdr elems)))
                          (rest-unknowns (car rest-unknowns--rest-evaled))
                          (rest-evaled (cadr rest-unknowns--rest-evaled)))
-                    (list (mcons first-unknowns rest-unknowns) 
+                    (list (append first-unknowns rest-unknowns) 
                           (mcons first-evaled rest-evaled)))))
             (let* ((unknowns--elems-evaled (iter (mcadr pattern-arg)))
                    (unknowns (car unknowns--elems-evaled))
@@ -1869,12 +1931,39 @@
      
      
      
+     ;;;;    Bindings-from-matching
+     
+     (define (bindings-from-matching pattern arg bindings env)
+       (define n (mlength (find-unknown-parameters pattern bindings env)))
+       (define (iter last-found bindings)
+         (given (bindings-from-matching-once pattern arg bindings env)
+                (lambda (bindings)
+                  (let ((now-found (env-pair-count (env-pairs-of bindings))))
+                    (cond
+                      [(= n now-found)
+                       (possibility bindings)]
+                      [(= last-found now-found)
+                       (impossibility)]
+                      [else
+                       (iter now-found bindings)])))))
+       (iter 0 bindings))
+     
+     
+     
+     
+     ;;;; Choice-bindings-from-matching
+     
      (define (choice-bindings-from-matching pattern arg env)
-       (let ((possibilities (bindings-from-matching pattern arg (env-create (env-pairs)) env)))
+       (let ((possibilities (bindings-from-matching pattern 
+                                                    arg 
+                                                    (env-create (env-pairs))
+                                                    env)))
          (if (impossible? possibilities)
              false
              (env-extend (env-all-pairs-of (possibility-first possibilities)) env))))
      choice-bindings-from-matching)))
+
+
 
 
 
@@ -1951,7 +2040,7 @@
 (define lang-funject-god (create-primitive (lambda (arg)
                                              (error "The funject god is called upon to serve " arg ", but he serves only the enlightened."))
                                            (lambda (arg)
-                                             (error "The funject god was called upon in esrver to serve " arg ", yet he has no inverse!"))))
+                                             (error "The funject god was called upon  to serve " arg ", yet he has no inverse!"))))
 
 (define lang-funject-inverse-god (create-primitive (lambda (arg)
                                                      (error ("The funject inverse god was called upon to serve " arg ", but the inverse god serves no one!")))

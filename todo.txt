@@ -1,7 +1,10 @@
-Rewrite the syntax parser (it now consumes 99+% of the time required to interpret Yak)
+Write three styles of tutorial on Yak: a brief intro for someone not sure whether they want to learn it, a relaxed tutorial for someone who wants to learn it "in practice", and a complete for someone who wants rigor.
 
-Give funjects access to the variable "self". 
-    It would be like "own", except when parent funjects are invoked because their children failed to match it would refer not the the parent but funject originally invoked.
+Allow <script type='text/yak'></script> tags. 
+
+Create a Yak package on npm.
+
+Give Yak a jQuery vocabulary.
 
 Have all funjects (other than builtin types) carry an ID (not accessible to the programmer) so that they can be compared for equality.
     Now only Numbers, Strings, Booleans, Nil, Dot, Unknown, and Lists can be compared.

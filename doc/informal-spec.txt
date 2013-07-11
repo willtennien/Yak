@@ -61,7 +61,7 @@ foo = {
     [2]: 'quux'
 }
 
-Now for some rigor. Yak contains eight builtin funject types:
+Now for some rigor. As I mentioned, everything is Yak is a funject. But not all funject are made equal; there are eight builtin types of funjects:
 
 Funject
 Number
@@ -126,3 +126,48 @@ integer-times = {
 }
 
 This specification is incomplete. Later versions will discuss pattern matching, scoping, and funject's rich diversity of assignment operators. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Syntax
+
+This section deals with the syntax of Yak.
+
+Unlike most languages, Yak does not differentiate between statements and expressions. Everything is simply an expression. Yak recognizes standard syntax:
+
