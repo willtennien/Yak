@@ -1,4 +1,15 @@
 #lang racket
+(define-syntax try
+  (syntax-rules (catch)
+    ((_ body (catch catcher))
+     (call-with-current-continuation
+      (lambda (exit)
+        (with-exception-handler
+         (lambda (condition)
+           catcher
+           (exit condition))
+         (lambda () body)))))))
+
 (require compatibility/mlist)
 
 ;;;                Personal Library
@@ -364,7 +375,7 @@
                          (parse-dot str indent)
                          (parse-unknown str indent)
                          (parse-identifier str indent)
-                         (parse-matching-identifier str indent)
+                         (parse-parameter str indent)
                          (parse-list-literal str indent)
                          (parse-funject-literal str indent)
                          (parse-strict-assignment str indent)
@@ -570,14 +581,14 @@
                           (lambda (name str)
                             (possibility (tokenize 'Identifier name) str))))
                  
-                 ;;;parse-matching-identifier
+                 ;;;parse-parameter
                  
-                 (define (parse-matching-identifier str indent)
+                 (define (parse-parameter str indent)
                    (given-seq (parse-characters "@" str no-indent)
                               (lambda (str)
                                 (given (parse-identifier str no-indent)
                                        (lambda (name str)
-                                         (possibility (tokenize 'Matching-identifier (string-append "@" (cadr name))) str))))))
+                                         (possibility (tokenize 'Parameter (string-append "@" (cadr name))) str))))))
                  
                  ;;;parse-funject-literal
                  
@@ -601,7 +612,7 @@
                                                          (lambda (str)
                                                            (parse-white str no-indent))
                                                          (lambda (str)
-                                                           (given (parse-lazy-expressions str indent)
+                                                           (given (parse-sequence str indent)
                                                                   (lambda (value str)
                                                                     (given (parse-all-like (lambda (c) (or (equal? c " ") 
                                                                                                            (equal? c "\n")))
@@ -644,7 +655,7 @@
                                                                                                           (lambda (str)
                                                                                                             (parse-white str no-indent))
                                                                                                           (lambda (str)
-                                                                                                            (given (parse-lazy-expressions str (lambda (ind) (< indentation ind)))
+                                                                                                            (given (parse-sequence str (lambda (ind) (< indentation ind)))
                                                                                                                    (lambda (value str)
                                                                                                                      (given-seq (parse-white str no-indent)
                                                                                                                                 (lambda (str)
@@ -687,12 +698,12 @@
                                               (possibility (tokenize 'List-literal elems) str))))))))
                  
                  
-                 ;;;parse-lazy-expressions
+                 ;;;parse-sequence
                  
-                 (define (parse-lazy-expressions str indent)
+                 (define (parse-sequence str indent)
                    (also (given (parse-exp str indent)
                                 (lambda (exp str)
-                                  (possibility (tokenize 'Lazy-expressions (list exp)) str)))
+                                  (possibility (tokenize 'Sequence (list exp)) str)))
                          (given-seq (parse-white str no-indent)
                                     (lambda (measure-str) 
                                       (parse-characters "\n" str no-indent))
@@ -700,7 +711,7 @@
                                       (given (parse-all-like (is " ") measure-str no-indent)
                                              (lambda (spaces measure-str)
                                                (define indentation (string-length spaces))
-                                               #|ensure indent indentation|# (if (indent indentation) '() (raise "parse-lazy-expressions: you must indent a series of statements farther than its enclosing syntactic block!"))
+                                               #|ensure indent indentation|# (if (indent indentation) '() (raise "parse-sequence: you must indent a series of statements farther than its enclosing syntactic block!"))
                                                (define (parse-white-newline-indent str indent)
                                                  (given-seq (parse-white str no-indent)
                                                             (lambda (str)
@@ -716,7 +727,7 @@
                                                                                     str 
                                                                                     (is-gte indentation))
                                                                    (lambda (exps str)
-                                                                     (possibility (tokenize 'Lazy-expressions exps) str)))))))))))
+                                                                     (possibility (tokenize 'Sequence exps) str)))))))))))
                  
                  ;;;parse-strict-assignment
                  
@@ -744,7 +755,7 @@
                                        (lambda (str) 
                                          (parse-white str no-indent))
                                        (lambda (str)
-                                         (given (parse-lazy-expressions str indent)
+                                         (given (parse-sequence str indent)
                                                 (lambda (right str)
                                                   (possibility (tokenize 'Lazy-assignment left right) str))))))))
                  
@@ -774,7 +785,7 @@
                                        (lambda (str)
                                          (parse-white str no-indent))
                                        (lambda (str)
-                                         (given (parse-lazy-expressions str indent)
+                                         (given (parse-sequence str indent)
                                                 (lambda (right str)
                                                   (possibility (tokenize 'Funject-lazy-assignment left right) str))))))))
                  
@@ -804,7 +815,7 @@
                                        (lambda (str) 
                                          (parse-white str no-indent))
                                        (lambda (str)
-                                         (given (parse-lazy-expressions str indent)
+                                         (given (parse-sequence str indent)
                                                 (lambda (right str)
                                                   (possibility (tokenize 'Reset-lazy-assignment left right) str))))))))
                  
@@ -1208,10 +1219,10 @@
 (define token-dot? (partial tagged-list? 'Token-dot))
 (define token-unknown? (partial tagged-list? 'Token-unknown ))
 (define token-identifier? (partial tagged-list? 'Token-identifier))
-(define token-matching-identifier? (partial tagged-list? 'Token-matching-identifier))
+(define token-parameter? (partial tagged-list? 'Token-parameter))
 (define token-funject-literal? (partial tagged-list? 'Token-funject-literal))
 (define token-list-literal? (partial tagged-list? 'Token-list-literal))
-(define token-lazy-expressions? (partial tagged-list? 'Token-lazy-expressions))
+(define token-sequence? (partial tagged-list? 'Token-sequence))
 (define token-strict-assignment? (partial tagged-list? 'Token-strict-assignment))
 (define token-lazy-assignment? (partial tagged-list? 'Token-lazy-assignment))
 (define token-funject-strict-assignment? (partial tagged-list? 'Token-funject-strict-assignment))
@@ -1230,10 +1241,10 @@
       (token-dot? exp)
       (token-unknown? exp)
       (token-identifier? exp)
-      (token-matching-identifier? exp)
+      (token-parameter? exp)
       (token-funject-literal? exp)
       (token-list-literal? exp)
-      (token-lazy-expressions? exp)
+      (token-sequence? exp)
       (token-strict-assignment? exp)
       (token-lazy-assignment? exp)
       (token-funject-strict-assignment? exp)
@@ -1332,10 +1343,10 @@
     ;dot
     ;unknown 
     ;identifier
-    ;matching-identifier
+    ;parameter
     ;funject-literal
     ;list-literal
-    ;lazy-expressions
+    ;sequence
     ;strict-assignment
     ;lazy-assignment
     ;funject-strict-assignment
@@ -1355,10 +1366,10 @@
     [(token-dot? tokens) (analyze-dot tokens)]
     [(token-unknown? tokens) (analyze-unknown  tokens)]
     [(token-identifier? tokens) (analyze-identifier tokens)]
-    [(token-matching-identifier? tokens) (analyze-matching-identifier tokens)]
+    [(token-parameter? tokens) (analyze-parameter tokens)]
     [(token-funject-literal? tokens) (analyze-funject-literal tokens)]
     [(token-list-literal? tokens) (analyze-list-literal tokens)]
-    [(token-lazy-expressions? tokens) (analyze-lazy-expressions tokens)]
+    [(token-sequence? tokens) (analyze-sequence tokens)]
     [(token-strict-assignment? tokens) (analyze-strict-assignment tokens)]
     [(token-lazy-assignment? tokens) (analyze-lazy-assignment tokens)]
     [(token-funject-strict-assignment? tokens) (analyze-funject-strict-assignment tokens)]
@@ -1407,14 +1418,14 @@
       (lookup-identifier name env))))
 
 
-(define analyze-matching-identifier analyze-identifier)
+(define analyze-parameter analyze-identifier)
 
 
 (define analyze-funject-literal ((lambda ()
                                    (define (analyze-pairs ps)
                                      (mmap (lambda (p)
                                              (set-mcadr! p 
-                                                         (analyze-lazy-expressions (mcadr p)))
+                                                         (analyze-sequence (mcadr p)))
                                              p)
                                            ps))
                                    (define (bind-pairs ps env)
@@ -1438,7 +1449,7 @@
       (create-lang 'List (eval-each aelems env)))))
 
 
-(define (analyze-lazy-expressions tokens) (mlist 'Analyzed-lazy-expressions (mmap analyze (mcadr tokens))))
+(define (analyze-sequence tokens) (mlist 'Analyzed-sequence (mmap analyze (mcadr tokens))))
 
 
 (define (analyze-strict-assignment tokens) 
@@ -1608,9 +1619,9 @@
                  (env (mcaddr pair))
                  (bindings (choice-bindings-from-matching pattern arg env)))
             (if bindings
-                (if (lang? 'Analyzed-lazy-expressions consequent)
-                    (force-lazy-expressions (bind-lazy-expressions consequent 
-                                                                   (env-extend (env-pairs (create-env-pair "own" (bind-as-though-lazy-expressions own)))
+                (if (lang? 'Analyzed-sequence consequent)
+                    (force-sequence (bind-sequence consequent 
+                                                                   (env-extend (env-pairs (create-env-pair "own" (bind-as-though-sequence own)))
                                                                                bindings)))
                     consequent)
                 (iter (mcdr apairs))))))
@@ -1674,20 +1685,20 @@
   ((env-get name env))) ;note the extra parenthases
 
 (define (assign-strict-identifier! name right env)
-  (env-set! name (bind-as-though-lazy-expressions right) env))
+  (env-set! name (bind-as-though-sequence right) env))
 
 (define (assign-lazy-identifier! name right env)
-  (env-set! name (bind-lazy-expressions right env) env))
+  (env-set! name (bind-sequence right env) env))
 
 (define (reset-strict-identifier! name right env)
-  (env-reset! name (bind-as-though-lazy-expressions right) (env-parent-of env)))
+  (env-reset! name (bind-as-though-sequence right) (env-parent-of env)))
 
 (define (reset-lazy-identifier! name right env) 
-  (env-reset! name (bind-lazy-expressions right env) (env-parent-of env)))
+  (env-reset! name (bind-sequence right env) (env-parent-of env)))
 
-;bind-{lazy-expressions/funject-pair}
-;force-lazy-expressions
-(define (bind-lazy-expressions exp env)
+;bind-{sequence/funject-pair}
+;force-sequence
+(define (bind-sequence exp env)
   (let ((statements (mcadr exp)))
     (lambda () 
       (mlast (eval-each statements env)))))
@@ -1697,9 +1708,9 @@
                   (lambda (pattern consequent)
                     (create-funject-bound-pair pattern consequent env))))
 
-(define (force-lazy-expressions stmts) (stmts))
+(define (force-sequence stmts) (stmts))
 
-(define (bind-as-though-lazy-expressions exp) 
+(define (bind-as-though-sequence exp) 
   (lambda () exp))
 
 
@@ -1735,7 +1746,7 @@
      (define find-unknown-parameters
        ((lambda ()
           (define (find-unknown-parameters pattern bindings env found)
-            (cond [(token-matching-identifier? pattern)
+            (cond [(token-parameter? pattern)
                    (if (or (env-has? (mcadr pattern) bindings)
                            (mmember (mcadr pattern) found))
                        found
@@ -1803,8 +1814,8 @@
           (user-error-funject-pattern-cannot-contain pattern)]
          [(token-list-literal? pattern)
           (bindings-from-matching-list-literal pattern arg bindings env)]
-         [(token-matching-identifier? pattern)
-          (bindings-from-matching-matching-identifier pattern arg bindings env)]
+         [(token-parameter? pattern)
+          (bindings-from-matching-parameter pattern arg bindings env)]
          [(token-identifier? pattern)
           (bindings-from-matching-identifier pattern arg bindings env)]
          [(token-invocation? pattern)
@@ -1845,7 +1856,7 @@
           bindings-from-matching-list-literal)))
      
      
-     (define (bindings-from-matching-matching-identifier pattern arg bindings env)
+     (define (bindings-from-matching-parameter pattern arg bindings env)
        (token-contents pattern
                        (lambda (name)
                          (cond 
@@ -1900,7 +1911,7 @@
               [(token-nil? pattern-arg) (list empty (create-lang 'Nil))]
               [(token-dot? pattern-arg) (list empty (create-lang 'Dot))]
               [(token-unknown? pattern-arg) (list empty (create-lang 'Unknown))]
-              [(token-matching-identifier? pattern-arg) 
+              [(token-parameter? pattern-arg) 
                (if (env-has? (mcadr pattern-arg) bindings)
                    (list empty (lookup-identifier (mcadr pattern-arg) bindings))
                    (list (list (mcadr pattern-arg)) lang-unknown))]
