@@ -1,7 +1,0 @@
-.gitignore
-.DS_Store
-private
-js/cat.coffee
-js/interpreter-coffee.js
-js/interpreter-racket.js
-js/racket2js
