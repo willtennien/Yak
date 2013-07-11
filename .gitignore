@@ -1,4 +1,5 @@
 .gitignore
+.DS_Store
 private
 js/cat.coffee
 js/interpreter-coffee.js
