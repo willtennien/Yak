@@ -26,13 +26,42 @@ tokenizer = do ->
 
     isIdentifier = (c) -> -1 isnt '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-+*/%_$<>=?!'.indexOf c
 
-    (s) ->
+    (raw) ->
         token = (type, value = '') -> {
             type, value, line
             character: character }
 
         syntaxError = (message) ->
             throw new SyntaxError "#{message} at :#{line}:#{character}"
+
+        s = ''
+        i = 0
+        loop
+            j = raw.indexOf '#', i
+            break if j is -1
+            s += raw.substring i, j
+            i = j + 1
+            c = raw[i]
+            if c is '|'
+                ++i
+                pairs = 1
+                while pairs
+                    a = raw.indexOf '#|', i
+                    b = raw.indexOf '|#', i
+                    if a is -1 and b is -1
+                        throw new SyntaxError "Unmatched multiline comment"
+                    if a isnt -1 and (a < b or b is -1)
+                        ++pairs
+                        i = a + 2
+                    if b isnt -1 and (b < a or a is -1)
+                        --pairs
+                        i = b + 2
+            else
+                j = raw.indexOf '\n', i
+                break if j is -1
+                i = j
+
+        s += raw.substring i
 
         i = 0
         character = 0
