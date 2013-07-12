@@ -302,12 +302,10 @@ class StringFunject extends PrimitiveFunject
 
     constructor: (@value) ->
 
-    ###
     call: [
         'own', '&+', (own) -> new PrimitiveFunject
             call: [
                 'string', (x) -> new StringFunject own.value + x.value]]
-    ###
 
     # The [] are there to avoid a syntax highlighting bug
     toString: -> "'" + @value.replace(/[\\]/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + "'"
