@@ -514,6 +514,11 @@ globalScope.set 'square', new PrimitiveFunject
 globalScope.set 'error', new PrimitiveFunject
     call: [['string'], (message) -> throw new InterpreterError message.value]
 
+globalScope.set 'print', new PrimitiveFunject
+    call: [['string'], (message) ->
+        console.log message.value
+        constant.nil]
+
 itself = (n) -> @return constant[n.type]
 variable = (n) -> @return @scope.get n.value
 
