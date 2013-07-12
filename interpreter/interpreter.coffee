@@ -1,3 +1,4 @@
+environment = global ? @
 parser = require './parser.coffee'
 
 last = (thing) -> thing[thing.length - 1]
@@ -64,8 +65,8 @@ class Scope
 class Funject
     type: 'funject'
 
-    apply: (interpreter, self, argument) ->
-        throw new MatchError self, argument
+    apply: (interpreter, own, argument) ->
+        throw new MatchError own, argument
 
     toString: -> '#<funject>'
 
@@ -135,7 +136,7 @@ class UserFunject extends Funject
         if argument.type is 'boolean' or argument.type is 'dot' or argument.type is 'nil' or argument.type is 'unknown'
             return constant[argument.value]
 
-    apply: (interpreter, self, argument) ->
+    apply: (interpreter, own, argument) ->
         for p, i in @patterns.slice interpreter.frame.index ? 0
             applications = []
             if interpreter.frame.bindings
@@ -159,7 +160,7 @@ class UserFunject extends Funject
                             type: 'reapply funject'
                             funject: @
                             argument
-                            self
+                            own
                         }
                         arguments: []
                         step: 'match'
@@ -197,7 +198,7 @@ class UserFunject extends Funject
                             type: 'reapply funject'
                             funject: @
                             argument
-                            self
+                            own
                         }
                         arguments: []
                         step: 'inverse'
@@ -216,16 +217,15 @@ class UserFunject extends Funject
             else
                 interpreter.pop()
                 scope = interpreter.scope
-                bindings.self = self
-                bindings.own = @
+                bindings.own = own
                 interpreter.scope = new Scope p.scope, bindings
                 interpreter.push { type: 'set scope', scope }
                 interpreter.push p.expression
             return
 
-        return @parent.apply interpreter, self, argument if @parent
+        return @parent.apply interpreter, own, argument if @parent
 
-        throw new MatchError self, argument
+        throw new MatchError own, argument
 
 class PrimitiveFunject extends Funject
     constructor: (properties) ->
@@ -261,7 +261,7 @@ class PrimitiveFunject extends Funject
                     return [argument]
             return false
 
-    apply: (interpreter, self, argument) ->
+    apply: (interpreter, own, argument) ->
         if @call
             i = 0
             length = @call.length
@@ -269,27 +269,27 @@ class PrimitiveFunject extends Funject
                 pattern = @call[i++]
                 if provideInterpreter = pattern is 'interpreter'
                     pattern = @call[i++]
-                if provideSelf = pattern is 'self'
+                if provideSelf = pattern is 'own'
                     pattern = @call[i++]
                 value = @call[i++]
                 if args = @match pattern, argument
                     if provideSelf
-                        args.unshift self
+                        args.unshift own
                     if provideInterpreter
                         args.unshift interpreter
                     return interpreter.return value.apply @, args
 
-        return @parent.apply interpreter, self, argument if @parent
+        return @parent.apply interpreter, own, argument if @parent
 
-        throw new MatchError self, argument
+        throw new MatchError own, argument
 
 class BaseFunject extends PrimitiveFunject
     parent: null
 
     call: [
-        'self', '.equals', (self) -> new PrimitiveFunject
+        'own', '.equals', (own) -> new PrimitiveFunject
             call: [
-                ['*'], (x) -> new BooleanFunject equal self, x]]
+                ['*'], (x) -> new BooleanFunject equal own, x]]
 
 Funject::parent = new BaseFunject
 
@@ -309,35 +309,35 @@ class NumberFunject extends PrimitiveFunject
     constructor: (@value) ->
 
     call: [
-        'self', '.plus', (self) -> new PrimitiveFunject
+        'own', '.plus', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) -> new NumberFunject self.value + x.value]
+                ['number'], (x) -> new NumberFunject own.value + x.value]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) ->
-                        new ListFunject [new NumberFunject x.value - self.value]]
-        'self', '.minus', (self) -> new PrimitiveFunject
+                        new ListFunject [new NumberFunject x.value - own.value]]
+        'own', '.minus', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) -> new NumberFunject self.value - x.value]
+                ['number'], (x) -> new NumberFunject own.value - x.value]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) ->
-                        new ListFunject [new NumberFunject x.value - self.value]]
+                        new ListFunject [new NumberFunject x.value - own.value]]
 
-        'self', '.times', (self) -> new PrimitiveFunject
+        'own', '.times', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) => new NumberFunject self.value * x.value]
+                ['number'], (x) => new NumberFunject own.value * x.value]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) =>
-                        new ListFunject [new NumberFunject x / self.value]]
-        'self', '.div', (self) -> new PrimitiveFunject
+                        new ListFunject [new NumberFunject x / own.value]]
+        'own', '.div', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) => new NumberFunject self.value / x.value]
+                ['number'], (x) => new NumberFunject own.value / x.value]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) =>
-                        new ListFunject [new NumberFunject x * self.value]]]
+                        new ListFunject [new NumberFunject x * own.value]]]
 
     toString: -> '' + @value
 
@@ -382,8 +382,50 @@ constant =
     true: new BooleanFunject true
     false: new BooleanFunject false
 
-globalScope = new Scope
-globalScope.name = '<global scope>'
+Funject.bridge = (v, context = environment) ->
+    if not v?
+        return constant.nil
+    if v instanceof Array
+        return new ListFunject (Funject.bridge x for x in v)
+    switch typeof v
+        when 'number' then new NumberFunject v
+        when 'string' then new StringFunject v
+        when 'boolean' then constant[v]
+        when 'function' then new PrimitiveFunject
+            call: [
+                'list', (list) -> Funject.bridge v.apply context, Funject.unbridge list]
+        when 'object' then new PrimitiveFunject
+            call: [
+                ['dot', 'string'], (property) -> Funject.bridge v[property.value], v]
+
+Funject.unbridge = (f) ->
+    switch f.type
+        when 'nil' then null
+        when 'dot', 'unknown' then throw new InterpreterError "Cannot unbridge #{f.type}"
+        when 'number', 'string', 'boolean' then f.value
+        when 'list' then Funject.unbridge v for v in f.values
+        when 'funject' then ->
+            Funject.unbridge new Interpreter().evaluate
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: f
+                argument:
+                    type: 'value'
+                    value: Funject.bridge [].slice.call arguments
+
+globalScope = new class extends Scope
+    name: '<global scope>'
+
+    get: (name) ->
+        try
+            super name
+        catch e
+            if Object::hasOwnProperty.call environment, name
+                Funject.bridge environment[name]
+            else
+                throw e
+
 
 globalScope.set 'cons', new PrimitiveFunject
     call: [
@@ -432,7 +474,7 @@ class Interpreter
                 @pop()
 
         'reapply funject': (n) ->
-            n.funject.apply @, n.self, n.argument
+            n.funject.apply @, n.own, n.argument
 
         sequence: (n) ->
             if @frame.arguments.length is 0
@@ -509,10 +551,9 @@ class Interpreter
             argument = @second()
             funject.apply @, funject, argument
 
-    evaluate: (s) ->
+    evaluate: (n) ->
         @scope = globalScope
         @stack = [ arguments: [] ]
-        n = parser.parse s
         n.isProxy = true
         @push n
         while @stack.length > 1
@@ -570,7 +611,7 @@ class Interpreter
     second: (n) -> @frame.arguments[1]
 
 evaluate = (s) ->
-    new Interpreter().evaluate s
+    new Interpreter().evaluate parser.parse s
 
 repl = ->
     process.stdin.resume()

@@ -24,15 +24,44 @@ tokenizer = do ->
 
     isDigit = (c) -> -1 isnt '0123456789'.indexOf c
 
-    isIdentifier = (c) -> -1 isnt '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-=?!'.indexOf c
+    isIdentifier = (c) -> -1 isnt '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-+*/%_$<>=?!'.indexOf c
 
-    (s) ->
+    (raw) ->
         token = (type, value = '') -> {
             type, value, line
             character: character }
 
         syntaxError = (message) ->
             throw new SyntaxError "#{message} at :#{line}:#{character}"
+
+        s = ''
+        i = 0
+        loop
+            j = raw.indexOf '#', i
+            break if j is -1
+            s += raw.substring i, j
+            i = j + 1
+            c = raw[i]
+            if c is '|'
+                ++i
+                pairs = 1
+                while pairs
+                    a = raw.indexOf '#|', i
+                    b = raw.indexOf '|#', i
+                    if a is -1 and b is -1
+                        throw new SyntaxError "Unmatched multiline comment"
+                    if a isnt -1 and (a < b or b is -1)
+                        ++pairs
+                        i = a + 2
+                    if b isnt -1 and (b < a or a is -1)
+                        --pairs
+                        i = b + 2
+            else
+                j = raw.indexOf '\n', i
+                break if j is -1
+                i = j
+
+        s += raw.substring i
 
         i = 0
         character = 0
@@ -58,9 +87,9 @@ tokenizer = do ->
                 i += q.length
                 return token symbol[q], q
             switch c
-                when '\n'
+                when '\n', '\r'
                     loop
-                        while c is '\n'
+                        while c is '\n' or c is '\r'
                             ++i
                             ++line
                             lastNewline = i
@@ -72,7 +101,7 @@ tokenizer = do ->
                             break unless isSpace c
                             space += c
                             ++i
-                        break unless c is '\n'
+                        break unless c is '\n' or c is '\r'
                     l = last indent
                     now = space.length
                     prev = l.length
@@ -402,6 +431,40 @@ parse = do ->
 
     parse
 
+parseForRacket = (s) ->
+    transform = (n) ->
+        switch n.type
+            when 'number' then ['Number', n.value]
+            when 'string' then ['String', n.value]
+            when 'boolean' then ['Boolean', n.value]
+            when 'nil' then ['Nil']
+            when 'dot' then ['Dot']
+            when 'unknown' then ['Unknown']
+            when 'identifier' then ['Identifier', n.value]
+            when 'formal parameter' then ['Parameter', n.value]
+            when 'list' then ['List', transform x for x in n.values]
+            when 'funject' then ['Funject', [transform(p.pattern), transform(p.value)] for p in n.patterns]
+            when 'sequence' then ['Sequence', transform x for x in n.expressions]
+            when 'application' then ['Invocation', transform(n.funject), transform(n.argument)]
+            when 'assignment'
+                switch n.operator
+                    when 'strict assignment'
+                        if n.left.type is 'application'
+                            ['Funject-strict-assignment', transform(n.left), transform(n.right)]
+                        else
+                            ['Strict-assignment', transform(n.left), transform(n.right)]
+                    when 'lazy assignment'
+                        if n.left.type is 'application'
+                            ['Funject-lazy-assignment', transform(n.left), transform(n.right)]
+                        else
+                            ['Lazy-assignment', transform(n.left), transform(n.right)]
+                    when 'reset strict assignment' then ['Reset-strict-assignment', transform(n.left), transform(n.right)]
+                    when 'reset lazy assignment' then ['Reset-lazy-assignment', transform(n.left), transform(n.right)]
+                    when 'inheritance assignment' then ['Funject-inheritance', transform(n.left), transform(n.right)]
+                    when 'inverse assignment' then ['Inverse-definition', transform(n.left), transform(n.right)]
+
+    transform parse s
+
 printTokens = (s) ->
     tokens = tokenizer s
     indent = ''
@@ -423,12 +486,15 @@ printTokens = (s) ->
 if module?
     exports.parse = parse
     exports.tokenizer = tokenizer
+    exports.parseForRacket = parseForRacket
     if not module.parent
         expression = null
+        racket = false
         i = 2
         argc = process.argv.length
         while i < argc
             switch arg = process.argv[i++]
+                when '-r' then racket = true
                 when '-e'
                     expression = process.argv[i++]
                     break
@@ -436,10 +502,11 @@ if module?
                     expression = '' + require('fs').readFileSync arg
                     break
         if i < argc or not expression?
-            console.error 'Usage: coffee parser.coffee [ <filename> | -e <expression> ]'
+            console.error 'Usage: coffee parser.coffee [ -r ] [ <filename> | -e <expression> ]'
             return
+        p = if racket then parseForRacket else parse
         try
-            console.log JSON.stringify parse(expression), undefined, 2
+            console.log JSON.stringify p(expression), undefined, 2
         catch e
             if e instanceof SyntaxError
                 console.error e.message
