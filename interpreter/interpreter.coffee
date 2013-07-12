@@ -64,8 +64,8 @@ class Scope
 class Funject
     type: 'funject'
 
-    apply: (interpreter, self, argument) ->
-        throw new MatchError self, argument
+    apply: (interpreter, own, argument) ->
+        throw new MatchError own, argument
 
     toString: -> '#<funject>'
 
@@ -135,7 +135,7 @@ class UserFunject extends Funject
         if argument.type is 'boolean' or argument.type is 'dot' or argument.type is 'nil' or argument.type is 'unknown'
             return constant[argument.value]
 
-    apply: (interpreter, self, argument) ->
+    apply: (interpreter, own, argument) ->
         for p, i in @patterns.slice interpreter.frame.index ? 0
             applications = []
             if interpreter.frame.bindings
@@ -159,7 +159,7 @@ class UserFunject extends Funject
                             type: 'reapply funject'
                             funject: @
                             argument
-                            self
+                            own
                         }
                         arguments: []
                         step: 'match'
@@ -197,7 +197,7 @@ class UserFunject extends Funject
                             type: 'reapply funject'
                             funject: @
                             argument
-                            self
+                            own
                         }
                         arguments: []
                         step: 'inverse'
@@ -216,16 +216,15 @@ class UserFunject extends Funject
             else
                 interpreter.pop()
                 scope = interpreter.scope
-                bindings.self = self
-                bindings.own = @
+                bindings.own = own
                 interpreter.scope = new Scope p.scope, bindings
                 interpreter.push { type: 'set scope', scope }
                 interpreter.push p.expression
             return
 
-        return @parent.apply interpreter, self, argument if @parent
+        return @parent.apply interpreter, own, argument if @parent
 
-        throw new MatchError self, argument
+        throw new MatchError own, argument
 
 class PrimitiveFunject extends Funject
     constructor: (properties) ->
@@ -261,7 +260,7 @@ class PrimitiveFunject extends Funject
                     return [argument]
             return false
 
-    apply: (interpreter, self, argument) ->
+    apply: (interpreter, own, argument) ->
         if @call
             i = 0
             length = @call.length
@@ -269,27 +268,27 @@ class PrimitiveFunject extends Funject
                 pattern = @call[i++]
                 if provideInterpreter = pattern is 'interpreter'
                     pattern = @call[i++]
-                if provideSelf = pattern is 'self'
+                if provideSelf = pattern is 'own'
                     pattern = @call[i++]
                 value = @call[i++]
                 if args = @match pattern, argument
                     if provideSelf
-                        args.unshift self
+                        args.unshift own
                     if provideInterpreter
                         args.unshift interpreter
                     return interpreter.return value.apply @, args
 
-        return @parent.apply interpreter, self, argument if @parent
+        return @parent.apply interpreter, own, argument if @parent
 
-        throw new MatchError self, argument
+        throw new MatchError own, argument
 
 class BaseFunject extends PrimitiveFunject
     parent: null
 
     call: [
-        'self', '.equals', (self) -> new PrimitiveFunject
+        'own', '.equals', (own) -> new PrimitiveFunject
             call: [
-                ['*'], (x) -> new BooleanFunject equal self, x]]
+                ['*'], (x) -> new BooleanFunject equal own, x]]
 
 Funject::parent = new BaseFunject
 
@@ -309,35 +308,35 @@ class NumberFunject extends PrimitiveFunject
     constructor: (@value) ->
 
     call: [
-        'self', '.plus', (self) -> new PrimitiveFunject
+        'own', '.plus', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) -> new NumberFunject self.value + x.value]
+                ['number'], (x) -> new NumberFunject own.value + x.value]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) ->
-                        new ListFunject [new NumberFunject x.value - self.value]]
-        'self', '.minus', (self) -> new PrimitiveFunject
+                        new ListFunject [new NumberFunject x.value - own.value]]
+        'own', '.minus', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) -> new NumberFunject self.value - x.value]
+                ['number'], (x) -> new NumberFunject own.value - x.value]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) ->
-                        new ListFunject [new NumberFunject x.value - self.value]]
+                        new ListFunject [new NumberFunject x.value - own.value]]
 
-        'self', '.times', (self) -> new PrimitiveFunject
+        'own', '.times', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) => new NumberFunject self.value * x.value]
+                ['number'], (x) => new NumberFunject own.value * x.value]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) =>
-                        new ListFunject [new NumberFunject x / self.value]]
-        'self', '.div', (self) -> new PrimitiveFunject
+                        new ListFunject [new NumberFunject x / own.value]]
+        'own', '.div', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) => new NumberFunject self.value / x.value]
+                ['number'], (x) => new NumberFunject own.value / x.value]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) =>
-                        new ListFunject [new NumberFunject x * self.value]]]
+                        new ListFunject [new NumberFunject x * own.value]]]
 
     toString: -> '' + @value
 
@@ -432,7 +431,7 @@ class Interpreter
                 @pop()
 
         'reapply funject': (n) ->
-            n.funject.apply @, n.self, n.argument
+            n.funject.apply @, n.own, n.argument
 
         sequence: (n) ->
             if @frame.arguments.length is 0
