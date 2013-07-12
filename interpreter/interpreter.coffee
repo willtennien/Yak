@@ -253,8 +253,11 @@ class PrimitiveFunject extends Funject
         if typeof pattern is 'string'
             if pattern[0] is '.'
                 return @match ['dot', '"' + pattern.substr 1], argument
-            if pattern[0] is '"'
+            else if pattern[0] is '"'
                 if argument.isString and argument.value is pattern.substr 1
+                    return []
+            else if pattern[0] is '&'
+                if argument is globalScope.get pattern.substr 1
                     return []
             else
                 if argument.type is pattern
@@ -293,11 +296,18 @@ class BaseFunject extends PrimitiveFunject
 
 Funject::parent = new BaseFunject
 
-class StringFunject
+class StringFunject extends PrimitiveFunject
     type: 'string'
     isString: true
 
     constructor: (@value) ->
+
+    ###
+    call: [
+        'own', '&+', (own) -> new PrimitiveFunject
+            call: [
+                'string', (x) -> new StringFunject own.value + x.value]]
+    ###
 
     # The [] are there to avoid a syntax highlighting bug
     toString: -> "'" + @value.replace(/[\\]/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + "'"
@@ -309,37 +319,65 @@ class NumberFunject extends PrimitiveFunject
     constructor: (@value) ->
 
     call: [
+        'own', '&+', (own) -> new PrimitiveFunject
+            call: [
+                'number', (x) -> new NumberFunject own + x]
+            inverse: new PrimitiveFunject
+                call: [
+                    ['number', 'unknown'], (x) ->
+                        new ListFunject [new NumberFunject x - own]]
+        'own', '&-', (own) -> new PrimitiveFunject
+            call: [
+                'number', (x) -> new NumberFunject own - x]
+            inverse: new PrimitiveFunject
+                call: [
+                    ['number', 'unknown'], (x) ->
+                        new ListFunject [new NumberFunject x - own]]
+        'own', '&*', (own) -> new PrimitiveFunject
+            call: [
+                'number', (x) => new NumberFunject own * x]
+            inverse: new PrimitiveFunject
+                call: [
+                    ['number', 'unknown'], (x) =>
+                        new ListFunject [new NumberFunject x / own]]
+        'own', '&/', (own) -> new PrimitiveFunject
+            call: [
+                'number', (x) => new NumberFunject own / x]
+            inverse: new PrimitiveFunject
+                call: [
+                    ['number', 'unknown'], (x) =>
+                        new ListFunject [new NumberFunject own / x]]
         'own', '.plus', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) -> new NumberFunject own.value + x.value]
+                ['number'], (x) -> new NumberFunject own + x]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) ->
-                        new ListFunject [new NumberFunject x.value - own.value]]
+                        new ListFunject [new NumberFunject x - own]]
         'own', '.minus', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) -> new NumberFunject own.value - x.value]
+                ['number'], (x) -> new NumberFunject own - x]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) ->
-                        new ListFunject [new NumberFunject x.value - own.value]]
-
+                        new ListFunject [new NumberFunject x - own]]
         'own', '.times', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) => new NumberFunject own.value * x.value]
+                ['number'], (x) => new NumberFunject own * x]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) =>
-                        new ListFunject [new NumberFunject x / own.value]]
+                        new ListFunject [new NumberFunject x / own]]
         'own', '.div', (own) -> new PrimitiveFunject
             call: [
-                ['number'], (x) => new NumberFunject own.value / x.value]
+                ['number'], (x) => new NumberFunject own / x]
             inverse: new PrimitiveFunject
                 call: [
                     ['number', ['unknown']], (x) =>
-                        new ListFunject [new NumberFunject x * own.value]]]
+                        new ListFunject [new NumberFunject own / x]]]
 
     toString: -> '' + @value
+    valueOf: -> @value
 
 class ListFunject extends PrimitiveFunject
     type: 'list'
@@ -426,13 +464,46 @@ globalScope = new class extends Scope
             else
                 throw e
 
+globalScope.set '+', new PrimitiveFunject
+    call: [
+        ['number', 'number'], (x, y) -> new NumberFunject x + y]
+    inverse: new PrimitiveFunject
+        call: [
+            ['number', ['number', 'unknown']], (x, y) -> new ListFunject [new NumberFunject x - y],
+            ['number', ['unknown', 'number']], (x, y) -> new ListFunject [new NumberFunject x - y]]
+
+globalScope.set '-', new PrimitiveFunject
+    call: [
+        ['number'], (x) -> new NumberFunject -x
+        'number', (x) -> new NumberFunject -x
+        ['number', 'number'], (x, y) -> new NumberFunject x - y]
+    inverse: new PrimitiveFunject
+        call: [
+            ['number', ['number', 'unknown']], (x, y) -> new ListFunject [new NumberFunject y - x]
+            ['number', ['unknown', 'number']], (x, y) -> new ListFunject [new NumberFunject x + y]]
+
+globalScope.set '*', new PrimitiveFunject
+    call: [
+        ['number', 'number'], (x, y) -> new NumberFunject x * y]
+    inverse: new PrimitiveFunject
+        call: [
+            ['number', ['number', 'unknown']], (x, y) -> new ListFunject [new NumberFunject x / y]
+            ['number', ['unknown', 'number']], (x, y) -> new ListFunject [new NumberFunject x / y]]
+
+globalScope.set '/', new PrimitiveFunject
+    call: [
+        ['number', 'number'], (x, y) -> new NumberFunject x / y]
+    inverse: new PrimitiveFunject
+        call: [
+            ['number', ['number', 'unknown']], (x, y) -> new ListFunject [new NumberFunject y / x]
+            ['number', ['unknown', 'number']], (x, y) -> new ListFunject [new NumberFunject x * y]]
 
 globalScope.set 'cons', new PrimitiveFunject
     call: [
         ['*', '*'], (x, y) -> new ListFunject [x, y]]
     inverse: new PrimitiveFunject
         call: [
-            [['*', '*'], ['unknown', '*']], (x, y) -> new ListFunject [x],
+            [['*', '*'], ['unknown', '*']], (x, y) -> new ListFunject [x]
             [['*', '*'], ['*', 'unknown']], (x, y) -> new ListFunject [y]]
 
 globalScope.set 'square', new PrimitiveFunject
