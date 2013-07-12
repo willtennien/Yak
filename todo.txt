@@ -6,6 +6,8 @@ Create a Yak package on npm.
 
 Give Yak a jQuery vocabulary.
 
+Support deep equality.
+
 Have all funjects (other than builtin types) carry an ID (not accessible to the programmer) so that they can be compared for equality.
     Now only Numbers, Strings, Booleans, Nil, Dot, Unknown, and Lists can be compared.
 

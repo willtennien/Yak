@@ -13,6 +13,17 @@
 (require compatibility/mlist)
 
 ;;;                Personal Library
+(define (is a)
+  (lambda (b)
+    (equal? a b)))
+
+(define (is-gt a)
+  (lambda (b)
+    (< a b)))
+
+(define (is-gte a)
+  (lambda (b)
+    (<= a b)))
 
 
 ;;;;begin not translating
@@ -23,7 +34,6 @@
                (not (equal? result b)))
              (string-split b a))))
 ;;;;end not translating
-
 
 
 
@@ -44,19 +54,7 @@
                  (define (is-in-list xs)
                    (lambda (c)
                      (< 0 (count (lambda (e) (equal? e c)) xs))))
-                 
-                 (define (is a)
-                   (lambda (b)
-                     (equal? a b)))
-                 
-                 (define (is-gt a)
-                   (lambda (b)
-                     (< a b)))
-                 
-                 (define (is-gte a)
-                   (lambda (b)
-                     (<= a b)))
-                 
+                                  
                  (define (partial-flatten xs)
                    (if (empty? xs)
                        xs
@@ -826,9 +824,11 @@
                           (lambda (receiver str)
                             (parse-invocation-with receiver str indent))))
                  (define (parse-invocation-with receiver str indent)
-                   (also (given (parse-exp str indent)
-                                (lambda (args str)
-                                  (also-within-naked-compound (possibility (tokenize 'Invocation receiver args) str) str indent)))
+                   (also (given (parse-white str no-indent)
+                                (lambda (_ str)
+                                  (given (parse-exp str indent)
+                                         (lambda (args str)
+                                           (also-within-naked-compound (possibility (tokenize 'Invocation receiver args) str) str indent)))))
                          (given (parse-characters "." str no-indent)
                                 (lambda (_ str)
                                   (given (parse-identifier str no-indent)
@@ -1091,6 +1091,8 @@
 
 (define env-pairs mlist)
 
+(define (create-env-pair-strict name val)
+  (create-env-pair name (bind-as-though-sequence val)))
 
 (define empty-env 'empty-env)
 
@@ -1285,8 +1287,8 @@
             (assert (= 2 (length args)) "I tried to create a List but was passed " args)
             (assert (mlist? (cadr args)) "I tried to create a List but was passed " args)]
            [(eq? 'Funject (car args))
-            (assert (= 4 (length args)) "I tried to create a Funject but was passed " args)
-            (assert (mlist? (cadr args)) "I tried to create a Funject but was passed " args)]
+            (assert (= 5 (length args)) "I tried to create a Funject but was passed " args)
+            (assert (mlist? (caddr args)) "I tried to create a Funject but was passed " args)]
            [else (display-all "Warning: I fail to recognize the type of " args "!\n")])
          (apply mlist args)))
 
@@ -1308,9 +1310,6 @@
 (define (lang-contents exp f)
   (assert (lang-any? exp) "I tried to take the lang-contents of a non-lang: " exp) ;to optimize, remove this line.
   (apply f (mlist->list (mcdr exp))))
-
-
-
          
          
 ;;;;    Evaluation
@@ -1437,9 +1436,10 @@
                                        (lambda (env)
                                          (let ((bpairs (bind-pairs apairs env)))
                                            (create-lang 'Funject 
+                                                        (random 100000000)
                                                         bpairs
-                                                        lang-funject-god
-                                                        lang-funject-inverse-god)))))
+                                                        primitive-funject-god
+                                                        primitive-funject-inverse-god)))))
                                    analyze-funject-literal)))
 
 
@@ -1575,33 +1575,28 @@
                   receiver
                   (car maybe-own)))
   (cond 
-    [(primitive? receiver) (invoke-primitive receiver arg)]
-    [(lang? 'Number receiver) (invoke-number receiver arg)]
+    [(primitive? receiver) (invoke-primitive receiver arg own)]
+    [(lang? 'Number receiver) (invoke-number receiver arg own)]
     [(lang? 'Funject receiver) (invoke-funject receiver arg own)]
     [else (error "invoke: I know not how to invoke " receiver "!")]))
 
-(define (invoke-primitive receiver arg)
+(define (invoke-primitive receiver arg own)
   (primitive-contents receiver
                       (lambda (funject _)
-                        (funject arg))))
+                        (funject arg own))))
 
-(define (invoke-number receiver arg)
-  (unless (lang? 'List arg)
-          (user-error-no-matching-pattern receiver arg)
+(define (invoke-number receiver arg own)
+  (unless (lang? 'String arg)
+          (invoke primitive-funject-god arg own)
           (lang-contents arg
-                         (lambda (elems)
-                           (unless (and (lang? 'Dot (mcar elems))
-                                        (lang? 'String (mcadr elems)))
-                                   (user-error-no-matching-pattern receiver arg)
-                                   (lang-contents (mcadr elems)
-                                                  (lambda (str)
-                                                    (cond 
-                                                      [(equal? str "plus") (create-primitive-number-plus (mcadr receiver))]
-                                                      [(equal? str "minus") (create-primitive-number-minus (mcadr receiver))]
-                                                      [(equal? str "times") (create-primitive-number-times (mcadr receiver))]
-                                                      [(equal? str "div") (create-primitive-number-div (mcadr receiver))]
-                                                      [else (user-error-no-matching-pattern receiver arg)]))))))))
-                                          
+                         (lambda (str)
+                           (cond 
+                             [(equal? str "+") (create-primitive-number-plus (mcadr receiver))]
+                             [(equal? str "-") (create-primitive-number-minus (mcadr receiver))]
+                             [(equal? str "*") (create-primitive-number-times (mcadr receiver))]
+                             [(equal? str "/") (create-primitive-number-div (mcadr receiver))]
+                             [else (invoke primitive-funject-god arg own)])))))
+
                  
 
 (define (invoke-funject receiver arg own)
@@ -1621,8 +1616,9 @@
             (if bindings
                 (if (lang? 'Analyzed-sequence consequent)
                     (force-sequence (bind-sequence consequent 
-                                                                   (env-extend (env-pairs (create-env-pair "own" (bind-as-though-sequence own)))
-                                                                               bindings)))
+                                                   (env-extend (env-pairs (create-env-pair "own" 
+                                                                                           (bind-as-though-sequence own)))
+                                                               bindings)))
                     consequent)
                 (iter (mcdr apairs))))))
     (iter apairs)))
@@ -1633,34 +1629,34 @@
 ;(set-)funject-<prop>(-of)
 
 (define (funject-pairs-of funject)
-  (unless (lang? 'Funject funject)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
           (error "I cannot find the pairs of a non-funject: " funject "!")
-          (mcadr funject)))
-
-(define (set-funject-pairs! funject pairs)
-  (unless (lang? 'Funject funject)
-          (error "I cannot set the pairs of a non-funject: " funject "!")
-          (set-mcadr! funject pairs)))
-
-(define (push-funject-pair! funject p)
-  (unless (lang? 'Funject funject)
-          (user-error-cannot-push-pair-to-non-funject)
-          (set-mcadr! funject (mcons p (mcadr funject)))))
-
-(define (funject-parent-of funject)
-  (unless (lang? 'Funject funject)
-          (error "I cannot find the parent of a non-funject: " funject "!")
           (mcaddr funject)))
 
+(define (set-funject-pairs! funject pairs)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
+          (error "I cannot set the pairs of a non-funject: " funject "!")
+          (set-mcaddr! funject pairs)))
+
+(define (push-funject-pair! funject p)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
+          (user-error-cannot-push-pair-to-non-funject)
+          (set-mcaddr! funject (mcons p (mcaddr funject)))))
+
+(define (funject-parent-of funject)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
+          (error "I cannot find the parent of a non-funject: " funject "!")
+          (mcadddr funject)))
+
 (define (set-funject-parent! funject parent)
-  (unless (lang? 'Funject funject)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
           (user-error-cannot-set-parent-of-non-funject)
-          (set-mcaddr! funject parent)))
+          (set-mcadddr! funject parent)))
 
 (define (funject-inverse-of funject)
   (cond 
     [(lang? 'Funject funject)
-     (mcadddr funject)]
+     (mcaddddr funject)]
     [(primitive? funject)
      (primitive-contents funject
                          (lambda (itself inverse)
@@ -1671,7 +1667,7 @@
 (define (set-funject-inverse! funject inverse)
   (unless (lang? 'Funject funject)
           (user-error-set-inverse-of-non-funject)
-          (set-mcadddr! funject inverse)))
+          (set-mcaddddr! funject inverse)))
 
 (define create-funject-pair mlist)
 
@@ -1981,6 +1977,12 @@
 
 ;;;;    Primitives
 
+;Primitive funjects rely on these:
+(define lang-nil (create-lang 'Nil))
+(define lang-dot (create-lang 'Dot))
+(define lang-unknown (create-lang 'Unknown))
+(define lang-equal? equal?)
+
 (define (create-primitive funject inverse)
   (mlist 'Primitive funject inverse))
 
@@ -1993,80 +1995,81 @@
   (assert (primitive? prim)) ;to optimize, remove this line.
   (apply f (mlist->list (mcdr prim))))
 
-(define (create-primitive-infix-operation type1 type2 result-type op op-inv)
-  (lambda (left)
-    (create-primitive (lambda (other)
-                        (unless (lang? 'List other)
-                          (invoke primitive-funject-god other)
-                          (lang-contents other
-                                         (lambda (elems)
-                                           (unless (and (= 1 (mlength elems))
-                                                        (lang? type2 (mcar elems)))
-                                             (invoke primitive-funject-god other)
-                                             (lang-contents (mcar elems)
-                                                            (lambda (right) 
-                                                              (create-lang result-type (op left 
-                                                                                           right)))))))))
-                      (lambda (result--arg)
-                        (unless (lang? 'List result--arg) (invoke primitive-funject-inverse-god result--arg)
-                          (lang-contents result--arg
-                                         (lambda (elems)
-                                           (mlist-contents elems
-                                                           (lambda (result arg)
-                                                             (unless (and (lang? 'List result)
-                                                                          (= 1 (mlength (mcadr result)))
-                                                                          (lang? result-type (mcaadr result))
-                                                                          (number? (mcadaadr result))
-                                                                          (lang? 'List arg)
-                                                                          (= 1 (mlength (mcadr arg)))
-                                                                          (lang? 'Unknown (mcaadr arg)))
-                                                               (invoke primitive-funject-inverse-god result--arg)
-                                                               (create-lang 'List (mlist (create-lang type2 (op-inv (mcadaadr result) left))))))))))))))
+(define (create-primitive-infix-operator right-type? result-type? op op-inv)
+  (define self (lambda (left)
+                 (create-primitive (lambda (other own)
+                                     (unless (right-type? other)
+                                       (invoke primitive-funject-god other)
+                                       (op left 
+                                           other)))
+                                   (lambda (result--arg own)
+                                     (lang-contents result--arg
+                                                    (lambda (elems)
+                                                      (mlist-contents elems
+                                                                      (lambda (result arg)
+                                                                        (unless (and (result-type? result)
+                                                                                     (lang? 'Unknown arg))
+                                                                          (invoke primitive-funject-inverse-god result--arg self)
+                                                                          (op-inv result left))))))))))
+  self)
 
-(define create-primitive-number-plus (create-primitive-infix-operation 'Number 'Number 'Number + -))
+(define (create-primitive-unoverloaded-infix-operator right-type result-type op op-inv)
+  (create-primitive-infix-operator (partial lang? right-type)
+                                   (partial lang? result-type)
+                                   (lambda (left right)
+                                     (lang-contents right
+                                                    (lambda (right-contents)
+                                                      (create-lang result-type (op left right-contents)))))
+                                   (lambda (result left)
+                                     (lang-contents result
+                                                    (lambda (result-contents)
+                                                      (create-lang 'List (mlist (create-lang right-type (op-inv result-contents left)))))))))
 
-(define create-primitive-number-minus (create-primitive-infix-operation 'Number 'Number 'Number - +))
+(define create-primitive-funject-is (create-primitive-infix-operator lang-any? ;to optimize, change this to sycophant
+                                                                     lang-any? ;to optimize, change this to sycophant
+                                                                     (lambda (a b)
+                                                                       (create-lang 'Boolean (lang-equal? a b)))
+                                                                     (lambda (result left)
+                                                                       (if (equal? result (mlist 'Boolean true))
+                                                                           (create-lang 'List left)
+                                                                           (user-error-no-matching-pattern (list "is of " left) (create-lang 'List result (create-lang 'Unknown)))))))
 
-(define create-primitive-number-times (create-primitive-infix-operation 'Number 'Number 'Number * /))
+(define create-primitive-number-plus (create-primitive-unoverloaded-infix-operator 'Number 'Number + -))
 
-(define create-primitive-number-div (create-primitive-infix-operation 'Number 'Number 'Number / *))
+(define create-primitive-number-minus (create-primitive-unoverloaded-infix-operator 'Number 'Number - +))
 
-                    
+(define create-primitive-number-times (create-primitive-unoverloaded-infix-operator 'Number 'Number * /))
+
+(define create-primitive-number-div (create-primitive-unoverloaded-infix-operator 'Number 'Number / *))
+
+
 
 
 (define primitive-funject-god
-  (create-primitive (lambda (arg)
-                      (user-error-no-matching-pattern "The primitive funject god" arg))
-                    (lambda (arg)
+  (create-primitive (lambda (arg own)
+                      (cond 
+                        [(lang? 'String arg)
+                         (lang-contents arg
+                                        (lambda (str)
+                                          (cond 
+                                            [(equal? str "is") (create-primitive-funject-is own)]
+                                            [else (user-error-no-matching-pattern own arg)])))]
+                        [else (user-error-no-matching-pattern "The primitive funject god inversted" arg)]))
+                    (lambda (arg own)
                       (user-error-no-matching-pattern "The primitive funject god inversted" arg))))
 
 
-(define primitive-funject-inverse-god
-  (create-primitive (lambda (arg)
-                      (user-error-no-matching-pattern "The primitive funject inverse god" arg))
-                    (lambda (arg)
-                      (user-error-no-matching-pattern "The primitive funject inverse god himself inversted" arg))))
+(define primitive-funject-inverse-god (create-primitive (mcaddr primitive-funject-god) (mcadr primitive-funject-god)))
 
 
-(define lang-funject-god (create-primitive (lambda (arg)
-                                             (error "The funject god is called upon to serve " arg ", but he serves only the enlightened."))
-                                           (lambda (arg)
-                                             (error "The funject god was called upon  to serve " arg ", yet he has no inverse!"))))
 
-(define lang-funject-inverse-god (create-primitive (lambda (arg)
-                                                     (error ("The funject inverse god was called upon to serve " arg ", but the inverse god serves no one!")))
-                                                   (lambda (arg)
-                                                     (error ("The funject was himself called in reverse to serve " arg ". He is amused.")))))
-                                                     
-
-
-(define lang-nil (create-lang 'Nil))
-(define lang-dot (create-lang 'Dot))
-(define lang-unknown (create-lang 'Unknown))
-(define lang-equal? equal?)
-
-(define global-env (env-create (env-pairs (create-env-pair "Yin" lang-funject-god)
-                                          (create-env-pair "Yang" lang-funject-inverse-god))))
+(define global-env (env-create (env-pairs (create-env-pair "Yin" primitive-funject-god)
+                                          (create-env-pair "Yang" primitive-funject-inverse-god)
+                                          (create-env-pair-strict "+" (create-lang 'String "+"))
+                                          (create-env-pair-strict "-" (create-lang 'String "-"))
+                                          (create-env-pair-strict "*" (create-lang 'String "*"))
+                                          (create-env-pair-strict "/" (create-lang 'String "/"))
+                                          (create-env-pair-strict "is" (create-lang 'String "is")))))
 
 
 
