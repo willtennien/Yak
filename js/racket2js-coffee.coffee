@@ -1,4 +1,3 @@
-
 string_to_number = Number
 number_to_string = String
 boolean_to_string = String
@@ -18,6 +17,8 @@ raise = (x) -> throw x
 
 error = (x) -> throw x
 
+assert = (cond, message) -> throw message unless cond
+
 #type functions
 is_symbol = (x) -> x.isSymbol is true
 
@@ -30,7 +31,8 @@ is_number = (x) -> x.constructor is Number
 #number functions
 _racket_plus_symbol = (a, b) -> a + b
 
-_racket_minus_symbol = (a, b) -> a - b
+#racket minus symbol:
+_ = (a, b) -> a - b
 
 _racket_mult_symbol = (a, b) -> a * b
 
@@ -45,15 +47,46 @@ string_append = () -> Array.prototype.reduce.call(arguments, (a, b) -> a + b)
 
 string_replace = (str, a, b) -> str.replace(a, b)
 
-substring = (str, start, end) -> str.slice(start, end)
+substring = (str, start, end) -> 
+    console.log([str, start, end])
+    str.slice(start, end)
 
 #list functions
 empty = []
 cons = mcons = (a, b) -> [a, b]
 car = mcar = (xs) -> xs[0]
 cdr = mcdr = (xs) -> xs[1]
+cadr = mcdar = (xs) -> xs[1][0]
+append = mappend = (xs, ys) -> 
+    if xs.length is 0
+        return ys
+    else
+        return cons(xs[0], append(xs[1..], ys))
+list = mlist = () -> 
+    if arguments.length is 0
+        return []
+    else 
+        return [arguments[0], mlist.apply({}, Array::slice.call(arguments, 1))]
+length = mlength = (xs) ->
+    if xs.length is 0
+        0
+    else
+        1 + length(xs[1])
+is_empty = (xs) -> xs.length is 0
+mlist_to_list = list_to_mlist = (xs) -> xs
 set_car_racket_exclamation_point = (xs, x) -> xs[0] = x
 set_cdr_racket_exclamation_point = (xs, x) -> xs[1] = x
+array2nested_pairs = (arr) -> 
+    if arr.length is 0
+        return []
+    else
+        return [arr[0], array2nested_pairs(arr[1..])]
+nested_pairs2array = (xs) ->
+    if xs.length is 0
+        return []
+    else
+        return [xs[0]].concat(nested_pairs2array(xs[1]))
+deep_list_to_mlist = deep_mlist_to_list = (x) -> x
 
 ###More efficient list functions, that assumes cdr always returns a list.
 empty = []
@@ -170,7 +203,7 @@ set_mcaaddddddddddr_racket_exclamation_point = set_caaddddddddddr_racket_exclama
 ###
 
 #interpreter:
-possibility = (result, str) -> [[result, str]]
+possibility = (result, str) -> list(list(result, str))
 
 impossibility = () -> []
 
@@ -178,9 +211,9 @@ is_possible = (xs) -> 0 < xs.length
 
 is_impossible = (xs) -> xs.length is 0
 
-shallow_flatten = (xss) ->  xss.reduce(((ys, xs) -> ys.concat(xs)), [])
+shallow_flatten = (xss) -> xss.reduce(((ys, xs) -> ys.concat(xs)), [])
 
-given = (possibilities, f) -> shallow_flatten(possibilities.map(([result, str]) -> f(result, str)))
+given = (possibilities, f) -> array2nested_pairs(shallow_flatten(nested_pairs2array(possibilities).map(([result, str]) -> f(result, str))))
 
 also = append
 
