@@ -1,3 +1,4 @@
+environment = global ? @
 parser = require './parser.coffee'
 
 last = (thing) -> thing[thing.length - 1]
@@ -381,8 +382,50 @@ constant =
     true: new BooleanFunject true
     false: new BooleanFunject false
 
-globalScope = new Scope
-globalScope.name = '<global scope>'
+Funject.bridge = (v, context = environment) ->
+    if not v?
+        return constant.nil
+    if v instanceof Array
+        return new ListFunject (Funject.bridge x for x in v)
+    switch typeof v
+        when 'number' then new NumberFunject v
+        when 'string' then new StringFunject v
+        when 'boolean' then constant[v]
+        when 'function' then new PrimitiveFunject
+            call: [
+                'list', (list) -> Funject.bridge v.apply context, Funject.unbridge list]
+        when 'object' then new PrimitiveFunject
+            call: [
+                ['dot', 'string'], (property) -> Funject.bridge v[property.value], v]
+
+Funject.unbridge = (f) ->
+    switch f.type
+        when 'nil' then null
+        when 'dot', 'unknown' then throw new InterpreterError "Cannot unbridge #{f.type}"
+        when 'number', 'string', 'boolean' then f.value
+        when 'list' then Funject.unbridge v for v in f.values
+        when 'funject' then ->
+            Funject.unbridge new Interpreter().evaluate
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: f
+                argument:
+                    type: 'value'
+                    value: Funject.bridge [].slice.call arguments
+
+globalScope = new class extends Scope
+    name: '<global scope>'
+
+    get: (name) ->
+        try
+            super name
+        catch e
+            if Object::hasOwnProperty.call environment, name
+                Funject.bridge environment[name]
+            else
+                throw e
+
 
 globalScope.set 'cons', new PrimitiveFunject
     call: [
@@ -508,10 +551,9 @@ class Interpreter
             argument = @second()
             funject.apply @, funject, argument
 
-    evaluate: (s) ->
+    evaluate: (n) ->
         @scope = globalScope
         @stack = [ arguments: [] ]
-        n = parser.parse s
         n.isProxy = true
         @push n
         while @stack.length > 1
@@ -569,7 +611,7 @@ class Interpreter
     second: (n) -> @frame.arguments[1]
 
 evaluate = (s) ->
-    new Interpreter().evaluate s
+    new Interpreter().evaluate parser.parse s
 
 repl = ->
     process.stdin.resume()
