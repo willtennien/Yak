@@ -58,9 +58,9 @@ tokenizer = do ->
                 i += q.length
                 return token symbol[q], q
             switch c
-                when '\n'
+                when '\n', '\r'
                     loop
-                        while c is '\n'
+                        while c is '\n' or c is '\r'
                             ++i
                             ++line
                             lastNewline = i
@@ -72,7 +72,7 @@ tokenizer = do ->
                             break unless isSpace c
                             space += c
                             ++i
-                        break unless c is '\n'
+                        break unless c is '\n' or c is '\r'
                     l = last indent
                     now = space.length
                     prev = l.length
