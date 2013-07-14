@@ -145,47 +145,54 @@ tokenizer = do ->
                         ++i
                         c = s[i]
                         break unless isDigit c
+                b = false
                 if c is '.'
                     value += c
                     ++i
                     c = s[i]
                     if not isDigit c
-                        character =
+                        --i
+                        c = s[i]
                         if value isnt '.'
-                            t = token 'number', +value.substr 0, value.length - 1
-                        character = i - lastNewline
-                        d = token 'dot application', '.'
-                        tokens.push d if t
-                        return t ? d
-                    loop
+                            return token 'number', +value.substr 0, value.length - 1
+                        b = true
+                    else
+                        loop
+                            value += c
+                            ++i
+                            c = s[i]
+                            break unless isDigit c
+                if not b
+                    if c is 'e' or c is 'E'
                         value += c
                         ++i
                         c = s[i]
-                        break unless isDigit c
-                if c is 'e' or c is 'E'
-                    value += c
-                    ++i
-                    c = s[i]
-                    if c is '+' or c is '-'
-                        value += c
-                        ++i
+                        if c is '+' or c is '-'
+                            value += c
+                            ++i
+                            c = s[i]
+                        if not isDigit c
+                            character = 1 + i - lastNewline
+                            syntaxError 'Expected digit'
+                        loop
+                            value += c
+                            ++i
+                            c = s[i]
+                            break unless isDigit c
+                    if isIdentifier c
+                        i = start
                         c = s[i]
-                    if not isDigit c
-                        character = 1 + i - lastNewline
-                        syntaxError 'Expected digit'
-                    loop
-                        value += c
-                        ++i
-                        c = s[i]
-                        break unless isDigit c
-                if isIdentifier c
-                    i = start
-                    c = s[i]
-                else
-                    return token 'number', +value
+                    else
+                        return token 'number', +value
 
-            if c is '@' or isIdentifier c
-                type = if c is '@' then 'formal parameter' else 'identifier'
+            if c is '@' or c is '.' or isIdentifier c
+                type =
+                    if c is '@'
+                        'formal parameter'
+                    else if c is '.'
+                        'symbol'
+                    else
+                        'identifier'
                 value = ''
                 loop
                     value += c
@@ -194,8 +201,13 @@ tokenizer = do ->
                     break unless isIdentifier c
                 if value is 'true' or value is 'false'
                     return token 'boolean', value is 'true'
-                if value is 'nil' or value is 'dot' or value is 'unknown'
+                if value is 'nil' or value is 'unknown'
                     return token value, value
+                if type is 'symbol'
+                    if value.length is 1
+                        character = 1 + i - lastNewline
+                        syntaxError 'Expected identifier'
+                    return token type, value.substr 1
                 return token type, value
 
             if c is '"' or c is "'"
@@ -225,10 +237,6 @@ tokenizer = do ->
                     c = s[i]
                 ++i
                 return token 'string', value
-
-            if c is '.'
-                ++i
-                return token 'dot application'
 
             syntaxError "Unexpected #{c}"
 
@@ -303,7 +311,7 @@ parse = do ->
             else
                 parseError tokens.here(), "Expected expression"
         loop
-            if -1 isnt ['identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'dot', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
+            if -1 isnt ['identifier', 'formal parameter', 'string', 'symbol', 'number', 'boolean', 'nil', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
                 t = tokens.here()
                 e =
                     type: 'application'
@@ -321,32 +329,6 @@ parse = do ->
                     funject: e
                     argument: expression tokens
                 # do not continue, since we cannot directly apply sequences to values which would normally be expressions
-            if t = tokens.match 'dot application'
-                name = tokens.require 'identifier'
-                e =
-                    type: 'application'
-                    line: t.line
-                    character: t.character
-                    funject: e
-                    argument:
-                        type: 'list'
-                        line: t.line
-                        character: t.character
-                        values: [
-                            {
-                                type: 'dot'
-                                value: '.'
-                                line: t.line
-                                character: t.character
-                            }
-                            {
-                                type: 'string'
-                                value: name.value
-                                line: name.line
-                                character: name.character
-                            }
-                        ]
-                continue
             break
         if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance assignment'
             if assignment.type isnt 'inheritance assignment' and assignment.type isnt 'inverse assignment' and e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'strict assignment' and assignment.type isnt 'lazy assignment')
@@ -396,32 +378,11 @@ parse = do ->
                 type: 'funject'
                 patterns
             }
-        if t = tokens.match 'identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'dot', 'unknown'
+        if t = tokens.match 'identifier', 'formal parameter', 'symbol', 'string', 'number', 'boolean', 'nil', 'unknown'
             return t
 
     pattern = (tokens) ->
-        if t = tokens.match 'dot application'
-            name = tokens.require 'identifier'
-            match =
-                type: 'list'
-                line: t.line
-                character: t.character
-                values: [
-                    {
-                        type: 'dot'
-                        value: '.'
-                        line: t.line
-                        character: t.character
-                    }
-                    {
-                        type: 'string'
-                        value: name.value
-                        line: name.line
-                        character: name.character
-                    }
-                ]
-        else
-            match = expression tokens
+        match = expression tokens
         tokens.require 'pattern match'
         result = expression tokens
         {
@@ -435,10 +396,10 @@ parseForRacket = (s) ->
     transform = (n) ->
         switch n.type
             when 'number' then ['Number', n.value]
+            when 'symbol' then ['Symbol', n.value]
             when 'string' then ['String', n.value]
             when 'boolean' then ['Boolean', n.value]
             when 'nil' then ['Nil']
-            when 'dot' then ['Dot']
             when 'unknown' then ['Unknown']
             when 'identifier' then ['Identifier', n.value]
             when 'formal parameter' then ['Parameter', n.value]

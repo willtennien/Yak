@@ -20,9 +20,9 @@ equal = (a, b) ->
             return true
         when 'funject'
             return a is b
-        when 'number', 'boolean', 'string'
+        when 'number', 'boolean', 'string', 'symbol'
             return a.value is b.value
-        when 'nil', 'dot', 'unknown'
+        when 'nil', 'unknown'
             return true
 
 class InterpreterError
@@ -91,9 +91,9 @@ class UserFunject extends Funject
                 argument: pattern.argument
                 value: argument
             return {}
-        if pattern.type is 'number' or pattern.type is 'string' or pattern.type is 'boolean'
+        if pattern.type is 'number' or pattern.type is 'symbol' or pattern.type is 'string' or pattern.type is 'boolean'
             return pattern.type is argument.type and pattern.value is argument.value and {}
-        if pattern.type is 'dot' or pattern.type is 'nil' or pattern.type is 'unknown'
+        if pattern.type is 'nil' or pattern.type is 'unknown'
             return pattern.type is argument.type and {}
         throw new InterpreterError "Invalid pattern"
 
@@ -129,11 +129,13 @@ class UserFunject extends Funject
             return new NumberFunject argument.value
         if argument.type is 'string'
             return new StringFunject argument.value
+        if argument.type is 'symbol'
+            return new SymbolFunject argument.value
         if argument.type is 'formal parameter'
             return constant.unknown
         if argument.type is 'application'
             throw new InterpreterError 'Nested applications are unimplemented'
-        if argument.type is 'boolean' or argument.type is 'dot' or argument.type is 'nil' or argument.type is 'unknown'
+        if argument.type is 'boolean' or argument.type is 'nil' or argument.type is 'unknown'
             return constant[argument.value]
 
     apply: (interpreter, own, argument) ->
@@ -252,7 +254,8 @@ class PrimitiveFunject extends Funject
                 return false
         if typeof pattern is 'string'
             if pattern[0] is '.'
-                return @match ['dot', '"' + pattern.substr 1], argument
+                if argument.isSymbol and argument.value is pattern.substr 1
+                    return []
             else if pattern[0] is '"'
                 if argument.isString and argument.value is pattern.substr 1
                     return []
@@ -295,6 +298,14 @@ class BaseFunject extends PrimitiveFunject
                 ['*'], (x) -> new BooleanFunject equal own, x]]
 
 Funject::parent = new BaseFunject
+
+class SymbolFunject extends PrimitiveFunject
+    type: 'symbol'
+    isSymbol: true
+
+    constructor: (@value) ->
+
+    toString: -> "." + @value
 
 class StringFunject extends PrimitiveFunject
     type: 'string'
@@ -399,12 +410,6 @@ class NilFunject extends PrimitiveFunject
 
     toString: -> 'nil'
 
-class DotFunject extends PrimitiveFunject
-    type: 'dot'
-    isDot: true
-
-    toString: -> 'dot'
-
 class UnknownFunject extends PrimitiveFunject
     type: 'unknown'
     isUnkown: true
@@ -413,7 +418,6 @@ class UnknownFunject extends PrimitiveFunject
 
 constant =
     nil: new NilFunject
-    dot: new DotFunject
     unknown: new UnknownFunject
     true: new BooleanFunject true
     false: new BooleanFunject false
@@ -432,12 +436,12 @@ Funject.bridge = (v, context = environment) ->
                 'list', (list) -> Funject.bridge v.apply context, Funject.unbridge list]
         when 'object' then new PrimitiveFunject
             call: [
-                ['dot', 'string'], (property) -> Funject.bridge v[property.value], v]
+                'symbol', (property) -> Funject.bridge v[property.value], v]
 
 Funject.unbridge = (f) ->
     switch f.type
         when 'nil' then null
-        when 'dot', 'unknown' then throw new InterpreterError "Cannot unbridge #{f.type}"
+        when 'unknown' then throw new InterpreterError "Cannot unbridge #{f.type}"
         when 'number', 'string', 'boolean' then f.value
         when 'list' then Funject.unbridge v for v in f.values
         when 'funject' then ->
@@ -525,10 +529,10 @@ variable = (n) -> @return @scope.get n.value
 class Interpreter
     expressions:
         number: (n) -> @return new NumberFunject n.value
+        symbol: (n)-> @return new SymbolFunject n.value
         string: (n) -> @return new StringFunject n.value
         boolean: (n) -> @return constant[n.value]
         nil: itself
-        dot: itself
         unknown: itself
 
         value: (n) -> @return n.value
