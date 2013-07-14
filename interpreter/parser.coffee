@@ -395,34 +395,34 @@ parse = do ->
 parseForRacket = (s) ->
     transform = (n) ->
         switch n.type
-            when 'number' then ['Number', n.value]
-            when 'symbol' then ['Symbol', n.value]
-            when 'string' then ['String', n.value]
-            when 'boolean' then ['Boolean', n.value]
-            when 'nil' then ['Nil']
-            when 'unknown' then ['Unknown']
-            when 'identifier' then ['Identifier', n.value]
-            when 'formal parameter' then ['Parameter', n.value]
-            when 'list' then ['List', transform x for x in n.values]
-            when 'funject' then ['Funject', [transform(p.pattern), transform(p.value)] for p in n.patterns]
-            when 'sequence' then ['Sequence', transform x for x in n.expressions]
-            when 'application' then ['Invocation', transform(n.funject), transform(n.argument)]
+            when 'number' then ['Token-number', n.value]
+            when 'symbol' then ['Token-symbol', n.value]
+            when 'string' then ['Token-string', n.value]
+            when 'boolean' then ['Token-boolean', n.value]
+            when 'nil' then ['Token-nil']
+            when 'unknown' then ['Token-unknown']
+            when 'identifier' then ['Token-identifier', n.value]
+            when 'formal parameter' then ['Token-parameter', n.value]
+            when 'list' then ['Token-list', transform x for x in n.values]
+            when 'funject' then ['Token-funject', [transform(p.pattern), transform(p.value)] for p in n.patterns]
+            when 'sequence' then ['Token-sequence', transform x for x in n.expressions]
+            when 'application' then ['Token-invocation', transform(n.funject), transform(n.argument)]
             when 'assignment'
                 switch n.operator
                     when 'strict assignment'
                         if n.left.type is 'application'
-                            ['Funject-strict-assignment', transform(n.left), transform(n.right)]
+                            ['Token-funject-strict-assignment', transform(n.left), transform(n.right)]
                         else
-                            ['Strict-assignment', transform(n.left), transform(n.right)]
+                            ['Token-strict-assignment', transform(n.left), transform(n.right)]
                     when 'lazy assignment'
                         if n.left.type is 'application'
-                            ['Funject-lazy-assignment', transform(n.left), transform(n.right)]
+                            ['Token-funject-lazy-assignment', transform(n.left), transform(n.right)]
                         else
-                            ['Lazy-assignment', transform(n.left), transform(n.right)]
-                    when 'reset strict assignment' then ['Reset-strict-assignment', transform(n.left), transform(n.right)]
-                    when 'reset lazy assignment' then ['Reset-lazy-assignment', transform(n.left), transform(n.right)]
-                    when 'inheritance assignment' then ['Funject-inheritance', transform(n.left), transform(n.right)]
-                    when 'inverse assignment' then ['Inverse-definition', transform(n.left), transform(n.right)]
+                            ['Token-lazy-assignment', transform(n.left), transform(n.right)]
+                    when 'reset strict assignment' then ['Token-reset-strict-assignment', transform(n.left), transform(n.right)]
+                    when 'reset lazy assignment' then ['Token-reset-lazy-assignment', transform(n.left), transform(n.right)]
+                    when 'inheritance assignment' then ['Token-funject-inheritance', transform(n.left), transform(n.right)]
+                    when 'inverse assignment' then ['Token-inverse-definition', transform(n.left), transform(n.right)]
 
     transform parse s
 
