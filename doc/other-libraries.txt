@@ -1,0 +1,261 @@
+Arrays
+================================================================================================================================
+
+JavaScript
+
+pop
+push
+reverse
+shift
+sort
+splice
+unshift
+concat
+join
+slice
+to
+toString
+indexOf
+lastIndexOf
+forEach
+every
+some
+filter
+map
+reduce
+reduceRight
+
+underscorejs
+
+first
+initial
+last
+rest
+compact
+flatten
+without
+union
+intersection
+difference
+uniq
+zip
+object
+indexOf
+lastIndexOf
+sortedIndex
+range
+
+Ruby
+
+&
+*
++
+-
+<<
+<=>
+==
+[]
+[]=
+assoc
+at
+clear
+collect
+collect!
+combination
+compact
+compact!
+concat
+count
+cycle
+delete
+delete_at
+delete_if
+drop
+drop_while
+each
+each_index
+empty?
+eql?
+fetch
+fill
+find_index
+first
+flatten
+flatten!
+frozen?
+hash
+include?
+index
+initialize_copy
+insert
+inspect
+join
+keep_if
+last
+length
+map
+map!
+pack
+permutation
+pop
+product
+push
+rassoc
+reject
+reject!
+repeated_combination
+repeated_permutation
+replace
+reverse
+reverse!
+reverse_each
+rindex
+rotate
+rotate!
+sample
+select
+select!
+shift
+shuffle
+shuffle!
+size
+slice
+slice!
+sort
+sort!
+sort_by!
+take
+take_while
+to_a
+to_ary
+to_s
+transpose
+uniq
+uniq!
+unshift
+values_at
+zip
+|
+
+Python
+
+[start:end:step]  #select the elements from index start up to (but not including stop). Optionally, skip every step elements.
+typecode          #The typecode character used to create the array. 
+itemsize          #The length in bytes of one array item in the internal representation.
+append(x)         #Append a new item with value x to the end of the array.
+buffer_info()     #Return a tuple (address, length) giving the current memory address and the length in elements of the buffer used to hold array’s contents. The size of the memory buffer in bytes can be computed as array.buffer_info()[1] * array.itemsize. This is occasionally useful when working with low-level (and inherently unsafe) I/O interfaces that require memory addresses, such as certain ioctl() operations. The returned numbers are valid as long as the array exists and no length-changing operations are applied to it.
+byteswap()        #“Byteswap” all items of the array. This is only supported for values which are 1, 2, 4, or 8 bytes in size; for other types of values, RuntimeError is raised. It is useful when reading data from a file written on a machine with a different byte order.
+count(x)          #Return the number of occurrences of x in the array.
+extend(iterable)  #Append items from iterable to the end of the array. If iterable is another array, it must have exactly the same type code; if not, TypeError will be raised. If iterable is not an array, it must be iterable and its elements must be the right type to be appended to the array.
+fromfile(f, n)    #Read n items (as machine values) from the file object f and append them to the end of the array. If less than n items are available, EOFError is raised, but the items that were available are still inserted into the array. f must be a real built-in file object; something else with a read() method won’t do.
+fromlist(list)    #Append items from the list. This is equivalent to for x in list: a.append(x) except that if there is a type error, the array is unchanged.
+fromstring(s)     #Appends items from the string, interpreting the string as an array of machine values (as if it had been read from a file using the fromfile() method).
+fromunicode(s)    #Extends this array with data from the given unicode string. The array must be a type 'u' array; otherwise a ValueError is raised. Use array.fromstring(unicodestring.encode(enc)) to append Unicode data to an array of some other type.
+index(x)          #Return the smallest i such that i is the index of the first occurrence of x in the array.
+insert(i, x)      #Insert a new item with value x in the array before position i. Negative values are treated as being relative to the end of the array.
+pop([i])          #Removes the item with the index i from the array and returns it. The optional argument defaults to -1, so that by default the last item is removed and returned.
+remove(x)         #Remove the first occurrence of x from the array.
+reverse()         #Reverse the order of the items in the array.
+tofile(f)         #Write all items (as machine values) to the file object f.
+tolist()          #Convert the array to an ordinary list with the same items.
+tostring()        #Convert the array to an array of machine values and return the string representation (the same sequence of bytes that would be written to a file by the tofile() method.)
+tounicode()       #Convert the array to a unicode string. The array must be a type 'u' array; otherwise a ValueError is raised. Use array.tostring().decode(enc) to obtain a unicode string from an array of some other type.
+
+Haskell
+
+++ :: [a] -> [a] -> [a]
+head :: [a] -> a
+last :: [a] -> a
+tail :: [a] -> [a]
+init :: [a] -> [a]
+null :: [a] -> Bool
+length :: [a] -> Int
+map :: (a -> b) -> [a] -> [b]
+reverse :: [a] -> [a]
+intersperse :: a -> [a] -> [a]
+intercalate :: [a] -> [[a]] -> [a]
+transpose :: [[a]] -> [[a]]
+subsequences :: [a] -> [[a]]
+permutations :: [a] -> [[a]]
+foldl :: (a -> b -> a) -> a -> [b] -> a
+foldl' :: (a -> b -> a) -> a -> [b] -> a
+foldl1 :: (a -> a -> a) -> [a] -> a
+foldl1' :: (a -> a -> a) -> [a] -> a
+foldr :: (a -> b -> b) -> b -> [a] -> b
+foldr1 :: (a -> a -> a) -> [a] -> a
+concat :: [[a]] -> [a]
+concatMap :: (a -> [b]) -> [a] -> [b]
+and :: [Bool] -> Bool
+or :: [Bool] -> Bool
+any :: (a -> Bool) -> [a] -> Bool
+all :: (a -> Bool) -> [a] -> Bool
+sum :: Num a => [a] -> a
+product :: Num a => [a] -> a
+maximum :: Ord a => [a] -> a
+minimum :: Ord a => [a] -> a
+scanl :: (a -> b -> a) -> a -> [b] -> [a]
+scanl1 :: (a -> a -> a) -> [a] -> [a]
+scanr :: (a -> b -> b) -> b -> [a] -> [b]
+scanr1 :: (a -> a -> a) -> [a] -> [a]
+mapAccumL :: (acc -> x -> (acc, y)) -> acc -> [x] -> (acc, [y])
+mapAccumR :: (acc -> x -> (acc, y)) -> acc -> [x] -> (acc, [y])
+iterate :: (a -> a) -> a -> [a]
+repeat :: a -> [a]
+replicate :: Int -> a -> [a]
+cycle :: [a] -> [a]
+unfoldr :: (b -> Maybe (a, b)) -> b -> [a]
+take :: Int -> [a] -> [a]
+drop :: Int -> [a] -> [a]
+splitAt :: Int -> [a] -> ([a], [a])
+takeWhile :: (a -> Bool) -> [a] -> [a]
+dropWhile :: (a -> Bool) -> [a] -> [a]
+dropWhileEnd :: (a -> Bool) -> [a] -> [a]
+span :: (a -> Bool) -> [a] -> ([a], [a])
+break :: (a -> Bool) -> [a] -> ([a], [a])
+stripPrefix :: Eq a => [a] -> [a] -> Maybe [a]
+group :: Eq a => [a] -> [[a]]
+inits :: [a] -> [[a]]
+tails :: [a] -> [[a]]
+isPrefixOf :: Eq a => [a] -> [a] -> Bool
+isSuffixOf :: Eq a => [a] -> [a] -> Bool
+isInfixOf :: Eq a => [a] -> [a] -> Bool
+elem :: Eq a => a -> [a] -> Bool
+notElem :: Eq a => a -> [a] -> Bool
+lookup :: Eq a => a -> [(a, b)] -> Maybe b
+find :: (a -> Bool) -> [a] -> Maybe a
+filter :: (a -> Bool) -> [a] -> [a]
+partition :: (a -> Bool) -> [a] -> ([a], [a])
+(!!) :: [a] -> Int -> a
+elemIndex :: Eq a => a -> [a] -> Maybe Int
+elemIndices :: Eq a => a -> [a] -> [Int]
+findIndex :: (a -> Bool) -> [a] -> Maybe Int
+findIndices :: (a -> Bool) -> [a] -> [Int]
+zip :: [a] -> [b] -> [(a, b)]
+zip3 :: [a] -> [b] -> [c] -> [(a, b, c)]
+zip4 :: [a] -> [b] -> [c] -> [d] -> [(a, b, c, d)]
+zip5 :: [a] -> [b] -> [c] -> [d] -> [e] -> [(a, b, c, d, e)]
+zip6 :: [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [(a, b, c, d, e, f)]
+zip7 :: [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [g] -> [(a, b, c, d, e, f, g)]
+zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith3 :: (a -> b -> c -> d) -> [a] -> [b] -> [c] -> [d]
+zipWith4 :: (a -> b -> c -> d -> e) -> [a] -> [b] -> [c] -> [d] -> [e]
+zipWith5 :: (a -> b -> c -> d -> e -> f) -> [a] -> [b] -> [c] -> [d] -> [e] -> [f]
+zipWith6 :: (a -> b -> c -> d -> e -> f -> g) -> [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [g]
+zipWith7 :: (a -> b -> c -> d -> e -> f -> g -> h) -> [a] -> [b] -> [c] -> [d] -> [e] -> [f] -> [g] -> [h]
+unzip :: [(a, b)] -> ([a], [b])
+unzip3 :: [(a, b, c)] -> ([a], [b], [c])
+unzip4 :: [(a, b, c, d)] -> ([a], [b], [c], [d])
+unzip5 :: [(a, b, c, d, e)] -> ([a], [b], [c], [d], [e])
+unzip6 :: [(a, b, c, d, e, f)] -> ([a], [b], [c], [d], [e], [f])
+unzip7 :: [(a, b, c, d, e, f, g)] -> ([a], [b], [c], [d], [e], [f], [g])
+lines :: String -> [String]
+words :: String -> [String]
+unlines :: [String] -> String
+unwords :: [String] -> String
+nub :: Eq a => [a] -> [a]
+delete :: Eq a => a -> [a] -> [a]
+(\\) :: Eq a => [a] -> [a] -> [a]
+union :: Eq a => [a] -> [a] -> [a]
+intersect :: Eq a => [a] -> [a] -> [a]
+sort :: Ord a => [a] -> [a]
+insert :: Ord a => a -> [a] -> [a]

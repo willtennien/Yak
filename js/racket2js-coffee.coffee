@@ -1,9 +1,8 @@
+set_of_racket_exclamation_point = (obj, k, v) -> obj[k] = v
+
 string_to_number = Number
 number_to_string = String
 boolean_to_string = String
-
-symbol_to_string = (sym) ->
-  sym.toString()
 
 is_equal = (a, b) -> a is b
 
@@ -15,7 +14,7 @@ display = newline = console.log
 
 raise = (x) -> throw x
 
-error = (x) -> throw x
+error = (x, args...) -> throw {name: x, message: args}
 
 assert = (cond, message) -> throw message unless cond
 
@@ -48,10 +47,14 @@ string_append = () -> Array.prototype.reduce.call(arguments, (a, b) -> a + b)
 string_replace = (str, a, b) -> str.replace(a, b)
 
 substring = (str, start, end) -> 
-    console.log([str, start, end])
     str.slice(start, end)
 
+string_downcase = (str) -> str.toLowerCase()
+
+string_upcase = (str) -> str.toUpperCase()
+
 #list functions
+###Less efficient list functions, that do not assume cdr always returns a list.
 empty = []
 cons = mcons = (a, b) -> [a, b]
 car = mcar = (xs) -> xs[0]
@@ -87,123 +90,91 @@ nested_pairs2array = (xs) ->
     else
         return [xs[0]].concat(nested_pairs2array(xs[1]))
 deep_list_to_mlist = deep_mlist_to_list = (x) -> x
+###
 
-###More efficient list functions, that assumes cdr always returns a list.
+#More efficient list functions that assume cdr always returns a list.
+cons = (x, xs) -> [x].concat(xs)
+
 empty = []
 
+list_to_mlist = mlist_to_list = deep_list_to_mlist = deep_mlist_to_list = (x) -> x
+
+is_list = is_mlist = (xs) -> xs.constructor is Array
+
 list = mlist = ->
-  Array::slice.call arguments_, 0
+  Array::slice.call arguments, 0
 
 count = (f, xs) -> xs.filter(f).length
 
+length = mlength = (xs) -> xs.length
+
 is_empty = (xs) -> xs.length is 0
 
-append = () -> Array.prototype.reduce.call(arguments, (rest, next) -> rest.concat(next))
+append = mappend = () -> Array.prototype.reduce.call(arguments, (rest, next) -> rest.concat(next))
 
-car = (xs) -> xs[0]
-cadr = (xs) -> xs[1]
-caddr = (xs) -> xs[2]
-cadddr = (xs) -> xs[3]
-caddddr = (xs) -> xs[4]
-cadddddr = (xs) -> xs[5]
-caddddddr = (xs) -> xs[6]
-cadddddddr = (xs) -> xs[7]
-caddddddddr = (xs) -> xs[8]
-cadddddddddr = (xs) -> xs[9]
-caddddddddddr = (xs) -> xs[10]
-cdr = (xs) -> xs.slice 1
-cddr = (xs) -> xs.slice 2
-cdddr = (xs) -> xs.slice 3
-cddddr = (xs) -> xs.slice 4
-cdddddr = (xs) -> xs.slice 5
-cddddddr = (xs) -> xs.slice 6
-cdddddddr = (xs) -> xs.slice 7
-cddddddddr = (xs) -> xs.slice 8
-cdddddddddr = (xs) -> xs.slice 9
-cddddddddddr = (xs) -> xs.slice 10
-cdddddddddddr = (xs) -> xs.slice 11
-cddddddddddddr = (xs) -> xs.slice 12
-caar = (xs) -> xs[0][0]
-caadr = (xs) -> xs[1][0]
-caaddr = (xs) -> xs[2][0]
-caadddr = (xs) -> xs[3][0]
-caaddddr = (xs) -> xs[4][0]
-caadddddr = (xs) -> xs[5][0]
-caaddddddr = (xs) -> xs[6][0]
-caadddddddr = (xs) -> xs[7][0]
-caaddddddddr = (xs) -> xs[8][0]
-caadddddddddr = (xs) -> xs[9][0]
-caaddddddddddr = (xs) -> xs[10][0]
-set_cadr_racket_exclamation_point = (xs, x) -> xs[1] = x
-set_caddr_racket_exclamation_point = (xs, x) -> xs[2] = x
-set_cadddr_racket_exclamation_point = (xs, x) -> xs[3] = x
-set_caddddr_racket_exclamation_point = (xs, x) -> xs[4] = x
-set_cadddddr_racket_exclamation_point = (xs, x) -> xs[5] = x
-set_caddddddr_racket_exclamation_point = (xs, x) -> xs[6] = x
-set_cadddddddr_racket_exclamation_point = (xs, x) -> xs[7] = x
-set_caddddddddr_racket_exclamation_point = (xs, x) -> xs[8] = x
-set_cadddddddddr_racket_exclamation_point = (xs, x) -> xs[9] = x
-set_caddddddddddr_racket_exclamation_point = (xs, x) -> xs[10] = x
-set_caar_racket_exclamation_point = (xs, x) -> xs[0][0] = x
-set_caadr_racket_exclamation_point = (xs, x) -> xs[1][0] = x
-set_caaddr_racket_exclamation_point = (xs, x) -> xs[2][0] = x
-set_caadddr_racket_exclamation_point = (xs, x) -> xs[3][0] = x
-set_caaddddr_racket_exclamation_point = (xs, x) -> xs[4][0] = x
-set_caadddddr_racket_exclamation_point = (xs, x) -> xs[5][0] = x
-set_caaddddddr_racket_exclamation_point = (xs, x) -> xs[6][0] = x
-set_caadddddddr_racket_exclamation_point = (xs, x) -> xs[7][0] = x
-set_caaddddddddr_racket_exclamation_point = (xs, x) -> xs[8][0] = x
-set_caadddddddddr_racket_exclamation_point = (xs, x) -> xs[9][0] = x
-set_caaddddddddddr_racket_exclamation_point = (xs, x) -> xs[10][0] = x
+map = mmap = (f, xs) -> xs.map(f)
 
+car = mcar = stream_first = (xs) -> xs[0]
+cadr = mcadr = (xs) -> xs[1]
+caddr = mcaddr = (xs) -> xs[2]
+cadddr = mcadddr = (xs) -> xs[3]
+caddddr = mcaddddr = (xs) -> xs[4]
+cadddddr = mcadddddr = (xs) -> xs[5]
+caddddddr = mcaddddddr = (xs) -> xs[6]
+cadddddddr = mcadddddddr = (xs) -> xs[7]
+caddddddddr = mcaddddddddr = (xs) -> xs[8]
+cadddddddddr = mcadddddddddr = (xs) -> xs[9]
+caddddddddddr = mcaddddddddddr = (xs) -> xs[10]
+cdr = mcdr = (xs) -> xs.slice 1
+cddr = mcddr = (xs) -> xs.slice 2
+cdddr = mcdddr = (xs) -> xs.slice 3
+cddddr = mcddddr = (xs) -> xs.slice 4
+cdddddr = mcdddddr = (xs) -> xs.slice 5
+cddddddr = mcddddddr = (xs) -> xs.slice 6
+cdddddddr = mcdddddddr = (xs) -> xs.slice 7
+cddddddddr = mcddddddddr = (xs) -> xs.slice 8
+cdddddddddr = mcdddddddddr = (xs) -> xs.slice 9
+cddddddddddr = mcddddddddddr = (xs) -> xs.slice 10
+cdddddddddddr = mcdddddddddddr = (xs) -> xs.slice 11
+cddddddddddddr = mcddddddddddddr = (xs) -> xs.slice 12
+caar = mcaar = (xs) -> xs[0][0]
+caadr = mcaadr = (xs) -> xs[1][0]
+caaddr = mcaaddr = (xs) -> xs[2][0]
+caadddr = mcaadddr = (xs) -> xs[3][0]
+caaddddr = mcaaddddr = (xs) -> xs[4][0]
+caadddddr = mcaadddddr = (xs) -> xs[5][0]
+caaddddddr = mcaaddddddr = (xs) -> xs[6][0]
+caadddddddr = mcaadddddddr = (xs) -> xs[7][0]
+caaddddddddr = mcaaddddddddr = (xs) -> xs[8][0]
+caadddddddddr = mcaadddddddddr = (xs) -> xs[9][0]
+caaddddddddddr = mcaaddddddddddr = (xs) -> xs[10][0]
+set_car_racket_exclamation_point = set_mcar_racket_exclamation_point = (xs, x) -> xs[0] = x
+set_cadr_racket_exclamation_point = set_mcadr_racket_exclamation_point = (xs, x) -> xs[1] = x
+set_caddr_racket_exclamation_point = set_mcaddr_racket_exclamation_point = (xs, x) -> xs[2] = x
+set_cadddr_racket_exclamation_point = set_mcadddr_racket_exclamation_point = (xs, x) -> xs[3] = x
+set_caddddr_racket_exclamation_point = set_mcaddddr_racket_exclamation_point = (xs, x) -> xs[4] = x
+set_cadddddr_racket_exclamation_point = set_mcadddddr_racket_exclamation_point = (xs, x) -> xs[5] = x
+set_caddddddr_racket_exclamation_point = set_mcaddddddr_racket_exclamation_point = (xs, x) -> xs[6] = x
+set_cadddddddr_racket_exclamation_point = set_mcadddddddr_racket_exclamation_point = (xs, x) -> xs[7] = x
+set_caddddddddr_racket_exclamation_point = set_mcaddddddddr_racket_exclamation_point = (xs, x) -> xs[8] = x
+set_cadddddddddr_racket_exclamation_point = set_mcadddddddddr_racket_exclamation_point = (xs, x) -> xs[9] = x
+set_caddddddddddr_racket_exclamation_point = set_mcaddddddddddr_racket_exclamation_point = (xs, x) -> xs[10] = x
+set_caar_racket_exclamation_point = set_mcaar_racket_exclamation_point = (xs, x) -> xs[0][0] = x
+set_caadr_racket_exclamation_point = set_mcaadr_racket_exclamation_point = (xs, x) -> xs[1][0] = x
+set_caaddr_racket_exclamation_point = set_mcaaddr_racket_exclamation_point = (xs, x) -> xs[2][0] = x
+set_caadddr_racket_exclamation_point = set_mcaadddr_racket_exclamation_point = (xs, x) -> xs[3][0] = x
+set_caaddddr_racket_exclamation_point = set_mcaaddddr_racket_exclamation_point = (xs, x) -> xs[4][0] = x
+set_caadddddr_racket_exclamation_point = set_mcaadddddr_racket_exclamation_point = (xs, x) -> xs[5][0] = x
+set_caaddddddr_racket_exclamation_point = set_mcaaddddddr_racket_exclamation_point = (xs, x) -> xs[6][0] = x
+set_caadddddddr_racket_exclamation_point = set_mcaadddddddr_racket_exclamation_point = (xs, x) -> xs[7][0] = x
+set_caaddddddddr_racket_exclamation_point = set_mcaaddddddddr_racket_exclamation_point = (xs, x) -> xs[8][0] = x
+set_caadddddddddr_racket_exclamation_point = set_mcaadddddddddr_racket_exclamation_point = (xs, x) -> xs[9][0] = x
+set_caaddddddddddr_racket_exclamation_point = set_mcaaddddddddddr_racket_exclamation_point = (xs, x) -> xs[10][0] = x
 
-
-mcadr = cadr
-mcaddr = caddr
-mcadddr = cadddr
-mcaddddr = caddddr
-mcadddddr = cadddddr
-mcaddddddr = caddddddr
-mcadddddddr = cadddddddr
-mcaddddddddr = caddddddddr
-mcadddddddddr = cadddddddddr
-mcaddddddddddr = caddddddddddr
-mcaar = caar
-mcaadr = caadr
-mcaaddr = caaddr
-mcaadddr = caadddr
-mcaaddddr = caaddddr
-mcaadddddr = caadddddr
-mcaaddddddr = caaddddddr
-mcaadddddddr = caadddddddr
-mcaaddddddddr = caaddddddddr
-mcaadddddddddr = caadddddddddr
-mcaaddddddddddr = caaddddddddddr
-set_mcadr_racket_exclamation_point = set_cadr_racket_exclamation_point
-set_mcaddr_racket_exclamation_point = set_caddr_racket_exclamation_point
-set_mcadddr_racket_exclamation_point = set_cadddr_racket_exclamation_point
-set_mcaddddr_racket_exclamation_point = set_caddddr_racket_exclamation_point
-set_mcadddddr_racket_exclamation_point = set_cadddddr_racket_exclamation_point
-set_mcaddddddr_racket_exclamation_point = set_caddddddr_racket_exclamation_point
-set_mcadddddddr_racket_exclamation_point = set_cadddddddr_racket_exclamation_point
-set_mcaddddddddr_racket_exclamation_point = set_caddddddddr_racket_exclamation_point
-set_mcadddddddddr_racket_exclamation_point = set_cadddddddddr_racket_exclamation_point
-set_mcaddddddddddr_racket_exclamation_point = set_caddddddddddr_racket_exclamation_point
-set_mcaar_racket_exclamation_point = set_caar_racket_exclamation_point
-set_mcaadr_racket_exclamation_point = set_caadr_racket_exclamation_point
-set_mcaaddr_racket_exclamation_point = set_caaddr_racket_exclamation_point
-set_mcaadddr_racket_exclamation_point = set_caadddr_racket_exclamation_point
-set_mcaaddddr_racket_exclamation_point = set_caaddddr_racket_exclamation_point
-set_mcaadddddr_racket_exclamation_point = set_caadddddr_racket_exclamation_point
-set_mcaaddddddr_racket_exclamation_point = set_caaddddddr_racket_exclamation_point
-set_mcaadddddddr_racket_exclamation_point = set_caadddddddr_racket_exclamation_point
-set_mcaaddddddddr_racket_exclamation_point = set_caaddddddddr_racket_exclamation_point
-set_mcaadddddddddr_racket_exclamation_point = set_caadddddddddr_racket_exclamation_point
-set_mcaaddddddddddr_racket_exclamation_point = set_caaddddddddddr_racket_exclamation_point
-###
 
 #interpreter:
-possibility = (result, str) -> list(list(result, str))
+possibility = (result, str) -> 
+    list(list(result, str))
 
 impossibility = () -> []
 
@@ -213,7 +184,9 @@ is_impossible = (xs) -> xs.length is 0
 
 shallow_flatten = (xss) -> xss.reduce(((ys, xs) -> ys.concat(xs)), [])
 
-given = (possibilities, f) -> array2nested_pairs(shallow_flatten(nested_pairs2array(possibilities).map(([result, str]) -> f(result, str))))
+#this defn of given assumes that cdr always returns a list.
+given = (possibilities, f) -> 
+    shallow_flatten(possibilities.map(([result, str]) -> f(result, str)))
 
 also = append
 

@@ -207,7 +207,8 @@
                                                                                        "-" "_racket_minus_symbol")
                                                                        "*" "_racket_mult_symbol")
                                                        "/" "_racket_division_symbol")
-                                       (cons "var" "_var_escaped_due_to_significance_in_js"))))
+                                       (cons "var" "_var_escaped_due_to_significance_in_js")
+                                       (cons "eval" "_eval_escaped_since_its_used_in_js"))))
                                      
 
 
@@ -291,9 +292,9 @@
                                  (join ", " (map translate named-args))
                                  ") { \n    var "
                                  (translate args-collector)
-                                 " = array2nested_pairs(Array.prototype.slice.call(arguments, " ; if I revert to Racket list -> JS Array, change this line to " = Array.prototype.slice.call(arguments, "
-                                 (number->string (length named-args))                           ; and change the line two down to have only one paren.
-                                 ")); \n    ")))
+                                 " = Array.prototype.slice.call(arguments, " ; if I revert to Racket cons -> JS [car, cdr], change this line to " = array2nested_pairs(Array.prototype.slice.call(arguments, "
+                                 (number->string (length named-args))        ; and change the line two down to have two parens.
+                                 "); \n    ")))
             (join "; \n    " (map translate body-exps))
             (if (empty? body-exps) "\n" ";\n")
             "    return ("
@@ -548,8 +549,18 @@
 (dt '(
       
 
-
 ;;;                Personal Library
+(define (is a)
+  (lambda (b)
+    (equal? a b)))
+
+(define (is-gt a)
+  (lambda (b)
+    (< a b)))
+
+(define (is-gte a)
+  (lambda (b)
+    (<= a b)))
 
 
 
@@ -572,19 +583,7 @@
                  (define (is-in-list xs)
                    (lambda (c)
                      (< 0 (count (lambda (e) (equal? e c)) xs))))
-                 
-                 (define (is a)
-                   (lambda (b)
-                     (equal? a b)))
-                 
-                 (define (is-gt a)
-                   (lambda (b)
-                     (< a b)))
-                 
-                 (define (is-gte a)
-                   (lambda (b)
-                     (<= a b)))
-                 
+                                  
                  (define (partial-flatten xs)
                    (if (empty? xs)
                        xs
@@ -608,7 +607,6 @@
                        'ok
                        (raise message)))
                  
-
                  (define (parens->spaces str)
                    (string-replace (string-replace str
                                                    ")"
@@ -839,7 +837,7 @@
                          (parse-dot str indent)
                          (parse-unknown str indent)
                          (parse-identifier str indent)
-                         (parse-matching-identifier str indent)
+                         (parse-parameter str indent)
                          (parse-list-literal str indent)
                          (parse-funject-literal str indent)
                          (parse-strict-assignment str indent)
@@ -1028,7 +1026,7 @@
                  
                  ;You may need these depending on how you define legal identifiers: "1" "2" "3" "4" "5" "6" "7" "8" "9"
                  (define numbers "1234567890")
-                 (define legal-variable-characters "-+=_0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
+                 (define legal-variable-characters "-+*/%_$<>0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
                  (define numbers-and-legal-variable-characters (string-append numbers legal-variable-characters))
                  
                  (define (parse-identifier str indent)
@@ -1045,14 +1043,14 @@
                           (lambda (name str)
                             (possibility (tokenize 'Identifier name) str))))
                  
-                 ;;;parse-matching-identifier
+                 ;;;parse-parameter
                  
-                 (define (parse-matching-identifier str indent)
+                 (define (parse-parameter str indent)
                    (given-seq (parse-characters "@" str no-indent)
                               (lambda (str)
                                 (given (parse-identifier str no-indent)
                                        (lambda (name str)
-                                         (possibility (tokenize 'Matching-identifier (string-append "@" (cadr name))) str))))))
+                                         (possibility (tokenize 'Parameter (string-append "@" (cadr name))) str))))))
                  
                  ;;;parse-funject-literal
                  
@@ -1076,7 +1074,7 @@
                                                          (lambda (str)
                                                            (parse-white str no-indent))
                                                          (lambda (str)
-                                                           (given (parse-lazy-expressions str indent)
+                                                           (given (parse-sequence str indent)
                                                                   (lambda (value str)
                                                                     (given (parse-all-like (lambda (c) (or (equal? c " ") 
                                                                                                            (equal? c "\n")))
@@ -1119,7 +1117,7 @@
                                                                                                           (lambda (str)
                                                                                                             (parse-white str no-indent))
                                                                                                           (lambda (str)
-                                                                                                            (given (parse-lazy-expressions str (lambda (ind) (< indentation ind)))
+                                                                                                            (given (parse-sequence str (lambda (ind) (< indentation ind)))
                                                                                                                    (lambda (value str)
                                                                                                                      (given-seq (parse-white str no-indent)
                                                                                                                                 (lambda (str)
@@ -1162,12 +1160,12 @@
                                               (possibility (tokenize 'List-literal elems) str))))))))
                  
                  
-                 ;;;parse-lazy-expressions
+                 ;;;parse-sequence
                  
-                 (define (parse-lazy-expressions str indent)
+                 (define (parse-sequence str indent)
                    (also (given (parse-exp str indent)
                                 (lambda (exp str)
-                                  (possibility (tokenize 'Lazy-expressions (list exp)) str)))
+                                  (possibility (tokenize 'Sequence (list exp)) str)))
                          (given-seq (parse-white str no-indent)
                                     (lambda (measure-str) 
                                       (parse-characters "\n" str no-indent))
@@ -1175,7 +1173,7 @@
                                       (given (parse-all-like (is " ") measure-str no-indent)
                                              (lambda (spaces measure-str)
                                                (define indentation (string-length spaces))
-                                               #|ensure indent indentation|# (if (indent indentation) '() (raise "parse-lazy-expressions: you must indent a series of statements farther than its enclosing syntactic block!"))
+                                               #|ensure indent indentation|# (if (indent indentation) '() (raise "parse-sequence: you must indent a series of statements farther than its enclosing syntactic block!"))
                                                (define (parse-white-newline-indent str indent)
                                                  (given-seq (parse-white str no-indent)
                                                             (lambda (str)
@@ -1191,7 +1189,7 @@
                                                                                     str 
                                                                                     (is-gte indentation))
                                                                    (lambda (exps str)
-                                                                     (possibility (tokenize 'Lazy-expressions exps) str)))))))))))
+                                                                     (possibility (tokenize 'Sequence exps) str)))))))))))
                  
                  ;;;parse-strict-assignment
                  
@@ -1219,7 +1217,7 @@
                                        (lambda (str) 
                                          (parse-white str no-indent))
                                        (lambda (str)
-                                         (given (parse-lazy-expressions str indent)
+                                         (given (parse-sequence str indent)
                                                 (lambda (right str)
                                                   (possibility (tokenize 'Lazy-assignment left right) str))))))))
                  
@@ -1249,7 +1247,7 @@
                                        (lambda (str)
                                          (parse-white str no-indent))
                                        (lambda (str)
-                                         (given (parse-lazy-expressions str indent)
+                                         (given (parse-sequence str indent)
                                                 (lambda (right str)
                                                   (possibility (tokenize 'Funject-lazy-assignment left right) str))))))))
                  
@@ -1279,7 +1277,7 @@
                                        (lambda (str) 
                                          (parse-white str no-indent))
                                        (lambda (str)
-                                         (given (parse-lazy-expressions str indent)
+                                         (given (parse-sequence str indent)
                                                 (lambda (right str)
                                                   (possibility (tokenize 'Reset-lazy-assignment left right) str))))))))
                  
@@ -1290,9 +1288,11 @@
                           (lambda (receiver str)
                             (parse-invocation-with receiver str indent))))
                  (define (parse-invocation-with receiver str indent)
-                   (also (given (parse-exp str indent)
-                                (lambda (args str)
-                                  (also-within-naked-compound (possibility (tokenize 'Invocation receiver args) str) str indent)))
+                   (also (given (parse-white str no-indent)
+                                (lambda (_ str)
+                                  (given (parse-exp str indent)
+                                         (lambda (args str)
+                                           (also-within-naked-compound (possibility (tokenize 'Invocation receiver args) str) str indent)))))
                          (given (parse-characters "." str no-indent)
                                 (lambda (_ str)
                                   (given (parse-identifier str no-indent)
@@ -1338,12 +1338,12 @@
                                        (lambda (str)
                                          (parse-white str no-indent))
                                        (lambda (str)
-                                         (parse-exp str indent)
-                                         (lambda (f-inverse str)
-                                           (possibility (tokenize 'Inverse-definition 
-                                                                  f 
-                                                                  f-inverse) 
-                                                        str)))))))
+                                         (given (parse-exp str indent)
+                                                (lambda (f-inverse str)
+                                                  (possibility (tokenize 'Inverse-definition 
+                                                                         f 
+                                                                         f-inverse) 
+                                                               str))))))))
                  
                  
                  (define (parse str)
@@ -1477,7 +1477,10 @@
   (if (empty? (mcdr xs))
       (mcar xs)
       (mlast (mcdr xs))))
-
+(define (mcopy xs)
+  (if (empty? xs)
+      '()
+      (mcons (mcar xs) (mcopy (mcdr xs)))))
 
 
 (define (partial f . args)
@@ -1501,11 +1504,18 @@
 ;;;;    Environment
 ;;;;    env-<specifier>
 
-(define env-pair mcons)
+(define create-env-pair mlist)
 
+(define env-pair-count mlength)
+
+(define env-pair-key-of mcar)
+
+(define env-pair-value-of mcadr)
 
 (define env-pairs mlist)
 
+(define (create-env-pair-strict name val)
+  (create-env-pair name (bind-as-though-sequence val)))
 
 (define empty-env 'empty-env)
 
@@ -1542,7 +1552,7 @@
     (cond 
       [(empty? ps)
        (env-has? name (env-parent-of env))]
-      [(equal? name (mcaar ps))
+      [(equal? name (env-pair-key-of (mcar ps)))
        true]
       [else (iter (mcdr ps))]))
   (if (env-empty? env)
@@ -1556,8 +1566,8 @@
         (if (env-empty? (env-parent-of env))
             (user-error-cannot-find-variable name)
             (env-get name (env-parent-of env)))
-        (if (equal? name (mcaar ps))
-            (mcdar ps)
+        (if (equal? name (env-pair-key-of (mcar ps)))
+            (env-pair-value-of (mcar ps))
             (iter (mcdr ps)))))
   (iter (mcadr env)))
 
@@ -1567,7 +1577,7 @@
     (cond 
       [(empty? ps)
        (set-mcadr! env
-                   (mcons (env-pair key value) 
+                   (mcons (create-env-pair key value) 
                           (mcadr env)))
         env]
       [(equal? key (mcaar ps))
@@ -1620,7 +1630,8 @@
       empty
       (mappend (env-pairs-of env) (env-all-pairs-of (env-parent-of env)))))
 
-
+(define (env-copy-youngest-scope env)
+  (env-extend (mcopy (env-pairs-of env)) (env-parent-of env)))
 
 
 ;;;;    Token types
@@ -1633,10 +1644,10 @@
 (define token-dot? (partial tagged-list? 'Token-dot))
 (define token-unknown? (partial tagged-list? 'Token-unknown ))
 (define token-identifier? (partial tagged-list? 'Token-identifier))
-(define token-matching-identifier? (partial tagged-list? 'Token-matching-identifier))
+(define token-parameter? (partial tagged-list? 'Token-parameter))
 (define token-funject-literal? (partial tagged-list? 'Token-funject-literal))
 (define token-list-literal? (partial tagged-list? 'Token-list-literal))
-(define token-lazy-expressions? (partial tagged-list? 'Token-lazy-expressions))
+(define token-sequence? (partial tagged-list? 'Token-sequence))
 (define token-strict-assignment? (partial tagged-list? 'Token-strict-assignment))
 (define token-lazy-assignment? (partial tagged-list? 'Token-lazy-assignment))
 (define token-funject-strict-assignment? (partial tagged-list? 'Token-funject-strict-assignment))
@@ -1655,10 +1666,10 @@
       (token-dot? exp)
       (token-unknown? exp)
       (token-identifier? exp)
-      (token-matching-identifier? exp)
+      (token-parameter? exp)
       (token-funject-literal? exp)
       (token-list-literal? exp)
-      (token-lazy-expressions? exp)
+      (token-sequence? exp)
       (token-strict-assignment? exp)
       (token-lazy-assignment? exp)
       (token-funject-strict-assignment? exp)
@@ -1699,8 +1710,8 @@
             (assert (= 2 (length args)) "I tried to create a List but was passed " args)
             (assert (mlist? (cadr args)) "I tried to create a List but was passed " args)]
            [(eq? 'Funject (car args))
-            (assert (= 4 (length args)) "I tried to create a Funject but was passed " args)
-            (assert (mlist? (cadr args)) "I tried to create a Funject but was passed " args)]
+            (assert (= 5 (length args)) "I tried to create a Funject but was passed " args)
+            (assert (mlist? (caddr args)) "I tried to create a Funject but was passed " args)]
            [else (display-all "Warning: I fail to recognize the type of " args "!\n")])
          (apply mlist args)))
 
@@ -1722,9 +1733,6 @@
 (define (lang-contents exp f)
   (assert (lang-any? exp) "I tried to take the lang-contents of a non-lang: " exp) ;to optimize, remove this line.
   (apply f (mlist->list (mcdr exp))))
-
-
-
          
          
 ;;;;    Evaluation
@@ -1757,10 +1765,10 @@
     ;dot
     ;unknown 
     ;identifier
-    ;matching-identifier
+    ;parameter
     ;funject-literal
     ;list-literal
-    ;lazy-expressions
+    ;sequence
     ;strict-assignment
     ;lazy-assignment
     ;funject-strict-assignment
@@ -1780,10 +1788,10 @@
     [(token-dot? tokens) (analyze-dot tokens)]
     [(token-unknown? tokens) (analyze-unknown  tokens)]
     [(token-identifier? tokens) (analyze-identifier tokens)]
-    [(token-matching-identifier? tokens) (analyze-matching-identifier tokens)]
+    [(token-parameter? tokens) (analyze-parameter tokens)]
     [(token-funject-literal? tokens) (analyze-funject-literal tokens)]
     [(token-list-literal? tokens) (analyze-list-literal tokens)]
-    [(token-lazy-expressions? tokens) (analyze-lazy-expressions tokens)]
+    [(token-sequence? tokens) (analyze-sequence tokens)]
     [(token-strict-assignment? tokens) (analyze-strict-assignment tokens)]
     [(token-lazy-assignment? tokens) (analyze-lazy-assignment tokens)]
     [(token-funject-strict-assignment? tokens) (analyze-funject-strict-assignment tokens)]
@@ -1832,14 +1840,14 @@
       (lookup-identifier name env))))
 
 
-(define analyze-matching-identifier analyze-identifier)
+(define analyze-parameter analyze-identifier)
 
 
 (define analyze-funject-literal ((lambda ()
                                    (define (analyze-pairs ps)
                                      (mmap (lambda (p)
                                              (set-mcadr! p 
-                                                         (analyze-lazy-expressions (mcadr p)))
+                                                         (analyze-sequence (mcadr p)))
                                              p)
                                            ps))
                                    (define (bind-pairs ps env)
@@ -1851,9 +1859,10 @@
                                        (lambda (env)
                                          (let ((bpairs (bind-pairs apairs env)))
                                            (create-lang 'Funject 
+                                                        (random 100000000)
                                                         bpairs
-                                                        lang-funject-god
-                                                        lang-funject-inverse-god)))))
+                                                        primitive-funject-god
+                                                        primitive-funject-inverse-god)))))
                                    analyze-funject-literal)))
 
 
@@ -1863,7 +1872,7 @@
       (create-lang 'List (eval-each aelems env)))))
 
 
-(define (analyze-lazy-expressions tokens) (mlist 'Analyzed-lazy-expressions (mmap analyze (mcadr tokens))))
+(define (analyze-sequence tokens) (mlist 'Analyzed-sequence (mmap analyze (mcadr tokens))))
 
 
 (define (analyze-strict-assignment tokens) 
@@ -1984,45 +1993,43 @@
 
 ;;;;    invoke
 
-(define (invoke receiver arg)
+(define (invoke receiver arg . maybe-own)
+  (define own (if (empty? maybe-own)
+                  receiver
+                  (car maybe-own)))
   (cond 
-    [(primitive? receiver) (invoke-primitive receiver arg)]
-    [(lang? 'Number receiver) (invoke-number receiver arg)]
-    [(lang? 'Funject receiver) (invoke-funject receiver arg)]
+    [(primitive? receiver) (invoke-primitive receiver arg own)]
+    [(lang? 'Number receiver) (invoke-number receiver arg own)]
+    [(lang? 'Funject receiver) (invoke-funject receiver arg own)]
     [else (error "invoke: I know not how to invoke " receiver "!")]))
 
-(define (invoke-primitive receiver arg)
+(define (invoke-primitive receiver arg own)
   (primitive-contents receiver
                       (lambda (funject _)
-                        (funject arg))))
+                        (funject arg own))))
 
-(define (invoke-number receiver arg)
-  (unless (lang? 'List arg)
-          (user-error-no-matching-pattern receiver arg)
+(define (invoke-number receiver arg own)
+  (unless (lang? 'String arg)
+          (invoke primitive-funject-god arg own)
           (lang-contents arg
-                         (lambda (elems)
-                           (unless (and (lang? 'Dot (mcar elems))
-                                        (lang? 'String (mcadr elems)))
-                                   (user-error-no-matching-pattern receiver arg)
-                                   (lang-contents (mcadr elems)
-                                                  (lambda (str)
-                                                    (cond 
-                                                      [(equal? str "plus") (create-primitive-number-plus (mcadr receiver))]
-                                                      [(equal? str "minus") (create-primitive-number-minus (mcadr receiver))]
-                                                      [(equal? str "times") (create-primitive-number-times (mcadr receiver))]
-                                                      [(equal? str "div") (create-primitive-number-div (mcadr receiver))]
-                                                      [else (user-error-no-matching-pattern receiver arg)]))))))))
-                                          
+                         (lambda (str)
+                           (cond 
+                             [(equal? str "+") (create-primitive-number-plus (mcadr receiver))]
+                             [(equal? str "-") (create-primitive-number-minus (mcadr receiver))]
+                             [(equal? str "*") (create-primitive-number-times (mcadr receiver))]
+                             [(equal? str "/") (create-primitive-number-div (mcadr receiver))]
+                             [else (invoke primitive-funject-god arg own)])))))
+
                  
 
-(define (invoke-funject receiver arg)
+(define (invoke-funject receiver arg own)
   (let ((apairs (funject-pairs-of receiver))
         (parent (funject-parent-of receiver))
         (inverse (funject-inverse-of receiver)))
     (define (iter apairs)
       (if (empty? apairs)
           (if parent
-              (invoke parent arg)
+              (invoke parent arg receiver)
               (user-error-no-matching-pattern receiver arg))
           (let* ((pair (mcar apairs))
                  (pattern (mcar pair))
@@ -2030,48 +2037,78 @@
                  (env (mcaddr pair))
                  (bindings (choice-bindings-from-matching pattern arg env)))
             (if bindings
-                (if (lang? 'Analyzed-lazy-expressions consequent)
-                    (force-lazy-expressions (bind-lazy-expressions consequent 
-                                                                   (env-extend (env-pairs (env-pair "own" (bind-as-though-lazy-expressions receiver)))
-                                                                               bindings)))
+                (if (lang? 'Analyzed-sequence consequent)
+                    (force-sequence (bind-sequence consequent 
+                                                   (env-extend (env-pairs (create-env-pair "own" 
+                                                                                           (bind-as-though-sequence own)))
+                                                               bindings)))
                     consequent)
                 (iter (mcdr apairs))))))
     (iter apairs)))
 
 
 
+;(set-)list-<prop>(-of)
+(define (list-id-of l)
+  (unless (lang? 'List l) ;to optimize, remove this condition.
+          (error "I cannot find the id of a non-list: " l "!")
+          (mcadr l)))
+
+(define (set-list-id! l val)
+  (unless (lang? 'List l) ;to optimize, remove this condition.
+          (error "I cannot set the id of a non-list: " l "!")
+          (set-mcadr! l val)))
+
+(define (list-elems-of l)
+  (unless (lang? 'List l) ;to optimize, remove this condition.
+          (error "I cannot find the elements of a non-list: " l "!")
+          (mcaddr l)))
+
+(define (set-list-elems! l val)
+  (unless (lang? 'List l) ;to optimize, remove this condition.
+          (error "I !cannot set the elements of a non-list: " l "!")
+          (set-mcaddr! l val)))
 
 ;(set-)funject-<prop>(-of)
-
-(define (funject-pairs-of funject)
-  (unless (lang? 'Funject funject)
+(define (funject-id-of funject)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
           (error "I cannot find the pairs of a non-funject: " funject "!")
           (mcadr funject)))
 
-(define (set-funject-pairs! funject pairs)
-  (unless (lang? 'Funject funject)
+(define (set-funject-id! funject id)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
           (error "I cannot set the pairs of a non-funject: " funject "!")
-          (set-mcadr! funject pairs)))
+          (set-mcadr! funject id)))
 
-(define (push-funject-pair! funject p)
-  (unless (lang? 'Funject funject)
-          (user-error-cannot-push-pair-to-non-funject)
-          (set-mcadr! funject (mcons p (mcadr funject)))))
-
-(define (funject-parent-of funject)
-  (unless (lang? 'Funject funject)
-          (error "I cannot find the parent of a non-funject: " funject "!")
+(define (funject-pairs-of funject)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
+          (error "I cannot find the pairs of a non-funject: " funject "!")
           (mcaddr funject)))
 
+(define (set-funject-pairs! funject pairs)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
+          (error "I cannot set the pairs of a non-funject: " funject "!")
+          (set-mcaddr! funject pairs)))
+
+(define (push-funject-pair! funject p)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
+          (user-error-cannot-push-pair-to-non-funject)
+          (set-mcaddr! funject (mcons p (mcaddr funject)))))
+
+(define (funject-parent-of funject)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
+          (error "I cannot find the parent of a non-funject: " funject "!")
+          (mcadddr funject)))
+
 (define (set-funject-parent! funject parent)
-  (unless (lang? 'Funject funject)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
           (user-error-cannot-set-parent-of-non-funject)
-          (set-mcaddr! funject parent)))
+          (set-mcadddr! funject parent)))
 
 (define (funject-inverse-of funject)
   (cond 
     [(lang? 'Funject funject)
-     (mcadddr funject)]
+     (mcaddddr funject)]
     [(primitive? funject)
      (primitive-contents funject
                          (lambda (itself inverse)
@@ -2082,7 +2119,7 @@
 (define (set-funject-inverse! funject inverse)
   (unless (lang? 'Funject funject)
           (user-error-set-inverse-of-non-funject)
-          (set-mcadddr! funject inverse)))
+          (set-mcaddddr! funject inverse)))
 
 (define create-funject-pair mlist)
 
@@ -2096,20 +2133,20 @@
   ((env-get name env))) ;note the extra parenthases
 
 (define (assign-strict-identifier! name right env)
-  (env-set! name (bind-as-though-lazy-expressions right) env))
+  (env-set! name (bind-as-though-sequence right) env))
 
 (define (assign-lazy-identifier! name right env)
-  (env-set! name (bind-lazy-expressions right env) env))
+  (env-set! name (bind-sequence right env) env))
 
 (define (reset-strict-identifier! name right env)
-  (env-reset! name (bind-as-though-lazy-expressions right) (env-parent-of env)))
+  (env-reset! name (bind-as-though-sequence right) (env-parent-of env)))
 
 (define (reset-lazy-identifier! name right env) 
-  (env-reset! name (bind-lazy-expressions right env) (env-parent-of env)))
+  (env-reset! name (bind-sequence right env) (env-parent-of env)))
 
-;bind-{lazy-expressions/funject-pair}
-;force-lazy-expressions
-(define (bind-lazy-expressions exp env)
+;bind-{sequence/funject-pair}
+;force-sequence
+(define (bind-sequence exp env)
   (let ((statements (mcadr exp)))
     (lambda () 
       (mlast (eval-each statements env)))))
@@ -2119,9 +2156,9 @@
                   (lambda (pattern consequent)
                     (create-funject-bound-pair pattern consequent env))))
 
-(define (force-lazy-expressions stmts) (stmts))
+(define (force-sequence stmts) (stmts))
 
-(define (bind-as-though-lazy-expressions exp) 
+(define (bind-as-though-sequence exp) 
   (lambda () exp))
 
 
@@ -2134,6 +2171,9 @@
 (define choice-bindings-from-matching 
   ((lambda () 
      
+     
+     
+     
      ;;;;    Possibility procedures
      
      (define possibility list)
@@ -2145,13 +2185,61 @@
        (flatten (map iterator possibilities)))
      (define also append)
      (define lang-list->possibilities (compose mlist->list mcadr))
-      
      
      
      
-     ;;;;    Bindings-from-matching itself
      
-     (define (bindings-from-matching pattern arg bindings env)
+     ;;;;    Find unknown parameters
+     
+     (define find-unknown-parameters
+       ((lambda ()
+          (define (find-unknown-parameters pattern bindings env found)
+            (cond [(token-parameter? pattern)
+                   (if (or (env-has? (mcadr pattern) bindings)
+                           (mmember (mcadr pattern) found))
+                       found
+                       (mcons (mcadr pattern) found))]
+                  [(token-invocation? pattern)
+                   (find-unknown-parameters (mcadr pattern)  ;I search the mcadr (receiver) only for the day when the programmer can include parameters there.
+                                            bindings
+                                            env
+                                            (find-unknown-parameters (mcaddr pattern)
+                                                                     bindings
+                                                                     env
+                                                                     found))]
+                  [(token-list-literal? pattern)
+                   (mfoldl (lambda (e found)
+                            (find-unknown-parameters e bindings env found))
+                           found
+                           (mcadr pattern))]
+                  [(or (token-number? pattern)
+                       (token-string? pattern)
+                       (token-boolean? pattern)
+                       (token-nil? pattern)
+                       (token-dot? pattern)
+                       (token-unknown? pattern)
+                       (not (token-any? pattern))
+                       (token-identifier? pattern))
+                   found]
+                  [(or (token-strict-assignment? pattern)
+                       (token-lazy-assignment? pattern)
+                       (token-funject-strict-assignment? pattern)
+                       (token-funject-lazy-assignment? pattern)
+                       (token-inverse-definition? pattern)
+                       (token-funject-inheritance? pattern)
+                       (token-funject-literal? pattern))
+                   (user-error-funject-pattern-cannot-contain pattern)]
+                  [else (error "find-unknown-parameters: I fail to account for the type of " pattern "!")]))
+          
+          (lambda (pattern bindings env)
+            (find-unknown-parameters pattern bindings env '())))))
+     
+     
+     
+     
+     ;;;;    Bindings-from-matching-once: a mega proc
+     
+     (define (bindings-from-matching-once pattern arg bindings env)
        (cond 
          [(or (token-number? pattern)
               (token-string? pattern)
@@ -2174,8 +2262,8 @@
           (user-error-funject-pattern-cannot-contain pattern)]
          [(token-list-literal? pattern)
           (bindings-from-matching-list-literal pattern arg bindings env)]
-         [(token-matching-identifier? pattern)
-          (bindings-from-matching-matching-identifier pattern arg bindings env)]
+         [(token-parameter? pattern)
+          (bindings-from-matching-parameter pattern arg bindings env)]
          [(token-identifier? pattern)
           (bindings-from-matching-identifier pattern arg bindings env)]
          [(token-invocation? pattern)
@@ -2196,10 +2284,10 @@
                 (if (empty? arg-elems)
                     (possibility bindings)
                     (impossibility))
-                (given (bindings-from-matching (mcar elems)
-                                               (mcar arg-elems)
-                                               bindings
-                                               env)
+                (given (bindings-from-matching-once (mcar elems)
+                                                    (mcar arg-elems)
+                                                    bindings
+                                                    env)
                        (lambda (bindings)
                          (iter (mcdr elems)
                                (mcdr arg-elems)
@@ -2216,18 +2304,18 @@
           bindings-from-matching-list-literal)))
      
      
-     (define (bindings-from-matching-matching-identifier pattern arg bindings env)
+     (define (bindings-from-matching-parameter pattern arg bindings env)
        (token-contents pattern
                        (lambda (name)
                          (cond 
                            [(not (env-has? name bindings)) 
-                            (let ((new-bindings (env-extend (env-pairs) bindings)))
+                            (let ((new-bindings (env-copy-youngest-scope bindings)))
                               (assign-strict-identifier! name arg new-bindings)
                               (possibility new-bindings))]
-                           [(lang-equal? arg (env-get name bindings))
+                           [(lang-equal? arg (lookup-identifier name bindings))
                             (possibility bindings)]
                            [else (impossibility)]))))
-                           
+     
      
      (define (bindings-from-matching-identifier pattern arg bindings env)
        (if (lang-equal? (eval (analyze pattern) env) 
@@ -2237,28 +2325,29 @@
      
      
      (define (bindings-from-matching-invocation pattern arg bindings env)
-       (token-contents pattern
-                       (lambda (receiver pattern-arg)
-                         (let* ((ereceiver (eval (analyze receiver) env))
-                                (unknowns-epattern-arg (eval-pattern-arg pattern-arg bindings env))
-                                (unknowns (car unknowns-epattern-arg))
-                                (epattern-arg (cadr unknowns-epattern-arg))
-                                (inverse (invoke (funject-inverse-of ereceiver) (create-lang 'List (mlist arg epattern-arg))))
-                                ;(e (error "" inverse))
-                                (possibilities (lang-list->possibilities inverse))
-                                (to-match (if (= 1 (mlength unknowns))
-                                              (mcar unknowns)
-                                              (user-error-multiple-unknowns-in-pattern-arg))))
-                           (given possibilities
-                                  (lambda (value)
-                                    (let ((new-bindings (env-extend (env-pairs) bindings)))
-                                      (assign-strict-identifier! to-match value new-bindings)
-                                      new-bindings)))))))
-
+       (if (< 1 (mlength (find-unknown-parameters pattern bindings env)))
+           (possibility bindings)
+           (token-contents pattern
+                           (lambda (receiver pattern-arg)
+                             (let* ((ereceiver (eval (analyze receiver) env))
+                                    (unknowns-epattern-arg (eval-pattern-arg pattern-arg bindings env))
+                                    (unknowns (car unknowns-epattern-arg))
+                                    (epattern-arg (cadr unknowns-epattern-arg))
+                                    (inverse (invoke (funject-inverse-of ereceiver) (create-lang 'List (mlist arg epattern-arg))))
+                                    (possibilities (lang-list->possibilities inverse)))
+                               (if (not (= 1 (length unknowns)))
+                                   (possibility bindings)
+                                   (let ((to-match (car unknowns)))
+                                     (given possibilities
+                                            (lambda (value)
+                                              (let ((new-bindings (env-copy-youngest-scope bindings)))
+                                                (assign-strict-identifier! to-match value new-bindings)
+                                                new-bindings))))))))))
      
      
      
-     ;;;;    Eval-pattern-arg
+     
+     ;;;;    Eval-pattern-arg :: tokens -> env -> env -> (list (list) lang)
      
      (define eval-pattern-arg
        ((lambda ()
@@ -2270,15 +2359,15 @@
               [(token-nil? pattern-arg) (list empty (create-lang 'Nil))]
               [(token-dot? pattern-arg) (list empty (create-lang 'Dot))]
               [(token-unknown? pattern-arg) (list empty (create-lang 'Unknown))]
-              [(token-matching-identifier? pattern-arg) 
+              [(token-parameter? pattern-arg) 
                (if (env-has? (mcadr pattern-arg) bindings)
-                   (list empty (env-get (mcadr pattern-arg) bindings))
-                   (list (mcadr pattern-arg) lang-unknown))]
+                   (list empty (lookup-identifier (mcadr pattern-arg) bindings))
+                   (list (list (mcadr pattern-arg)) lang-unknown))]
               [(token-identifier? pattern-arg)
-               (list empty (env-get (mcadr pattern-arg) env))]
+               (list empty (lookup-identifier (mcadr pattern-arg) env))]
               [(token-list-literal? pattern-arg) 
                (eval-pattern-arg-list-literal pattern-arg bindings env)]            
-              [else (error "analyze: I fail to recognize the token " (deep-stream->list pattern-arg))]))
+              [else (error "eval-pattern-arg: I fail to recognize the token " (deep-stream->list pattern-arg))]))
           
           (define (eval-pattern-arg-list-literal pattern-arg bindings env)
             (define (iter elems)
@@ -2290,7 +2379,7 @@
                          (rest-unknowns--rest-evaled (iter (mcdr elems)))
                          (rest-unknowns (car rest-unknowns--rest-evaled))
                          (rest-evaled (cadr rest-unknowns--rest-evaled)))
-                    (list (mcons first-unknowns rest-unknowns) 
+                    (list (append first-unknowns rest-unknowns) 
                           (mcons first-evaled rest-evaled)))))
             (let* ((unknowns--elems-evaled (iter (mcadr pattern-arg)))
                    (unknowns (car unknowns--elems-evaled))
@@ -2301,8 +2390,33 @@
      
      
      
+     ;;;;    Bindings-from-matching
+     
+     (define (bindings-from-matching pattern arg bindings env)
+       (define n (mlength (find-unknown-parameters pattern bindings env)))
+       (define (iter last-found bindings)
+         (given (bindings-from-matching-once pattern arg bindings env)
+                (lambda (bindings)
+                  (let ((now-found (env-pair-count (env-pairs-of bindings))))
+                    (cond
+                      [(= n now-found)
+                       (possibility bindings)]
+                      [(= last-found now-found)
+                       (impossibility)]
+                      [else
+                       (iter now-found bindings)])))))
+       (iter 0 bindings))
+     
+     
+     
+     
+     ;;;; Choice-bindings-from-matching
+     
      (define (choice-bindings-from-matching pattern arg env)
-       (let ((possibilities (bindings-from-matching pattern arg (env-create (env-pairs)) env)))
+       (let ((possibilities (bindings-from-matching pattern 
+                                                    arg 
+                                                    (env-create (env-pairs))
+                                                    env)))
          (if (impossible? possibilities)
              false
              (env-extend (env-all-pairs-of (possibility-first possibilities)) env))))
@@ -2311,7 +2425,15 @@
 
 
 
+
+
 ;;;;    Primitives
+
+;Primitive funjects rely on these:
+(define lang-nil (create-lang 'Nil))
+(define lang-dot (create-lang 'Dot))
+(define lang-unknown (create-lang 'Unknown))
+(define lang-equal? equal?)
 
 (define (create-primitive funject inverse)
   (mlist 'Primitive funject inverse))
@@ -2325,80 +2447,81 @@
   (assert (primitive? prim)) ;to optimize, remove this line.
   (apply f (mlist->list (mcdr prim))))
 
-(define (create-primitive-infix-operation type1 type2 result-type op op-inv)
-  (lambda (left)
-    (create-primitive (lambda (other)
-                        (unless (lang? 'List other)
-                          (invoke primitive-funject-god other)
-                          (lang-contents other
-                                         (lambda (elems)
-                                           (unless (and (= 1 (mlength elems))
-                                                        (lang? type2 (mcar elems)))
-                                             (invoke primitive-funject-god other)
-                                             (lang-contents (mcar elems)
-                                                            (lambda (right) 
-                                                              (create-lang result-type (op left 
-                                                                                           right)))))))))
-                      (lambda (result--arg)
-                        (unless (lang? 'List result--arg) (invoke primitive-funject-inverse-god result--arg)
-                          (lang-contents result--arg
-                                         (lambda (elems)
-                                           (mlist-contents elems
-                                                           (lambda (result arg)
-                                                             (unless (and (lang? 'List result)
-                                                                          (= 1 (mlength (mcadr result)))
-                                                                          (lang? result-type (mcaadr result))
-                                                                          (number? (mcadaadr result))
-                                                                          (lang? 'List arg)
-                                                                          (= 1 (mlength (mcadr arg)))
-                                                                          (lang? 'Unknown (mcaadr arg)))
-                                                               (invoke primitive-funject-inverse-god result--arg)
-                                                               (create-lang 'List (mlist (create-lang type2 (op-inv (mcadaadr result) left))))))))))))))
+(define (create-primitive-infix-operator right-type? result-type? op op-inv)
+  (define self (lambda (left)
+                 (create-primitive (lambda (other own)
+                                     (unless (right-type? other)
+                                       (invoke primitive-funject-god other)
+                                       (op left 
+                                           other)))
+                                   (lambda (result--arg own)
+                                     (lang-contents result--arg
+                                                    (lambda (elems)
+                                                      (mlist-contents elems
+                                                                      (lambda (result arg)
+                                                                        (unless (and (result-type? result)
+                                                                                     (lang? 'Unknown arg))
+                                                                          (invoke primitive-funject-inverse-god result--arg self)
+                                                                          (op-inv result left))))))))))
+  self)
 
-(define create-primitive-number-plus (create-primitive-infix-operation 'Number 'Number 'Number + -))
+(define (create-primitive-unoverloaded-infix-operator right-type result-type op op-inv)
+  (create-primitive-infix-operator (partial lang? right-type)
+                                   (partial lang? result-type)
+                                   (lambda (left right)
+                                     (lang-contents right
+                                                    (lambda (right-contents)
+                                                      (create-lang result-type (op left right-contents)))))
+                                   (lambda (result left)
+                                     (lang-contents result
+                                                    (lambda (result-contents)
+                                                      (create-lang 'List (mlist (create-lang right-type (op-inv result-contents left)))))))))
 
-(define create-primitive-number-minus (create-primitive-infix-operation 'Number 'Number 'Number - +))
+(define create-primitive-funject-is (create-primitive-infix-operator lang-any? ;to optimize, change this to sycophant
+                                                                     lang-any? ;to optimize, change this to sycophant
+                                                                     (lambda (a b)
+                                                                       (create-lang 'Boolean (lang-equal? a b)))
+                                                                     (lambda (result left)
+                                                                       (if (equal? result (mlist 'Boolean true))
+                                                                           (create-lang 'List left)
+                                                                           (user-error-no-matching-pattern (list "is of " left) (create-lang 'List result (create-lang 'Unknown)))))))
 
-(define create-primitive-number-times (create-primitive-infix-operation 'Number 'Number 'Number * /))
+(define create-primitive-number-plus (create-primitive-unoverloaded-infix-operator 'Number 'Number + -))
 
-(define create-primitive-number-div (create-primitive-infix-operation 'Number 'Number 'Number / *))
+(define create-primitive-number-minus (create-primitive-unoverloaded-infix-operator 'Number 'Number - +))
 
-                    
+(define create-primitive-number-times (create-primitive-unoverloaded-infix-operator 'Number 'Number * /))
+
+(define create-primitive-number-div (create-primitive-unoverloaded-infix-operator 'Number 'Number / *))
+
+
 
 
 (define primitive-funject-god
-  (create-primitive (lambda (arg)
-                      (user-error-no-matching-pattern "The primitive funject god" arg))
-                    (lambda (arg)
+  (create-primitive (lambda (arg own)
+                      (cond 
+                        [(lang? 'String arg)
+                         (lang-contents arg
+                                        (lambda (str)
+                                          (cond 
+                                            [(equal? str "is") (create-primitive-funject-is own)]
+                                            [else (user-error-no-matching-pattern own arg)])))]
+                        [else (user-error-no-matching-pattern "The primitive funject god inversted" arg)]))
+                    (lambda (arg own)
                       (user-error-no-matching-pattern "The primitive funject god inversted" arg))))
 
 
-(define primitive-funject-inverse-god
-  (create-primitive (lambda (arg)
-                      (user-error-no-matching-pattern "The primitive funject inverse god" arg))
-                    (lambda (arg)
-                      (user-error-no-matching-pattern "The primitive funject inverse god himself inversted" arg))))
+(define primitive-funject-inverse-god (create-primitive (mcaddr primitive-funject-god) (mcadr primitive-funject-god)))
 
 
-(define lang-funject-god (create-primitive (lambda (arg)
-                                             (error "The funject god is called upon to serve " arg ", but he serves only the enlightened."))
-                                           (lambda (arg)
-                                             (error "The funject god was called upon in esrver to serve " arg ", yet he has no inverse!"))))
 
-(define lang-funject-inverse-god (create-primitive (lambda (arg)
-                                                     (error ("The funject inverse god was called upon to serve " arg ", but the inverse god serves no one!")))
-                                                   (lambda (arg)
-                                                     (error ("The funject was himself called in reverse to serve " arg ". He is amused.")))))
-                                                     
-
-
-(define lang-nil (create-lang 'Nil))
-(define lang-dot (create-lang 'Dot))
-(define lang-unknown (create-lang 'Unknown))
-(define lang-equal? equal?)
-
-(define global-env (env-create (env-pairs (env-pair "Yin" lang-funject-god)
-                                          (env-pair "Yang" lang-funject-inverse-god))))
+(define global-env (env-create (env-pairs (create-env-pair "Yin" primitive-funject-god)
+                                          (create-env-pair "Yang" primitive-funject-inverse-god)
+                                          (create-env-pair-strict "+" (create-lang 'String "+"))
+                                          (create-env-pair-strict "-" (create-lang 'String "-"))
+                                          (create-env-pair-strict "*" (create-lang 'String "*"))
+                                          (create-env-pair-strict "/" (create-lang 'String "/"))
+                                          (create-env-pair-strict "is" (create-lang 'String "is")))))
 
 
 
@@ -2427,7 +2550,11 @@
 
 
 
- 
+(define p1 (compose car stream-first parse))
+(define (interpret str)
+  (mmap (lambda (exp)
+         (eval exp global-env))
+       (mmap analyze (deep-list->mlist (p1 str)))))
 
 
 
@@ -2457,10 +2584,6 @@
 
 
 
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Testing
 
 
 ))

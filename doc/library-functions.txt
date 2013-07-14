@@ -1,0 +1,298 @@
+The programmer can always access any builtin method from the class/prototype/space/schema of the receiver, in a manner similar to this:
+
+[0].map[f]
+array.map[[0], [f]] or 
+array.map[[0], f] or
+array:.map[[0], f] or
+array>.map[[0], [f]] or
+array::map[[0], [f]]
+
+This is important for inverses:
+
+array>.reflect[@x] or
+array>.self[@x] requires @x to be an array.
+number>.abs[@x]    matches against a positive number. 
+
+
+
+
+
+
+Free Funjects
+================================================================================================================================================================================================================================================================
+by[.sym] is {[f]: f.sym} #this allows array.sort[by[.height]]
+
+
+
+
+
+
+Funject Methods -- need to gather
+================================================================================================================================================================================================================================================================
+is the-other #is literally equal to the-other; when the user modifies one, the-other should change.
+(eq or ==) the-other #a test for deep equality. Funjects should return true even if they have different environments, as long as the variables they reference are deeply equal.
+apply[args] is receiver(args)
+then[f] is f(funject) #ex: arr.lots-of-long-methods.then[{[arr]: arr[arr.length - 1]}]
+has[k]
+clone #equivalent to ({} << receiver)
+
+append[k, v] # sets k equal to v at the bottom of the funject
+insert[i, k, v] # sets k equal to v before the ith pair.
+
+If we allow users to compare funjects for equivalence (not equality):
+keys # throws an error if any of the keys have parameters
+has-pair[f] # takes a funject and returns true if the receiver has all the pairs in f.
+
+
+
+
+
+
+Number Methods -- need to gather
+================================================================================================================================================================================================================================================================
+sources: Ruby
+number?
+integer?
+float?
+math.e
+math.pi
+math.random #if the user supplies no arguments, this returns a random number on the range [0, 1). If the programmer supplies a number, it returns an integer between 0 and n - 1. If the programmer supplies two numbers, it returns an integer between that number and the other minus 1. If the ranges ever don't make sense, it signals an error.
++
+-
+*
+/
+%
+^ (power operator)
+sqrt
+root[n] #a.root[2] is a.sqrt
+ln
+log[b] #takes that number to the log base b. If the user supplies no number it either assumes e or complains.
+sin
+cos
+tan
+sec
+csc
+cot
+asin
+acos
+atan
+atan/[n] #a.tan/[b] is math::atan[a / b]; this allows us to note that a.atan/[0] is 1 without using Infinity.
+asec
+acsc
+acot
+sinh
+cosh
+tanh
+coth
+sech
+csch
+asinh
+acosh
+atanh
+acoth
+asech
+acsch
+abs     #should also be a prefix method
+ceil    #if the user supplies a number argument, it increases to the nearest number divisible by n.
+floor or truncate   #if the user supplies a number argument, it increases to the nearest number divisible by n.
+round   #if the user supplies a number argument, it increases to the nearest number divisible by n.
+upto    #if we use ranges, this produces a range; otherwise, it produces an array.
+downto  #if we use ranges, this produces a range; otherwise, it produces an array.
+to-string
+to-fixed[n]
+to-pennies
+times[f] #invokes f n times with 1..n or 0..(n - 1) passed to it.
+
+
+
+
+
+Boolean Methods -- need to gather
+================================================================================================================================================================================================================================================================
+boolean?
+and
+or
+xor
+(maybe not)
+
+
+
+
+
+
+String Methods -- Strings are immutable.
+================================================================================================================================================================================================================================================================
+sources: JS, Python, Ruby (checked but found none in Haskell, underscore)
+string.repeat(n, thing) # returns a string of n things concatentated to one another.
+
+string?
+[<number>] # returns a single-length string; negative indices count from the end.
+[<range>] # just like Python or just like CoffeeScript; make ranges an alternative syntax for arrays.
+(assuredly or definately: return a funject that can reference the receiver just as the receiver can but throw an error if an index is out of range
+ --or--
+ quietly or silently: the opposite of assuredly)
+length or size
+
+contains?
+begins-with?
+ends-with?
+index-of
+last-index-of
+count[str or funject] #Python: count the number of occurances of str or strings for which funject returns true. Signals an error if the funject returns neither true nor false.
+
+uppercase? #Python
+lowercase? #Python
+capitalized? #Python
+alpha? #Python
+num? #Python
+alnum? #Python
+every[str or f] #like arr.every, but matches a strings, too.
+partition[str or f] #Python: return an array of three elements: the part before the separator, the separator itself, and the part after it.
+(scan or matches)[str or f] #Ruby: returns a list of strings that match str or f.
+
++ or concat #string concatentation
+insert #str.insert[i, other] is str[0...i] + other + str[i..]
+
+split #JS
+sub or substitute or replace or translate or substitute-all or replace-all or translate-all([to-find, replacement] or [f]) #when we introduce regexes, this will probably take them. replace occurances of to-find with replacement. Do not search for to-find in any "replacement"s.
+sub or substitute or replace or translate or sub-one or substitute-one or replace-one or translate-one #same as the one above it, but replaces only one.
+
+each[f] #f takes a single string for each character in the receiver.
+
+quote #JS
+uppercase
+lowercase
+swapcase #Ruby
+capitalize
+escape-for-html #underscore: "Escapes a string for insertion into HTML, replacing &, <, >, ", ', and / characters."
+unescape-from-html #underscore: "The opposite of escape, replaces &amp;, &lt;, &gt;, &quot;, &#x27;, and &#x2F; with their unescaped counterparts."
+trim #JS; if the user passes a string, remove all characters contained in the string from the beginning and end of the string. If the user passes a funject, remove all characters from the beginning and end that satisfy the funject. Signal an error if the funject returns neither true nor false.
+trim-left #JS
+trim-right #JS
+lines #str.lines is str.split['\n']
+words #str.words is str.split[/[^a-zA-Z0-9]/] (once we add regexes)
+strip-prefix(str, f=error) #Haskell: if str is at the beginning of the receiver, return the rest of the receiver. Otherwise, apply the receiver to f.
+center[width or str] #Ruby
+number-from-english
+plural
+squeeze #Ruby: replaces runs of the same character with just that character.
+
+
+
+
+
+
+(maybe) Range Methods
+================================================================================================================================================================================================================================================================
+If we add ranges, consider letting them be added with +. This would allow arr[(0..2) + (-3..-1)] => [1, 2, 3, 98, 99, 100].
+Consider using either (start..end) syntax or Python's syntax.
+Can we use (start..end) syntax while also specifying a step? 
+
+
+
+
+
+
+Array Methods
+================================================================================================================================================================================================================================================================
+sources: JavaScript, underscorejs, Python, Ruby, Haskell
+
+array.repeat(n, thing) #create an array of n things
+array.repeatedly-call(n, f) #create an array of the n results of calling f (use this to create an array of mutable but separate objects).
+(maybe) array.unfold-right[f, start] #Haskell; takes a starting value and a funject that takes a parameter and either returns nil or a list of two values. Puts all of the [0]'s of the returned lists in an array, passes the functions the values of the [1]'s of the array, and stops when the function returns nil.
+(maybe) array.unfold-left[f, start] #array.unfold-left(f, start) is array.unfold-right(f, start).reverse
+
+array?
+[<number>]: array reference; negative indices count from the end.
+[<range>]: just like Python or just like CoffeeScript; make ranges an alternative syntax for arrays.
+(assuredly or definately: return a funject that will perform the same operations on the array but throw an error if the index is out of range
+ --or--
+ quietly or silently: the opposite of assuredly)
++ #concat from JS
+(maybe) length: 1 + the highest index of any element
+length or count or size: #Ruby; if the programmer supplies a funject, returns the number of objects that satisfy the condition.
+count or size: the number of elements the programmer explicity set.
+empty?: Scheme, Ruby
+includes? or include?: Ruby
+pop #JS, but returns a copy
+pop! #JS
+push #JS, but returns a copy of the receiver
+push! #JS
+insert(i, elem) #returns a copy of elem inserted at i
+insert(i, elem)! #inserts elem at i
+delete[x, n=1]! #deletes the first n instances of an funject.
+delete_at! #Ruby
+reverse #JS, but returns a copy
+reverse! #JS
+shift #JS, but returns a copy of the receiver
+shift! #JS
+unshift #alias for [0]
+unshift! #JS
+join #JS
+sort #JS, but returns a copy; takes a funject that returns numbers. An element with a number higher than another should appear after it.
+sort! #JS
+each #Ruby, but copies the array before iterating; returns nil
+each-index #Ruby, but copies the array before iterating; returns nil
+map(f, [index or range]) #copies the array before iterating; if the programmer supplies an index or range, maps over only the selected elements.
+map!(f, [index or range]) #replaces the elements of the array with the results
+invoke #underscore
+pluck #underscore 
+every or all #copies the array before iterating
+some or any #copies the array before iterating
+filter #copies the array before iterating; complains if the funject returns neither true nor false.
+filter! #replaces contents of the array with the filtered elements
+reject #array.reject[cond] is array.filter[{[x]: not cond[x]}]
+reject! #modifies the array
+reduce #JS
+reduce-right #JS
+scan #Haskell; like reduce, but accumulates each intermediate value.
+scan-right #Haskell; scans from the right
+first #takes a funject and returns the first element returning true. As an optional second argument, takes a number, n, and returns the nth element for which it is true (negative from the end), or takes a range (a..b), and returns the a through b elements for which it is true.
+last #arr.last is arr.reverse.first
+take or take-while or while #Takes a funject and returns all elements until the funject returns false. Complains if the funject returns neither true nor false.
+drop or drop-while or once or take-once #Same as take, but only starts taking elements once the funject returns true.
+index-of #like first, but takes an object to search for and returns the index. Returns an array if the user supplies a range as the second argument.
+last-index-of #arr.last-index-of is arr.reverse.index-of
+compact #returns a copy with all nils removed
+compact! #removes all nils
+flatten #underscore
+flatten! #modifies the array
+flatten-shallow #underscore
+flatten-shallow! #modifies the array
+without or difference or "-" #underscore
+without! or difference! or -! #modifies the array
+union or "or" #underscore
+union! #modifies the array
+intersection or "and" #underscore
+intersection! or "and!" #modifies the array
+unique or uniq #underscore
+unique! or uniq! #modifies the array
+zip #scheme (takes any number of arrays and zips them all)
+zip! #modifies the array
+zip-width([f] + arrs) #applies each element from the receiver and arrs to f and returns an array of the results.
+(maybe) unzip   #takes a list of lists of length n and returns a list of length n of the elements at each index. Complains if the arrays are of unequal length.
+(maybe) unzip! #modifies the array
+assoc #object in underscore
+sum #arr.sum is arr.reduce(+)
+multiply #arr.multiply is arr.reduce(*)
+(maybe) * <number> #returns the array concatenated to itself <number> times.
+(maybe) binary-search #like .index-of, but runs in O(log n) time.
+combination #returns all possible combinations of the elements. If a <number> is supplied, returns all possible combinations of length n. If a range is supplied, returns all possible combinations in that range.
+permutation #like combination, but with no arguments it returns only the permutations the length of the array.
+(maybe) equal? or eql? or eq? #Returns true if the contents of two (or more) arrays are the same.
+(maybe) product or * #like zip, but return all possible combinations of arrays rather than just those that have the same index.
+rotate #Ruby
+rotate! #modifies the array
+(maybe) sample or random #selects a random element from the array or, if the programmer supplies a number, n random elements.
+shuffle #Ruby
+shuffle! #modifies the array
+transpose #Ruby, but complains if it finds something other than an array.
+transpose[n] or transpose-deep[n] #rotates the first n dimensions of the array's indices.
+subsequences #Haskell: [1, 2, 3].subsequences is [[], [1], [2], [3], [1, 2], [2, 3], [1, 2, 3]]
+intersperse #Haskell
+remove(x) #Remove the first occurrence of x from the array.
+min or minimum #The least element in of an array of numbers; accepts a funject that assigns each element a number for comparison.
+max or maximum #Opposite of min
+(maybe) span[f] #Haskell: returns an array of two elements: all of the initial elements that satisfy f and the rest.
+group[f={[x]: x}] #underscore: returns a funject whose keys are the things returned by f and whose values are arrays of the arguments that produced them.
+partition[f] #Haskell: return a list of two elements: all elements that satisfy f and all those that don't.

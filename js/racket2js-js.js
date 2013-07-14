@@ -29,6 +29,11 @@ var Symbol = (function () {
 
 }());
 
+string_to_symbol = Symbol
+symbol_to_string = function (sym) { 
+    return sym._val; 
+    
+};
 
 
 

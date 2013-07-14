@@ -1,4 +1,5 @@
 #lang racket
+;;;;begin not translating
 (define-syntax try
   (syntax-rules (catch)
     ((_ body (catch catcher))
@@ -11,6 +12,7 @@
          (lambda () body)))))))
 
 (require compatibility/mlist)
+;;;;end not translating
 
 ;;;                Personal Library
 (define (is a)
@@ -1625,8 +1627,37 @@
 
 
 
+;(set-)list-<prop>(-of)
+(define (list-id-of l)
+  (unless (lang? 'List l) ;to optimize, remove this condition.
+          (error "I cannot find the id of a non-list: " l "!")
+          (mcadr l)))
+
+(define (set-list-id! l val)
+  (unless (lang? 'List l) ;to optimize, remove this condition.
+          (error "I cannot set the id of a non-list: " l "!")
+          (set-mcadr! l val)))
+
+(define (list-elems-of l)
+  (unless (lang? 'List l) ;to optimize, remove this condition.
+          (error "I cannot find the elements of a non-list: " l "!")
+          (mcaddr l)))
+
+(define (set-list-elems! l val)
+  (unless (lang? 'List l) ;to optimize, remove this condition.
+          (error "I !cannot set the elements of a non-list: " l "!")
+          (set-mcaddr! l val)))
 
 ;(set-)funject-<prop>(-of)
+(define (funject-id-of funject)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
+          (error "I cannot find the pairs of a non-funject: " funject "!")
+          (mcadr funject)))
+
+(define (set-funject-id! funject id)
+  (unless (lang? 'Funject funject) ;to optimize, remove this condition.
+          (error "I cannot set the pairs of a non-funject: " funject "!")
+          (set-mcadr! funject id)))
 
 (define (funject-pairs-of funject)
   (unless (lang? 'Funject funject) ;to optimize, remove this condition.
@@ -2098,6 +2129,17 @@
 
 
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Behold:
+(define p1 (compose car stream-first parse))
+(define (interpret str)
+  (mmap (lambda (exp)
+         (eval exp global-env))
+       (mmap analyze (deep-list->mlist (p1 str)))))
+
+
  
 
 
@@ -2135,12 +2177,7 @@
 
 ;;;begin not translating
 (define v deep-mlist->list)
-(define p1 (compose car stream-first parse))
 (define (t str) (deep-list->mlist (p1 str)))
-(define (interpret str)
-  (mmap (lambda (exp)
-         (eval exp global-env))
-       (mmap analyze (deep-list->mlist (p1 str)))))
 (define (interpret-verbose str)
   (display "I parse the syntax...\n")
   (let ((parsed (p1 str)))
