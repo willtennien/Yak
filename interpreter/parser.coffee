@@ -491,10 +491,12 @@ if module?
         expression = null
         racket = false
         i = 2
+        tokens = false
         argc = process.argv.length
         while i < argc
             switch arg = process.argv[i++]
                 when '-r' then racket = true
+                when '-t' then tokens = true
                 when '-e'
                     expression = process.argv[i++]
                     break
@@ -502,11 +504,14 @@ if module?
                     expression = '' + require('fs').readFileSync arg
                     break
         if i < argc or not expression?
-            console.error 'Usage: coffee parser.coffee [ -r ] [ <filename> | -e <expression> ]'
+            console.error 'Usage: coffee parser.coffee [ -r | -t ] [ <filename> | -e <expression> ]'
             return
-        p = if racket then parseForRacket else parse
         try
-            console.log JSON.stringify p(expression), undefined, 2
+            if tokens
+                printTokens expression
+            else
+                p = if racket then parseForRacket else parse
+                console.log JSON.stringify p(expression), undefined, 2
         catch e
             if e instanceof SyntaxError
                 console.error e.message
