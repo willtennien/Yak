@@ -112,17 +112,19 @@ class Funject
                     return [argument]
             return false
 
-    scan: (bindings, applications, pattern, argument) ->
+    scan: (scope, bindings, applications, pattern, argument) ->
         if pattern.type is 'list'
             return false unless argument.isList and argument.values.length is pattern.values.length
             for x, i in pattern.values
-                return false unless sub = @scan bindings, applications, x, argument.values[i]
+                return false unless sub = @scan scope, bindings, applications, x, argument.values[i]
             return true
         if pattern.type is 'formal parameter'
             if Object::hasOwnProperty.call bindings, pattern.value
                 return equal bindings[pattern.value], argument
             bindings[pattern.value] = argument
             return true
+        if pattern.type is 'identifier'
+            return equal argument, scope.get pattern.value
         if pattern.type is 'application'
             applications.push
                 funject: pattern.funject
@@ -208,7 +210,7 @@ class Funject
                     interpreter.frame.bindings = null
                 else
                     bindings = {}
-                    continue unless @scan bindings, applications, p.pattern, argument
+                    continue unless @scan p.scope, bindings, applications, p.pattern, argument
                 if applications.length
                     if interpreter.frame.step is 'match'
                         continue unless bound = @match interpreter, bindings, p.pattern, argument
@@ -665,7 +667,8 @@ class Interpreter
                         scope: @scope
                     else
                         pattern: n.left.argument
-                        value: @second())
+                        value: @second()
+                        scope: @scope)
                 return @return (if n.operator is 'lazy assignment' then constant.nil else @second())
             throw new InterpreterError "Unimplemented: #{n.operator}"
 
