@@ -575,7 +575,8 @@ class Interpreter
                     return @return @first()
                 when 'inheritance assignment'
                     return unless @args n.left, n.right
-                    return @return @first().parent = @second()
+                    @first().parent = @second()
+                    return @return @first()
             if n.left.type is 'identifier'
                 switch n.operator
                     when 'strict assignment'
