@@ -132,6 +132,8 @@ class UserFunject extends Funject
         if argument.type is 'symbol'
             return new SymbolFunject argument.value
         if argument.type is 'formal parameter'
+            if Object::hasOwnProperty.call bindings, argument.value
+                return bindings[argument.value]
             return constant.unknown
         if argument.type is 'application'
             throw new InterpreterError 'Nested applications are unimplemented'
