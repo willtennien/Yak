@@ -19,6 +19,7 @@ tokenizer = do ->
         '|:=': 'reset lazy assignment'
         '<-': 'inverse assignment'
         '<<': 'inheritance assignment'
+        '::': 'prototypal application'
 
     isSpace = (c) -> c is ' ' or c is '\t'
 
@@ -83,7 +84,7 @@ tokenizer = do ->
                     return token 'outdent'
                 return token 'end'
             character = 1 + i - lastNewline
-            if (q = s.substr i, 3) is '|:=' or (q = s.substr i, 2) is ':=' or q is '|=' or q is '<-' or q is '<<'
+            if (q = s.substr i, 3) is '|:=' or (q = s.substr i, 2) is ':=' or q is '|=' or q is '<-' or q is '<<' or q is '::'
                 i += q.length
                 return token symbol[q], q
             switch c
@@ -329,6 +330,14 @@ parse = do ->
                     funject: e
                     argument: expression tokens
                 # do not continue, since we cannot directly apply sequences to values which would normally be expressions
+            if t = tokens.match 'prototypal application'
+                e =
+                    type: 'prototypal application'
+                    line: t.line
+                    character: t.character
+                    funject: e
+                    argument: value tokens
+                continue
             break
         if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance assignment'
             if assignment.type isnt 'inheritance assignment' and assignment.type isnt 'inverse assignment' and e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'strict assignment' and assignment.type isnt 'lazy assignment')
