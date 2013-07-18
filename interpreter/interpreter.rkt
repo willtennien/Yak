@@ -109,7 +109,7 @@
 (dsl (parse-boolean "true" no-indent))
 (dsl (parse-string "\"f\"" no-indent))
 (dsl (parse-nil "nil foo" no-indent))
-(dsl (parse-dot "dot " no-indent))
+(dsl (parse-symbol ".foo " no-indent))
 ;Check multiline strings later.
 (dsl (parse-identifier "fo-o" no-indent))
 (dsl (parse-list-literal "[]" no-indent))
@@ -372,10 +372,10 @@
                          (parse-string str indent)
                          (parse-boolean str indent)
                          (parse-nil str indent)
-                         (parse-dot str indent)
                          (parse-unknown str indent)
                          (parse-identifier str indent)
                          (parse-parameter str indent)
+                         (parse-symbol str indent)
                          (parse-list-literal str indent)
                          (parse-funject-literal str indent)
                          (parse-strict-assignment str indent)
@@ -546,13 +546,6 @@
                           (lambda (_ str)
                             (possibility (tokenize 'Nil) str))))
                  
-                 ;;;parse-dot
-                 
-                 (define (parse-dot str indent) 
-                   (given (parse-characters "dot" str no-indent)
-                          (lambda (_ str)
-                            (possibility (tokenize 'Dot) str))))
-                 
                  ;;;parse-unknown 
                  
                  (define (parse-unknown str indent)
@@ -564,7 +557,7 @@
                  
                  ;You may need these depending on how you define legal identifiers: "1" "2" "3" "4" "5" "6" "7" "8" "9"
                  (define numbers "1234567890")
-                 (define legal-variable-characters "-+*/%_$<>0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
+                 (define legal-variable-characters "-+*/%_$<>?0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
                  (define numbers-and-legal-variable-characters (string-append numbers legal-variable-characters))
                  
                  (define (parse-identifier str indent)
@@ -589,6 +582,15 @@
                                 (given (parse-identifier str no-indent)
                                        (lambda (name str)
                                          (possibility (tokenize 'Parameter (string-append "@" (cadr name))) str))))))
+                 
+                 ;;;parse-symbol
+                 
+                 (define (parse-symbol str indent) 
+                   (given (parse-characters "." str no-indent)
+                          (lambda (_ str)
+                            (given (parse-identifier str no-indent)
+                                   (lambda (ident str)
+                                     (possibility (tokenize 'Symbol (cadr ident)) str))))))
                  
                  ;;;parse-funject-literal
                  
@@ -826,26 +828,11 @@
                           (lambda (receiver str)
                             (parse-invocation-with receiver str indent))))
                  (define (parse-invocation-with receiver str indent)
-                   (also (given (parse-white str no-indent)
+                   (given (parse-white str no-indent)
                                 (lambda (_ str)
                                   (given (parse-exp str indent)
                                          (lambda (args str)
-                                           (also-within-naked-compound (possibility (tokenize 'Invocation receiver args) str) str indent)))))
-                         (given (parse-characters "." str no-indent)
-                                (lambda (_ str)
-                                  (given (parse-identifier str no-indent)
-                                         (lambda (property-token str)
-                                           (token-contents property-token 
-                                                           (lambda (property)
-                                                             (also-within-naked-compound (possibility (tokenize 'Invocation 
-                                                                                                                receiver 
-                                                                                                                (tokenize 'List-literal
-                                                                                                                          (list (tokenize 'Dot)
-                                                                                                                                (tokenize 'String
-                                                                                                                                          property))))
-                                                                                                      str)
-                                                                                         str
-                                                                                         indent)))))))))
+                                           (also-within-naked-compound (possibility (tokenize 'Invocation receiver args) str) str indent))))))
                  
                  ;;;parse-funject-inheritance
                  
@@ -1026,6 +1013,9 @@
 ;;;;begin not translating
 (define (mfoldl f init xs) 
   (foldl f init (mlist->list xs)))
+
+(define (mormap f xs)
+  (ormap f (mlist->list xs)))
 
 (define (mapply f mxs)
   (apply f (mlist->list mxs)))
@@ -1220,7 +1210,7 @@
 (define token-string? (partial tagged-list? 'Token-string))
 (define token-boolean? (partial tagged-list? 'Token-boolean))
 (define token-nil? (partial tagged-list? 'Token-nil))
-(define token-dot? (partial tagged-list? 'Token-dot))
+(define token-symbol? (partial tagged-list? 'Token-symbol))
 (define token-unknown? (partial tagged-list? 'Token-unknown ))
 (define token-identifier? (partial tagged-list? 'Token-identifier))
 (define token-parameter? (partial tagged-list? 'Token-parameter))
@@ -1237,12 +1227,12 @@
 (define token-funject-inheritance? (partial tagged-list? 'Token-funject-inheritance))
 (define token-inverse-definition? (partial tagged-list? 'Token-inverse-definition))
 
-(define (token-any? exp)
+(define (token-any? exp) ;to optimize, define this simply as (equal? "Token" (substring (symbol->string (cadr exp)) 0 5))
   (or (token-number? exp)
       (token-string? exp)
       (token-boolean? exp)
       (token-nil? exp)
-      (token-dot? exp)
+      (token-symbol? exp)
       (token-unknown? exp)
       (token-identifier? exp)
       (token-parameter? exp)
@@ -1281,10 +1271,12 @@
            [(eq? 'Boolean (car args))
             (assert (= 2 (length args)) "I tried to create a Boolean but was passed " args)
             (assert (boolean? (cadr args)) "I tried to create a Boolean but was passed " args)]
+           [(eq? 'Symbol (car args))
+            (assert (= 2 (length args)) "I tried to create a Symbol but was passed " args)
+            (assert (string? (cadr args)) "I tried to create a Symbol but was passed " args)]
            [(or (eq? 'Nil (car args))
-                (eq? 'Dot (car args))
                 (eq? 'Unknown (car args)))
-            (assert (= 1 (length args)) "I tried to create a Nil, Dot, or Unknown but was passed " args)]
+            (assert (= 1 (length args)) "I tried to create a Nil, or Unknown but was passed " args)]
            [(eq? 'List (car args))
             (assert (= 2 (length args)) "I tried to create a List but was passed " args)
             (assert (mlist? (cadr args)) "I tried to create a List but was passed " args)]
@@ -1304,7 +1296,7 @@
            (eq? (mcar exp) 'String)
            (eq? (mcar exp) 'Boolean)
            (eq? (mcar exp) 'Nil)
-           (eq? (mcar exp) 'Dot)
+           (eq? (mcar exp) 'Symbol)
            (eq? (mcar exp) 'Unknown)
            (eq? (mcar exp) 'List)
            (eq? (mcar exp) 'Funject))))
@@ -1341,7 +1333,7 @@
     ;string
     ;boolean
     ;nil
-    ;dot
+    ;symbol
     ;unknown 
     ;identifier
     ;parameter
@@ -1364,7 +1356,7 @@
     [(token-string? tokens) (analyze-string tokens)]
     [(token-boolean? tokens) (analyze-boolean tokens)]
     [(token-nil? tokens) (analyze-nil tokens)]
-    [(token-dot? tokens) (analyze-dot tokens)]
+    [(token-symbol? tokens) (analyze-symbol tokens)]
     [(token-unknown? tokens) (analyze-unknown  tokens)]
     [(token-identifier? tokens) (analyze-identifier tokens)]
     [(token-parameter? tokens) (analyze-parameter tokens)]
@@ -1405,8 +1397,8 @@
     (lambda (env) (create-lang 'Nil)))
   
 
-(define (analyze-dot tokens)
-    (lambda (env) (create-lang 'Dot)))
+(define (analyze-symbol tokens)
+    (lambda (env) (create-lang 'Symbol (mcadr tokens))))
 
 
 (define (analyze-unknown tokens)
@@ -1577,10 +1569,18 @@
                   receiver
                   (car maybe-own)))
   (cond 
-    [(primitive? receiver) (invoke-primitive receiver arg own)]
-    [(lang? 'Number receiver) (invoke-number receiver arg own)]
-    [(lang? 'Funject receiver) (invoke-funject receiver arg own)]
-    [else (error "invoke: I know not how to invoke " receiver "!")]))
+    [(primitive? receiver) 
+     (invoke-primitive receiver arg own)]
+    [(lang? 'Number receiver) 
+     (invoke-number receiver arg own)]
+    [(and (lang? 'Funject receiver)
+          (lang? 'Symbol arg) 
+          (equal? "has?" (mcadr arg))) 
+     (create-primitive-has?-match own)]
+    [(lang? 'Funject receiver) 
+     (invoke-funject receiver arg own)]
+    [else 
+     (error "invoke: I know not how to invoke " receiver "!")]))
 
 (define (invoke-primitive receiver arg own)
   (primitive-contents receiver
@@ -1601,7 +1601,7 @@
 
                  
 
-(define (invoke-funject receiver arg own)
+(define (invoke-funject receiver arg own . extra-bindings)
   (let ((apairs (funject-pairs-of receiver))
         (parent (funject-parent-of receiver))
         (inverse (funject-inverse-of receiver)))
@@ -1614,13 +1614,14 @@
                  (pattern (mcar pair))
                  (consequent (mcadr pair))
                  (env (mcaddr pair))
-                 (bindings (choice-bindings-from-matching pattern arg env)))
+                 (bindings (choice-bindings-from-matching pattern arg (env-extend extra-bindings env))))
             (if bindings
                 (if (lang? 'Analyzed-sequence consequent)
                     (force-sequence (bind-sequence consequent 
                                                    (env-extend (env-pairs (create-env-pair "own" 
                                                                                            (bind-as-though-sequence own)))
-                                                               bindings)))
+                                                               (env-extend extra-bindings
+                                                                           bindings))))
                     consequent)
                 (iter (mcdr apairs))))))
     (iter apairs)))
@@ -1701,6 +1702,12 @@
           (set-mcaddddr! funject inverse)))
 
 (define create-funject-pair mlist)
+
+(define funject-pair-pattern-of mcar)
+
+(define funject-pair-conseq-of mcadr)
+
+(define funject-pair-env-of mcaddr)
 
 (define create-funject-bound-pair mlist)
 
@@ -1795,10 +1802,10 @@
                        (token-string? pattern)
                        (token-boolean? pattern)
                        (token-nil? pattern)
-                       (token-dot? pattern)
                        (token-unknown? pattern)
                        (not (token-any? pattern))
-                       (token-identifier? pattern))
+                       (token-identifier? pattern)
+                       (token-symbol? pattern))
                    found]
                   [(or (token-strict-assignment? pattern)
                        (token-lazy-assignment? pattern)
@@ -1823,8 +1830,8 @@
          [(or (token-number? pattern)
               (token-string? pattern)
               (token-boolean? pattern)
+              (token-symbol? pattern)
               (token-nil? pattern)
-              (token-dot? pattern)
               (token-unknown? pattern))
           (bindings-from-matching-flat pattern arg bindings env)]
          [(not (token-any? pattern))
@@ -1935,8 +1942,8 @@
               [(token-number? pattern-arg) (list empty (create-lang 'Number (mcadr pattern-arg)))]
               [(token-string? pattern-arg) (list empty (create-lang 'String (mcadr pattern-arg)))]
               [(token-boolean? pattern-arg) (list empty (create-lang 'Boolean (mcadr pattern-arg)))]
+              [(token-symbol? pattern-arg) (list empty (create-lang 'Symbol (mcadr (pattern-arg))))]
               [(token-nil? pattern-arg) (list empty (create-lang 'Nil))]
-              [(token-dot? pattern-arg) (list empty (create-lang 'Dot))]
               [(token-unknown? pattern-arg) (list empty (create-lang 'Unknown))]
               [(token-parameter? pattern-arg) 
                (if (env-has? (mcadr pattern-arg) bindings)
@@ -2010,7 +2017,6 @@
 
 ;Primitive funjects rely on these:
 (define lang-nil (create-lang 'Nil))
-(define lang-dot (create-lang 'Dot))
 (define lang-unknown (create-lang 'Unknown))
 (define lang-equal? equal?)
 
@@ -2065,6 +2071,38 @@
                                                                            (create-lang 'List left)
                                                                            (user-error-no-matching-pattern (list "is of " left) (create-lang 'List result (create-lang 'Unknown)))))))
 
+(define (create-primitive-has?-match own)
+  (if (lang? 'Funject own)
+      (create-primitive (lambda (arg _)
+                          (if (mormap (lambda (pair) 
+                                       (choice-bindings-from-matching (mcar pair) arg (mcaddr pair)))
+                                     (funject-pairs-of own))
+                              (create-lang 'Boolean true)
+                              (invoke (invoke (funject-parent-of own) (create-lang 'Symbol "has?")) arg)))
+                        (lambda (has-or-doesnt _)
+                          (unless (lang? 'Boolean has-or-doesnt)
+                                  (create-lang 'List '())
+                                  (if (mcadr has-or-doesnt)
+                                      (create-lang 'List '())   ;Todo: invent a proper inverse for .has?
+                                      (create-lang 'List '())))))
+      (error "I cannot call has? on a non-funject; I should have passed that to a builtin!")))
+
+(define funject-god-method-names (list "is" "has?"))
+(define primitive-funject-god-has?-match 
+  (create-primitive (lambda (arg _)
+                      (if (and (lang? 'Symbol arg)
+                               (member (mcadr arg) funject-god-method-names))
+                          (create-lang 'Boolean true)
+                          (create-lang 'Boolean false)))
+                    (lambda (result _)
+                      (unless (lang? 'Boolean result)
+                              (create-lang 'List '())
+                              (if (mcadr result)       ;Todo: decide on a real inverse for .has?
+                                  (create-lang 'List (map (lambda (str) 
+                                                            (create-lang 'Symbol str))
+                                                          funject-god-method-names))
+                                  (create-lang 'List '()))))))
+
 (define create-primitive-number-plus (create-primitive-unoverloaded-infix-operator 'Number 'Number + -))
 
 (define create-primitive-number-minus (create-primitive-unoverloaded-infix-operator 'Number 'Number - +))
@@ -2079,11 +2117,12 @@
 (define primitive-funject-god
   (create-primitive (lambda (arg own)
                       (cond 
-                        [(lang? 'String arg)
+                        [(lang? 'Symbol arg)
                          (lang-contents arg
-                                        (lambda (str)
+                                        (lambda (sym)
                                           (cond 
-                                            [(equal? str "is") (create-primitive-funject-is own)]
+                                            [(equal? sym "is") (create-primitive-funject-is own)]
+                                            [(equal? sym "has?") primitive-funject-god-has?-match]
                                             [else (user-error-no-matching-pattern own arg)])))]
                         [else (user-error-no-matching-pattern "The primitive funject god inversted" arg)]))
                     (lambda (arg own)

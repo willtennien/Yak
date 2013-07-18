@@ -1,0 +1,236 @@
+#An example class:
+
+class Knavery 
+	knavery-ids = {
+		.murder: 905739523
+		.privateering: 402760288
+		.marketing: 572951062
+	}
+
+	exports = 
+		.first-letter: 'K, for Kalamity'
+		.punishment: 'Usually, death'
+
+	instance = 
+		.expiation: 
+			ajax['www.vatican.gov/find-expiation-cost?id=' + my.id]
+		.initialize
+			[@self, @name]: 
+			my.id = knavery-ids @name.to-sym
+
+
+class Marketing < Knavery
+	exports.punishment = 'Death by buzzwords'
+
+	instance.pitch = {[@name]:
+		private.pitch-count += 1
+		print['buy ' + str[private.pitch-count] + ' ' + str[@name] + ' and get one free!']
+		@name } <- {[@result, [unknown]]: [@result]}
+
+	instance.initialize = {
+		[@self, []]: 
+			my.id = 572951062
+			private.pitch-count = 0
+	}
+
+
+#Classes in their simplest formation.
+
+class A
+	#code
+
+#becomes
+
+A = {[]:
+	exports = {}
+	instance = {}
+
+	#code
+
+	#Here we can add validations to ensure the user knows what she's doing. 
+	#But those validations aren't necessary.
+	exports.instance = instance
+	exports.new = {@arg:
+		self = {
+			.class: A
+			@else: 
+				meth = instance(@else)
+				{@arg:
+					meth[self, @arg]
+				} <- {
+					[@result, unknown]: [{
+						meth[self, @x]: @x } @result] }}
+		instance.initialize[self, @arg]
+		self }
+	exports }[]
+
+
+#These classes allow the user to define methods that take no argument.
+
+class A 
+	#code
+
+#becomes
+
+A = {[]:
+	exports = {}
+	instance = {}
+
+	#code
+
+	#Here we can add validations to ensure the user knows what she's doing. 
+	#But those validations aren't necessary.
+	exports.instance = instance
+	exports.new = {@arg:
+		self = {
+			.class: A
+			@else: 
+				meth = instance(@else)
+				if meth.has?[self]
+					meth[self]
+				else
+					{@arg:
+						meth[self, @arg]
+					} <- {
+						[@result, unknown]: [{
+							meth[self, @x]: @x } @result] }
+		} 
+		instance.initialize[self, @arg]
+		self }
+	exports }[]
+
+
+#These classes support inheritance
+
+class A < B
+	#code
+
+#becomes
+
+A = {[]:
+	super = #B or, if the user ommited a superclass, Funject
+	exports = {} << super
+	instance = {} << super.instance
+
+	#code
+
+	#Here we can add validations to ensure the user knows what she's doing. 
+	#But those validations aren't necessary.
+	exports = exports << super
+	instance = instance << super.instance
+	exports.instance = instance
+	exports.new = {@arg:
+		self = {
+			.class: A
+			@else: 
+				meth = instance(@else)
+				if meth.has?[self]
+					meth[self]
+				else
+					{@arg:
+						meth[self, @arg]
+					} <- {
+						[@result, unknown]: [{
+							meth[self, @x]: @x } @result] }
+		} 
+		instance.initialize[self, @arg]
+		self }
+	exports }[]
+
+
+#These classes allow private variables.
+
+class A < B
+	#code
+
+#becomes
+
+A = {[]:
+	super = #B or, if the user ommited a superclass, Funject
+	exports = {} 
+	instance = {}
+	private := error-cannot-find-variable 
+
+	#code
+
+	#Here we can add validations to ensure the user knows what she's doing. 
+	#But those validations aren't necessary.
+	exports = exports << super
+	instance = instance << super.instance
+	privates = {}
+	with-private-of = {[self, meth, arg]:
+							old-private = private
+							private |= privates[self]
+							result = meth arg
+							private |= old-private
+							result }
+	exports.instance = instance
+	exports.new = {@arg:
+		self = {
+			.class: A
+			@else: 
+				meth = instance(@else)
+				if meth.has?[self]
+					with-private-of[self, meth, [self]]
+				else
+					{@arg:
+						with-private-of[self, meth, [self, @arg]]
+					} <- {
+						[@result, unknown]: 
+							[with-private-of[self, 
+											 {meth[self, @x]: @x },
+											 @result]] } } 
+		privates[self] = {}
+		instance.initialize[self, @arg]
+		self }
+	exports }[]
+
+
+#These classes allow protected variables.
+
+class A < B
+	#code
+
+#becomes
+
+A = {[]:
+	super = #B or, if the user ommited a superclass, Funject
+	exports = {} 
+	instance = {}
+	private := error-cannot-find-variable 
+
+	#code
+
+	#Here we can add validations to ensure the user knows what she's doing.
+	#But those validations aren't necessary.
+	exports = exports << super
+	instance = instance << super.instance
+	privates = {}
+	protecteds = {}
+	with-env-of = {[self, meth, arg]:
+						old-private = private
+						private |= privates[self]
+						result = meth.with[{protected: protecteds[self]}] arg
+						private |= old-private
+						result }
+	exports.instance = instance
+	exports.new = {@arg:
+		self = {
+			.class: A
+			@else: 
+				meth = instance(@else)
+				if meth.has?[self]
+					with-env-of[self, meth, [self]]
+				else
+					{@arg:
+						with-env-of[self, meth, [self, @arg]]
+					} <- {
+						[@result, unknown]: 
+							[with-env-of[self, 
+										 {meth[self, @x]: @x },
+										 @result]] }} 
+		privates[self] = {}
+		protecteds[self] = {}
+		instance.initialize[self, @arg]
+		self }
+	exports }[]
