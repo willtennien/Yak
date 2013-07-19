@@ -27,8 +27,131 @@
   (lambda (b)
     (<= a b)))
 
+(define (partial f . args)
+  (define (result . more-args)
+    (apply f (append args more-args)))
+  result)
+
+(define mcadr (compose mcar mcdr))
+(define mcaddr (compose mcar mcdr mcdr))
+(define mcadddr (compose mcar mcdr mcdr mcdr))
+(define mcaddddr (compose mcar mcdr mcdr mcdr mcdr))
+(define mcadddddr (compose mcar mcdr mcdr mcdr mcdr mcdr))
+(define mcaddddddr (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcadddddddr (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaddddddddr (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaadr (compose mcar mcar mcdr))
+(define mcaaddr (compose mcar mcar mcdr mcdr))
+(define mcaadddr (compose mcar mcar mcdr mcdr mcdr))
+(define mcaaddddr (compose mcar mcar mcdr mcdr mcdr mcdr))
+(define mcaadddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr))
+(define mcaaddddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaadddddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaaddddddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcaar (compose mcar mcar))
+(define mcadar (compose mcar mcdr mcar))
+(define mcaddar (compose mcar mcdr mcdr mcar))
+(define mcadddar (compose mcar mcdr mcdr mcdr mcar))
+(define mcaddddar (compose mcar mcdr mcdr mcdr mcdr mcar))
+(define mcadddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcadddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaddddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaadar (compose mcar mcar mcdr mcar))
+(define mcaaddar (compose mcar mcar mcdr mcdr mcar))
+(define mcaadddar (compose mcar mcar mcdr mcdr mcdr mcar))
+(define mcaaddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcar))
+(define mcaadddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaaddddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaadddddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcaaddddddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcddr (compose mcdr mcdr))
+(define mcdddr (compose mcdr mcdr mcdr))
+(define mcddddr (compose mcdr mcdr mcdr mcdr))
+(define mcdddddr (compose mcdr mcdr mcdr mcdr mcdr))
+(define mcddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcdddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcddddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcdar (compose mcdr mcar))
+(define mcddar (compose mcdr mcdr mcar))
+(define mcdddar (compose mcdr mcdr mcdr mcar))
+(define mcddddar (compose mcdr mcdr mcdr mcdr mcar))
+(define mcdddddar (compose mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcdddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcddddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcadaadr (compose mcar mcdr mcar mcar mcdr))
+(define (set-mcadr! xs x) (set-mcar! (mcdr xs) x))
+(define (set-mcaddr! xs x) (set-mcar! (mcddr xs) x))
+(define (set-mcadddr! xs x) (set-mcar! (mcdddr xs) x))
+(define (set-mcaddddr! xs x) (set-mcar! (mcddddr xs) x))
+(define (set-mcadddddr! xs x) (set-mcar! (mcdddddr xs) x))
+(define (set-mcaddddddr! xs x) (set-mcar! (mcddddddr xs) x))
+(define (set-mcadddddddr! xs x) (set-mcar! (mcdddddddr xs) x))
+(define (set-mcaddddddddr! xs x) (set-mcar! (mcddddddddr xs) x))
+(define (set-mcaadr! xs x) (set-mcar! (mcadr xs) x))
+(define (set-mcaaddr! xs x) (set-mcar! (mcaddr xs) x))
+(define (set-mcaadddr! xs x) (set-mcar! (mcadddr xs) x))
+(define (set-mcaaddddr! xs x) (set-mcar! (mcaddddr xs) x))
+(define (set-mcaadddddr! xs x) (set-mcar! (mcadddddr xs) x))
+(define (set-mcaaddddddr! xs x) (set-mcar! (mcaddddddr xs) x))
+(define (set-mcaadddddddr! xs x) (set-mcar! (mcadddddddr xs) x))
+(define (set-mcaaddddddddr! xs x) (set-mcar! (mcaddddddddr xs) x))
+(define (set-mcadar! xs x) (set-mcar! (mcdar xs) x))
+(define (set-mcaddar! xs x) (set-mcar! (mcddar xs) x))
+(define (set-mcadddar! xs x) (set-mcar! (mcdddar xs) x))
+(define (set-mcaddddar! xs x) (set-mcar! (mcddddar xs) x))
+(define (set-mcadddddar! xs x) (set-mcar! (mcdddddar xs) x))
+(define (set-mcaddddddar! xs x) (set-mcar! (mcddddddar xs) x))
+(define (set-mcadddddddar! xs x) (set-mcar! (mcdddddddar xs) x))
+(define (set-mcaddddddddar! xs x) (set-mcar! (mcddddddddar xs) x))
+(define (set-mcaadar! xs x) (set-mcar! (mcadar xs) x))
+(define (set-mcaaddar! xs x) (set-mcar! (mcaddar xs) x))
+(define (set-mcaadddar! xs x) (set-mcar! (mcadddar xs) x))
+(define (set-mcaaddddar! xs x) (set-mcar! (mcaddddar xs) x))
+(define (set-mcaadddddar! xs x) (set-mcar! (mcadddddar xs) x))
+(define (set-mcaaddddddar! xs x) (set-mcar! (mcaddddddar xs) x))
+(define (set-mcaadddddddar! xs x) (set-mcar! (mcadddddddar xs) x))
+(define (set-mcaaddddddddar! xs x) (set-mcar! (mcaddddddddar xs) x))
+(define (set-mcdar! xs x) (set-mcdr! (mcar xs) x)) 
+(define (mlast xs)
+  (if (empty? (mcdr xs))
+      (mcar xs)
+      (mlast (mcdr xs))))
+(define (mcopy xs)
+  (if (empty? xs)
+      '()
+      (mcons (mcar xs) (mcopy (mcdr xs)))))
+(define (mmap-indexes proc xs)
+  (mmap proc
+        xs
+        (mup-to 0 (mlength xs))))
+(define (mup-to start end)
+  (if (= end start)
+      empty
+      (mcons start
+             (mup-to (+ 1 start) end))))
 
 ;;;;begin not translating
+(define (just a)
+  (list 'Maybe (list 'Just a)))
+
+(define nothing
+  (list 'Maybe 'Nothing))
+
+(define (maybe? a)
+  (equal? 'Maybe (car a)))
+
+(define (nothing? a)
+  (assert (maybe? a) "nothing?: you passed me something other than a maybe!")
+  (equal? 'Nothing (cadr a)))
+
+(define something? (compose not nothing?))
+
+(define (just-thing a)
+  (assert (something? a) "just-thing: you failed to pass me a just something!")
+  (cadadr a))
+
 (define (matches a b)
   (or (and (equal? a "")
            (equal? b ""))
@@ -381,7 +504,9 @@
                          (parse-strict-assignment str indent)
                          (parse-lazy-assignment str indent)
                          (parse-reset-strict-assignment str indent)
-                         (parse-reset-lazy-assignment str indent)))
+                         (parse-reset-lazy-assignment str indent)
+                         (parse-module str indent)
+                         (parse-class str indent)))
                  
                  
                  ;;;parse-beginning-with-exp
@@ -870,6 +995,66 @@
                                                                          f-inverse) 
                                                                str))))))))
                  
+                 ;;;parse-module and parse-class
+                 
+                 (define parse-module--parse-class
+                   ((lambda ()
+                      (define (parse-module-or-class-after-declaration type maybe-parent str indent)
+                        (given (parse-sequence str indent)
+                               (lambda (seq str)
+                                 (possibility (if (something? maybe-parent)
+                                                  (tokenize type (just-thing maybe-parent) seq)
+                                                  (tokenize type seq))
+                                              str))))
+                      
+                      (define (parse-module-or-class-after-type type str indent)
+                        (given-seq (parse-white str no-indent)
+                                   (lambda (str)
+                                     (also (given (parse-identifier str no-indent)
+                                                  (lambda (name str)
+                                                    (if (equal? "<" (cadr name))
+                                                        (impossibility)
+                                                        (given (parse-module-or-class-after-name type str indent)
+                                                               (lambda (module-or-class str)
+                                                                 (possibility (tokenize 'Strict-assignment
+                                                                                        name
+                                                                                        module-or-class)
+                                                                              str))))))
+                                           (parse-module-or-class-after-name type str indent)))))
+                      
+                      (define (parse-module-or-class-after-name type str indent)
+                        (also (given-seq (parse-white str no-indent)
+                                         (lambda (str)
+                                           (parse-characters "<" str no-indent))
+                                         (lambda (str)
+                                           (parse-white str no-indent))
+                                         (lambda (str)
+                                           (given (parse-exp str indent)
+                                                  (lambda (parent str)
+                                                    (given-seq (parse-white str indent)
+                                                               (lambda (str)
+                                                                 (parse-module-or-class-after-declaration type (just parent) str indent)))))))
+                              (given-seq (parse-white str indent)
+                                         (lambda (str)
+                                           (parse-module-or-class-after-declaration type nothing str indent)))))                                                                                 
+                     
+                      (define (parse-module str indent)
+                        (given (parse-characters "module" str indent)
+                               (lambda (_ str)
+                                 (parse-module-or-class-after-type 'Module str indent))))
+                      
+                      (define (parse-class str indent)
+                        (given (parse-characters "class" str indent)
+                               (lambda (_ str)
+                                 (parse-module-or-class-after-type 'Class str indent))))
+                      
+                      (mlist parse-module parse-class))))
+                        
+                 (define parse-module (mcar parse-module--parse-class))
+                 
+                 (define parse-class (mcadr parse-module--parse-class))
+                                                                                       
+                                                                                       
                  ;;;;begin not translating
                  (set! odsl dsl)
                  ;;;;end not translating
@@ -912,104 +1097,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Evaluator
 
 
-
-
-
-
-;;;;    Personal Library
-
-
-(define mcadr (compose mcar mcdr))
-(define mcaddr (compose mcar mcdr mcdr))
-(define mcadddr (compose mcar mcdr mcdr mcdr))
-(define mcaddddr (compose mcar mcdr mcdr mcdr mcdr))
-(define mcadddddr (compose mcar mcdr mcdr mcdr mcdr mcdr))
-(define mcaddddddr (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr))
-(define mcadddddddr (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
-(define mcaddddddddr (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
-(define mcaadr (compose mcar mcar mcdr))
-(define mcaaddr (compose mcar mcar mcdr mcdr))
-(define mcaadddr (compose mcar mcar mcdr mcdr mcdr))
-(define mcaaddddr (compose mcar mcar mcdr mcdr mcdr mcdr))
-(define mcaadddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr))
-(define mcaaddddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr))
-(define mcaadddddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
-(define mcaaddddddddr (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
-(define mcaar (compose mcar mcar))
-(define mcadar (compose mcar mcdr mcar))
-(define mcaddar (compose mcar mcdr mcdr mcar))
-(define mcadddar (compose mcar mcdr mcdr mcdr mcar))
-(define mcaddddar (compose mcar mcdr mcdr mcdr mcdr mcar))
-(define mcadddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcaddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcadddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcaddddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcaadar (compose mcar mcar mcdr mcar))
-(define mcaaddar (compose mcar mcar mcdr mcdr mcar))
-(define mcaadddar (compose mcar mcar mcdr mcdr mcdr mcar))
-(define mcaaddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcar))
-(define mcaadddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcaaddddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcaadddddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcaaddddddddar (compose mcar mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcddr (compose mcdr mcdr))
-(define mcdddr (compose mcdr mcdr mcdr))
-(define mcddddr (compose mcdr mcdr mcdr mcdr))
-(define mcdddddr (compose mcdr mcdr mcdr mcdr mcdr))
-(define mcddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr))
-(define mcdddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
-(define mcddddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
-(define mcdar (compose mcdr mcar))
-(define mcddar (compose mcdr mcdr mcar))
-(define mcdddar (compose mcdr mcdr mcdr mcar))
-(define mcddddar (compose mcdr mcdr mcdr mcdr mcar))
-(define mcdddddar (compose mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcdddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcddddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
-(define mcadaadr (compose mcar mcdr mcar mcar mcdr))
-(define (set-mcadr! xs x) (set-mcar! (mcdr xs) x))
-(define (set-mcaddr! xs x) (set-mcar! (mcddr xs) x))
-(define (set-mcadddr! xs x) (set-mcar! (mcdddr xs) x))
-(define (set-mcaddddr! xs x) (set-mcar! (mcddddr xs) x))
-(define (set-mcadddddr! xs x) (set-mcar! (mcdddddr xs) x))
-(define (set-mcaddddddr! xs x) (set-mcar! (mcddddddr xs) x))
-(define (set-mcadddddddr! xs x) (set-mcar! (mcdddddddr xs) x))
-(define (set-mcaddddddddr! xs x) (set-mcar! (mcddddddddr xs) x))
-(define (set-mcaadr! xs x) (set-mcar! (mcadr xs) x))
-(define (set-mcaaddr! xs x) (set-mcar! (mcaddr xs) x))
-(define (set-mcaadddr! xs x) (set-mcar! (mcadddr xs) x))
-(define (set-mcaaddddr! xs x) (set-mcar! (mcaddddr xs) x))
-(define (set-mcaadddddr! xs x) (set-mcar! (mcadddddr xs) x))
-(define (set-mcaaddddddr! xs x) (set-mcar! (mcaddddddr xs) x))
-(define (set-mcaadddddddr! xs x) (set-mcar! (mcadddddddr xs) x))
-(define (set-mcaaddddddddr! xs x) (set-mcar! (mcaddddddddr xs) x))
-(define (set-mcadar! xs x) (set-mcar! (mcdar xs) x))
-(define (set-mcaddar! xs x) (set-mcar! (mcddar xs) x))
-(define (set-mcadddar! xs x) (set-mcar! (mcdddar xs) x))
-(define (set-mcaddddar! xs x) (set-mcar! (mcddddar xs) x))
-(define (set-mcadddddar! xs x) (set-mcar! (mcdddddar xs) x))
-(define (set-mcaddddddar! xs x) (set-mcar! (mcddddddar xs) x))
-(define (set-mcadddddddar! xs x) (set-mcar! (mcdddddddar xs) x))
-(define (set-mcaddddddddar! xs x) (set-mcar! (mcddddddddar xs) x))
-(define (set-mcaadar! xs x) (set-mcar! (mcadar xs) x))
-(define (set-mcaaddar! xs x) (set-mcar! (mcaddar xs) x))
-(define (set-mcaadddar! xs x) (set-mcar! (mcadddar xs) x))
-(define (set-mcaaddddar! xs x) (set-mcar! (mcaddddar xs) x))
-(define (set-mcaadddddar! xs x) (set-mcar! (mcadddddar xs) x))
-(define (set-mcaaddddddar! xs x) (set-mcar! (mcaddddddar xs) x))
-(define (set-mcaadddddddar! xs x) (set-mcar! (mcadddddddar xs) x))
-(define (set-mcaaddddddddar! xs x) (set-mcar! (mcaddddddddar xs) x))
-(define (set-mcdar! xs x) (set-mcdr! (mcar xs) x)) 
-(define (mlast xs)
-  (if (empty? (mcdr xs))
-      (mcar xs)
-      (mlast (mcdr xs))))
-(define (mcopy xs)
-  (if (empty? xs)
-      '()
-      (mcons (mcar xs) (mcopy (mcdr xs)))))
-
 ;;;;begin not translating
 (define (mfoldl f init xs) 
   (foldl f init (mlist->list xs)))
@@ -1051,12 +1138,6 @@
 
 (define deep-stream->mlist (compose deep-list->mlist deep-stream->list))
 ;;;;end not translating
-
-(define (partial f . args)
-  (define (result . more-args)
-    (apply f (append args more-args)))
-  result)
-
 
 (define (contents xs f)
   (apply f xs))
@@ -1226,6 +1307,8 @@
 (define token-invocation? (partial tagged-list? 'Token-invocation))
 (define token-funject-inheritance? (partial tagged-list? 'Token-funject-inheritance))
 (define token-inverse-definition? (partial tagged-list? 'Token-inverse-definition))
+(define token-module? (partial tagged-list? 'Token-module))
+(define token-class? (partial tagged-list? 'Token-class))
 
 (define (token-any? exp) ;to optimize, define this simply as (equal? "Token" (substring (symbol->string (cadr exp)) 0 5))
   (or (token-number? exp)
@@ -1372,6 +1455,8 @@
     [(token-invocation? tokens) (analyze-invocation tokens)]
     [(token-funject-inheritance? tokens) (analyze-funject-inheritance tokens)]
     [(token-inverse-definition? tokens) (analyze-inverse-definition tokens)]
+    [(token-module? tokens) (analyze-module tokens)]
+    [(token-class? tokens) (analyze-class tokens)]
     [else (error "analyze: I fail to recognize the token " tokens)]))
 
 
@@ -1558,6 +1643,44 @@
                                              (eright (eval aright env)))
                                          (set-funject-inverse! eleft eright)
                                          eleft)))))))
+
+
+(define analyze-module 
+  ((lambda ()
+     (define (after-analyze aparent aseq)
+       (lambda (env)
+         (let* ((parent (eval aparent env))
+                (module-env (env-extend (env-pairs (create-env-pair "exports"
+                                                                    (create-lang 'Funject 
+                                                                                 '() 
+                                                                                 parent
+                                                                                 primitive-funject-inverse-god)))
+                                        env)))
+           (eval aseq module-env)
+           (let ((exports (env-get "exports" module-env)))
+             (cond 
+               [(lang? 'Funject exports)
+                (set-funject-parent! parent)]
+               [(lang? 'List exports)
+                (create-lang 'Funject (mmap-indexes (lambda (elem i)
+                                                      (bind-funject-pair (create-funject-pair (create-lang 'Number i) elem) module-env))
+                                                    (mcadr exports)))]
+               [else
+                exports])))))
+     
+     (lambda (tokens)
+       (error "TODO: I need to implement analyze-module.")
+       (cond 
+         [(= 2 (mlength tokens))
+          (after-analyze (lambda (env) 
+                           primitive-funject-god)
+                         (analyze (caddr tokens)))]
+         [(= 3 (mlength tokens))
+          (after-analyze (analyze (cadr tokens))
+                         (analyze (caddr tokens)))])))))
+
+(define (analyze-class tokens) (error "TODO: I need to implement analyze-class."))
+             
 
 
 

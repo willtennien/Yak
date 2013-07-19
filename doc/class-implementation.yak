@@ -234,3 +234,18 @@ A = {[]:
 		instance.initialize[self, @arg]
 		self }
 	exports }[]
+
+
+#modules are just syntactic sugar:
+
+module A < B
+	#code
+
+#becomes
+
+A = {[]:
+		exports = {} << B
+		#code
+		exports << B 
+		exports }[]
+

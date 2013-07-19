@@ -1,0 +1,13 @@
+{
+  "name": "yak-script",
+  "version": "0.1.1-placeholder2",
+  "engines": "node 0.10",
+  "author": {
+    "name": "Will Murphy"
+  },
+  "main": "yak-lang.js",
+  "readme": "YakScript\n=======\nYak in the browser.",
+  "readmeFilename": "README.md",
+  "_id": "yak-script@0.1.1-placeholder",
+  "description": "Yak in the browser."
+}
