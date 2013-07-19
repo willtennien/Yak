@@ -1678,7 +1678,7 @@
          [(= 3 (mlength tokens))
           (after-analyze (analyze (cadr tokens))
                          (analyze (caddr tokens)))])))))
-
+ 
 (define (analyze-class tokens) (error "TODO: I need to implement analyze-class."))
              
 
