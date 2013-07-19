@@ -514,9 +514,9 @@
                  (define (parse-beginning-with-exp str indent) 
                    (also (parse-funject-strict-assignment str indent)
                          (parse-funject-lazy-assignment str indent)
-                         (parse-invocation str indent)
                          (parse-funject-inheritance str indent)
-                         (parse-inverse-definition str indent)))
+                         (parse-inverse-definition str indent)
+                         (parse-invocation str indent)))
                  
                  
                  ;;;parse-associating-left-beginning-with-exp-with
@@ -1165,7 +1165,7 @@
 (define env-pairs mlist)
 
 (define (create-env-pair-strict name val)
-  (create-env-pair name (bind-as-though-sequence val)))
+  (create-env-pair name (bind-as-though-unevaled val)))
 
 (define empty-env 'empty-env)
 
@@ -1173,7 +1173,7 @@
 (define env-empty? (partial eq? 'empty-env))
 
 
-(define (env-create pairs . maybe-parent)
+(define (env-create pairs)
   (mlist 'env
          pairs
          empty-env))
@@ -1231,7 +1231,7 @@
                           (mcadr env)))
         env]
       [(equal? key (mcaar ps))
-       (set-mcdar! ps value)
+       (set-mcadar! ps value)
        env]
       [else (iter (mcdr ps))]))
   (iter (mcadr env)))
@@ -1245,7 +1245,7 @@
            (user-error-cannot-reset-unset-variable key)
            (env-reset! key value (env-parent-of env)))]
       [(equal? key (mcaar ps))
-       (set-mcdar! ps value)
+       (set-mcadar! ps value)
        env]
       [else (iter (mcdr ps))]))
   (iter (mcadr env)))
@@ -1503,7 +1503,7 @@
                                    (define (analyze-pairs ps)
                                      (mmap (lambda (p)
                                              (set-mcadr! p 
-                                                         (analyze-sequence (mcadr p)))
+                                                         (mlist 'Unevaled (analyze-sequence (mcadr p))))
                                              p)
                                            ps))
                                    (define (bind-pairs ps env)
@@ -1515,7 +1515,7 @@
                                        (lambda (env)
                                          (let ((bpairs (bind-pairs apairs env)))
                                            (create-lang 'Funject 
-                                                        (random 100000000)
+                                                        (gen-funject-id)
                                                         bpairs
                                                         primitive-funject-god
                                                         primitive-funject-inverse-god)))))
@@ -1528,7 +1528,18 @@
       (create-lang 'List (eval-each aelems env)))))
 
 
-(define (analyze-sequence tokens) (mlist 'Analyzed-sequence (mmap analyze (mcadr tokens))))
+(define (analyze-sequence-without-own-scope tokens)
+  (assert (< 0 (mlength (mcadr tokens))) "analyze-sequence: A sequence must have at least one expression, but this one has none!") ;to optimize, remove this assertion
+  (let ((aexps (mmap analyze (mcadr tokens))))
+    (lambda (env)
+      (mlast (mmap (lambda (aexp)
+                     (eval aexp env))
+                   aexps)))))
+
+(define (analyze-sequence tokens)
+  (let ((analyzed (analyze-sequence-without-own-scope tokens)))
+    (lambda (env)
+      (eval analyzed (env-extend (env-pairs) env)))))
 
 
 (define (analyze-strict-assignment tokens) 
@@ -1547,8 +1558,8 @@
         (aright (analyze (mcaddr tokens))))
     (lambda (env)
       (assign-lazy-identifier! left-name 
-                              aright 
-                              env)
+                               aright 
+                               env)
       lang-nil)))
 
 
@@ -1562,8 +1573,7 @@
                                                        (lambda (env)
                                                          (each-evaled (list areceiver aright) env
                                                                       (lambda (ereceiver eright)
-                                                                        (push-funject-pair! ereceiver (bind-funject-pair (create-funject-pair pattern eright) global-env))
-                                                                        eright))))))))))
+                                                                        (push-funject-pair! ereceiver (bind-funject-pair (create-funject-pair pattern (mlist 'Evaled eright)) global-env))))))))))))
 
 
 (define (analyze-funject-lazy-assignment tokens)
@@ -1576,7 +1586,7 @@
                                                        (lambda (env)
                                                          (each-evaled (list areceiver) env
                                                                       (lambda (ereceiver)
-                                                                        (push-funject-pair! ereceiver (bind-funject-pair (create-funject-pair pattern aright) env))
+                                                                        (push-funject-pair! ereceiver (bind-funject-pair (create-funject-pair pattern (mlist 'Unevaled aright)) env))
                                                                         lang-nil))))))))))
 
 
@@ -1645,45 +1655,95 @@
                                          eleft)))))))
 
 
-(define analyze-module 
+(define analyze-module--analyze-class 
   ((lambda ()
-     (define (after-analyze aparent aseq)
+     (define (general-with-new-parent! thing parent)
+       (cond 
+               [(lang? 'Funject thing)
+                (set-funject-parent! thing parent)
+                thing]
+               [(lang? 'List thing)
+                (create-lang 'Funject 
+                             (gen-funject-id)
+                             (mmap-indexes (lambda (elem i)
+                                             (bind-funject-pair (create-funject-pair (create-lang 'Number i) (mlist 'Evaled elem)) module-env))
+                                           (mcadr thing))
+                             parent
+                             primitive-funject-inverse-god)]
+               [else
+                thing]))
+     
+     (define (after-analyze-module aparent aseq)
        (lambda (env)
          (let* ((parent (eval aparent env))
-                (module-env (env-extend (env-pairs (create-env-pair "exports"
-                                                                    (create-lang 'Funject 
-                                                                                 '() 
-                                                                                 parent
-                                                                                 primitive-funject-inverse-god)))
+                (module-env (env-extend (env-pairs)
                                         env)))
+           (assign-strict-identifier! "exports" 
+                                      (create-lang 'Funject 
+                                                   (gen-funject-id)
+                                                   '() 
+                                                   parent
+                                                   primitive-funject-inverse-god)
+                                      module-env)
            (eval aseq module-env)
-           (let ((exports (env-get "exports" module-env)))
-             (cond 
-               [(lang? 'Funject exports)
-                (set-funject-parent! parent)]
-               [(lang? 'List exports)
-                (create-lang 'Funject (mmap-indexes (lambda (elem i)
-                                                      (bind-funject-pair (create-funject-pair (create-lang 'Number i) elem) module-env))
-                                                    (mcadr exports)))]
-               [else
-                exports])))))
+           (let ((exports (lookup-identifier "exports" module-env)))
+             (general-with-new-parent! exports parent)))))
      
-     (lambda (tokens)
-       (error "TODO: I need to implement analyze-module.")
-       (cond 
-         [(= 2 (mlength tokens))
-          (after-analyze (lambda (env) 
-                           primitive-funject-god)
-                         (analyze (caddr tokens)))]
-         [(= 3 (mlength tokens))
-          (after-analyze (analyze (cadr tokens))
-                         (analyze (caddr tokens)))])))))
- 
-(define (analyze-class tokens) (error "TODO: I need to implement analyze-class."))
+     (define (analyze-header callback)
+       (lambda (tokens)
+         (cond 
+           [(= 2 (mlength tokens))
+            (after-analyze-module (lambda (env) 
+                                    primitive-funject-god)
+                                  (if (token-sequence? (mcadr tokens))
+                                      (analyze-sequence-without-own-scope (mcadr tokens))
+                                      (analyze (mcadr tokens))))]
+           [(= 3 (mlength tokens))
+            (after-analyze-module (analyze (mcadr tokens))
+                                  (if (token-sequence? (mcaddr tokens))
+                                      (analyze-sequence-without-own-scope (mcaddr tokens))
+                                      (analyze (mcaddr tokens))))])))
+
+
+     (define (after-analyze-class aparent aseq)
+       (lambda (env)
+         (let* ((parent (eval aparent env))
+                (module-env (env-extend (env-pairs)
+                                        env)))
+           (assign-strict-identifier! "exports" 
+                                      (create-lang 'Funject 
+                                                   (gen-funject-id)
+                                                   '() 
+                                                   parent
+                                                   primitive-funject-inverse-god)
+                                      module-env)
+           (assign-strict-identifier! "instance" 
+                                      (create-lang 'Funject 
+                                                   (gen-funject-id)
+                                                   '() 
+                                                   parent
+                                                   primitive-funject-inverse-god))
+           (eval aseq module-env)
+           (let ((exports (general-with-new-parent! (lookup-identifier "exports" module-env) parent))
+                 (instance (general-with-new-parent! (lookup-identifier "instance" module-env) parent)))
+             (push-funject-pair! exports (bind-funject-pair (create-funject-pair (create-lang 'Symbol "instance")
+                                                                                 (mlist 'Evaled instance))
+                                                            module-env))
+             (push-funject-pair! exports (bind-funject-pair (create-funject-pair (create-lang 'Symbol "new")
+                                                                                 (mlist 'Evaled (create-primitive-class-new module-env)))
+                                                            module-env))
+             (assign-identifier! "exports" exports module-env)
+             exports))))
              
+                  
+     (mlist (analyze-header after-analyze-module)
+            (analyze-header after-analyze-class)))))
+  
+(define analyze-module (mcar analyze-module--analyze-class))
+(define analyze-class (mcadr analyze-module--analyze-class))
 
 
-
+     
 
 ;;;;    invoke
 
@@ -1739,13 +1799,16 @@
                  (env (mcaddr pair))
                  (bindings (choice-bindings-from-matching pattern arg (env-extend extra-bindings env))))
             (if bindings
-                (if (lang? 'Analyzed-sequence consequent)
-                    (force-sequence (bind-sequence consequent 
-                                                   (env-extend (env-pairs (create-env-pair "own" 
-                                                                                           (bind-as-though-sequence own)))
-                                                               (env-extend extra-bindings
-                                                                           bindings))))
-                    consequent)
+                (cond
+                  [(eq? 'Unevaled (mcar consequent))
+                   (force-bound (bind-analyzed (mcadr consequent) (env-extend (env-pairs (create-env-pair "own" 
+                                                                                                          (bind-as-though-unevaled own)))
+                                                                              (env-extend extra-bindings
+                                                                                          bindings))))]
+                  [(eq? 'Evaled (mcar consequent))
+                   (mcadr consequent)]
+                  [else
+                   (error "In the consequent of a pattern, I find neither 'Evaled nor 'Unevaled, but " consequent)])
                 (iter (mcdr apairs))))))
     (iter apairs)))
 
@@ -1834,41 +1897,50 @@
 
 (define create-funject-bound-pair mlist)
 
+(define gen-funject-id
+  ((lambda ()
+     (define id 0)
+     (lambda ()
+       (set! id (add1 id))
+       id))))
+
 
 
 
 ;<operation>(-<type>)-identifier
 (define (lookup-identifier name env)
-  ((env-get name env))) ;note the extra parenthases
+  (force-bound (env-get name env))) ;note the extra parenthases
 
-(define (assign-strict-identifier! name right env)
-  (env-set! name (bind-as-though-sequence right) env))
+(define (assign-strict-identifier! name eright env)
+  (env-set! name (bind-as-though-unevaled eright) env))
 
-(define (assign-lazy-identifier! name right env)
-  (env-set! name (bind-sequence right env) env))
+(define (assign-lazy-identifier! name aright env)
+  (env-set! name (bind-analyzed aright env) env))
 
-(define (reset-strict-identifier! name right env)
-  (env-reset! name (bind-as-though-sequence right) (env-parent-of env)))
+(define (reset-strict-identifier! name eright env)
+  (env-reset! name (bind-as-though-unevaled eright) (env-parent-of env)))
 
-(define (reset-lazy-identifier! name right env) 
-  (env-reset! name (bind-sequence right env) (env-parent-of env)))
+(define (reset-lazy-identifier! name aright env) 
+  (env-reset! name (bind-analyzed aright env) (env-parent-of env)))
 
-;bind-{sequence/funject-pair}
-;force-sequence
-(define (bind-sequence exp env)
-  (let ((statements (mcadr exp)))
-    (lambda () 
-      (mlast (eval-each statements env)))))
+;bind-{analyzed/as-though-unevaled/funject-pair}
+;force-bound
+(define (bind-analyzed exp env)
+  (mlist exp env))
+
+(define (bind-as-though-unevaled exp) 
+  (mlist (lambda (_) exp) '()))
+
+(define (bind-delayed-primitive prim)
+  (mlist prim '()))
+
+(define (force-bound exp--env) 
+  ((mcar exp--env) (mcadr exp--env)))
 
 (define (bind-funject-pair p env)
   (mlist-contents p
                   (lambda (pattern consequent)
                     (create-funject-bound-pair pattern consequent env))))
-
-(define (force-sequence stmts) (stmts))
-
-(define (bind-as-though-sequence exp) 
-  (lambda () exp))
 
 
 
@@ -2235,6 +2307,26 @@
 (define create-primitive-number-div (create-primitive-unoverloaded-infix-operator 'Number 'Number / *))
 
 
+(define (create-primitive-class-new module-env) 
+  (let* ((exports (lookup-identifier! "exports" module-env))
+         (instance (lookup-idnetifier! "instance" module-env))
+         (instance-lang-has? (create-primitive-has?-pattern instance))
+         (instance-has? (lambda (arg) 
+                          (lang-contents (instance-lang-has? arg)
+                                         identity))))
+  (lambda (constructor-arg)
+    (define self (create-lang 'Funject
+                              (gen-funject-id)
+                              (mlist (bind-funject-pair (create-funject-pair (create-lang 'Symbol "class")
+                                                                             (mlist 'Evaled exports))
+                                                        module-env)
+                                     (bind-funject-pair (create-funject-pair (create-lang 'Parameter "else")
+                                                                             (mlist 'Unevaled (lambda (env)
+                                                                                                (let (for-instance (create-lang 'List (mlist self
+                                                                                                                                             (lookup-identifier "@else" 
+                              funject-parent-never-to-be-called
+                              (
+
 
 
 (define primitive-funject-god
@@ -2247,7 +2339,7 @@
                                             [(equal? sym "is") (create-primitive-funject-is own)]
                                             [(equal? sym "has?") primitive-funject-god-has?-match]
                                             [else (user-error-no-matching-pattern own arg)])))]
-                        [else (user-error-no-matching-pattern "The primitive funject god inversted" arg)]))
+                        [else (user-error-no-matching-pattern "The primitive funject god" arg)]))
                     (lambda (arg own)
                       (user-error-no-matching-pattern "The primitive funject god inversted" arg))))
 
