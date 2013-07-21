@@ -57,6 +57,14 @@
 (define mcaddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcar))
 (define mcadddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
 (define mcaddddddddar (compose mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcadadr (compose mcar mcdr mcar mcdr))
+(define mcadaddr (compose mcar mcdr mcar mcdr mcdr))
+(define mcadadddr (compose mcar mcdr mcar mcdr mcdr mcdr))
+(define mcadaddddr (compose mcar mcdr mcar mcdr mcdr mcdr mcdr))
+(define mcadadddddr (compose mcar mcdr mcar mcdr mcdr mcdr mcdr mcdr))
+(define mcadaddddddr (compose mcar mcdr mcar mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcadadddddddr (compose mcar mcdr mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
+(define mcadaddddddddr (compose mcar mcdr mcar mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr))
 (define mcaadar (compose mcar mcar mcdr mcar))
 (define mcaaddar (compose mcar mcar mcdr mcdr mcar))
 (define mcaadddar (compose mcar mcar mcdr mcdr mcdr mcar))
@@ -80,6 +88,21 @@
 (define mcddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcar))
 (define mcdddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
 (define mcddddddddar (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar))
+(define mcdadr (compose mcdr mcar mcdr))
+(define mcddadr (compose mcdr mcdr mcar mcdr))
+(define mcdddadr (compose mcdr mcdr mcdr mcar mcdr))
+(define mcddddadr (compose mcdr mcdr mcdr mcdr mcar mcdr))
+(define mcdddddadr (compose mcdr mcdr mcdr mcdr mcdr mcar mcdr))
+(define mcddddddadr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcar mcdr))
+(define mcdddddddadr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar mcdr))
+(define mcddddddddadr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar mcdr))
+(define mcdaddr (compose mcdr mcdr mcar mcdr mcdr))
+(define mcdadddr (compose mcdr mcdr mcdr mcar mcdr mcdr))
+(define mcdaddddr (compose mcdr mcdr mcdr mcdr mcar mcdr mcdr))
+(define mcdadddddr (compose mcdr mcdr mcdr mcdr mcdr mcar mcdr mcdr))
+(define mcdaddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcar mcdr mcdr))
+(define mcdadddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar mcdr mcdr))
+(define mcdaddddddddr (compose mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcdr mcar mcdr mcdr))
 (define mcadaadr (compose mcar mcdr mcar mcar mcdr))
 (define (set-mcadr! xs x) (set-mcar! (mcdr xs) x))
 (define (set-mcaddr! xs x) (set-mcar! (mcddr xs) x))
@@ -97,6 +120,14 @@
 (define (set-mcaaddddddr! xs x) (set-mcar! (mcaddddddr xs) x))
 (define (set-mcaadddddddr! xs x) (set-mcar! (mcadddddddr xs) x))
 (define (set-mcaaddddddddr! xs x) (set-mcar! (mcaddddddddr xs) x))
+(define (set-mcadadr! xs x) (set-mcar! (mcdadr xs) x))
+(define (set-mcadaddr! xs x) (set-mcar! (mcdaddr xs) x))
+(define (set-mcadadddr! xs x) (set-mcar! (mcdadddr xs) x))
+(define (set-mcadaddddr! xs x) (set-mcar! (mcdaddddr xs) x))
+(define (set-mcadadddddr! xs x) (set-mcar! (mcdadddddr xs) x))
+(define (set-mcadaddddddr! xs x) (set-mcar! (mcdaddddddr xs) x))
+(define (set-mcadadddddddr! xs x) (set-mcar! (mcdadddddddr xs) x))
+(define (set-mcadaddddddddr! xs x) (set-mcar! (mcdaddddddddr xs) x))
 (define (set-mcadar! xs x) (set-mcar! (mcdar xs) x))
 (define (set-mcaddar! xs x) (set-mcar! (mcddar xs) x))
 (define (set-mcadddar! xs x) (set-mcar! (mcdddar xs) x))
@@ -1666,7 +1697,7 @@
                 (create-lang 'Funject 
                              (gen-funject-id)
                              (mmap-indexes (lambda (elem i)
-                                             (bind-funject-pair (create-funject-pair (create-lang 'Number i) (mlist 'Evaled elem)) module-env))
+                                             (bind-funject-pair (create-funject-pair (create-lang 'Number i) (mlist 'Evaled elem)) (env-create (env-pairs))))
                                            (mcadr thing))
                              parent
                              primitive-funject-inverse-god)]
@@ -1732,7 +1763,7 @@
              (push-funject-pair! exports (bind-funject-pair (create-funject-pair (create-lang 'Symbol "new")
                                                                                  (mlist 'Evaled (create-primitive-class-new module-env)))
                                                             module-env))
-             (assign-identifier! "exports" exports module-env)
+             (assign-strict-identifier! "exports" exports module-env)
              exports))))
              
                   
@@ -2308,26 +2339,47 @@
 
 
 (define (create-primitive-class-new module-env) 
-  (let* ((exports (lookup-identifier! "exports" module-env))
-         (instance (lookup-idnetifier! "instance" module-env))
-         (instance-lang-has? (create-primitive-has?-pattern instance))
-         (instance-has? (lambda (arg) 
-                          (lang-contents (instance-lang-has? arg)
-                                         identity))))
-  (lambda (constructor-arg)
-    (define self (create-lang 'Funject
-                              (gen-funject-id)
-                              (mlist (bind-funject-pair (create-funject-pair (create-lang 'Symbol "class")
-                                                                             (mlist 'Evaled exports))
-                                                        module-env)
-                                     (bind-funject-pair (create-funject-pair (create-lang 'Parameter "else")
-                                                                             (mlist 'Unevaled (lambda (env)
-                                                                                                (let (for-instance (create-lang 'List (mlist self
-                                                                                                                                             (lookup-identifier "@else" 
-                              funject-parent-never-to-be-called
-                              (
+  (let* ((exports (lookup-identifier "exports" module-env))
+         (instance (lookup-identifier "instance" module-env)))
+    (lambda (constructor-arg)
+      (define self (create-lang 'Funject
+                                (gen-funject-id)
+                                (mlist (bind-funject-pair (create-funject-pair (create-lang 'Symbol "class")
+                                                                               (mlist 'Evaled exports))
+                                                          module-env)
+                                       (bind-funject-pair (create-funject-pair (create-lang 'Parameter "else")
+                                                                               (mlist 'Unevaled (lambda (env)
+                                                                                                  (let ((meth (invoke instance (lookup-identifier "@else" env))))
+                                                                                                    (if (equal? (create-lang 'Boolean true) 
+                                                                                                                ((create-primitive-has?-match meth) (create-lang 'List self)))
+                                                                                                        (invoke meth (create-lang 'List self))
+                                                                                                        (create-primitive-class-instance-method meth self))))))
+                                                          module-env))
+                                primitive-funject-never-to-be-called
+                                primitive-funject-inverse-god))
+      (invoke (invoke instance 
+                      (create-lang 'Symbol 
+                                   "initialize"))
+              constructor-arg)
+      self)))
 
+(define (create-primitive-class-instance-method meth self)
+  (create-primitive (lambda (arg) 
+                      (invoke meth (create-lang 'List (mlist self arg))))
+                    (lambda (arg)
+                      (assert (and (lang? 'List arg)
+                                   (mlength (mcadr arg))) "create-primitive-class-instance-method: my inverse was passed not an array of two arguments, but this:" arg)
+                      (let ((result (mcaadr arg))
+                            (inverse-arg (mcadadr arg)))
+                        (invoke (funject-inverse-of meth) (create-lang 'List (mlist result
+                                                                                    (create-lang 'List (mlist self
+                                                                                                              inverse-arg)))))))))
 
+(define primitive-funject-never-to-be-called 
+  (create-primitive (lambda (arg)
+                      (error "primitive-funject-never-to-be-called: I said don't call me!"))
+                    (lambda (arg)
+                      (error "primitive-funject-never-to-be-called: why did you call my inverse?"))))
 
 (define primitive-funject-god
   (create-primitive (lambda (arg own)

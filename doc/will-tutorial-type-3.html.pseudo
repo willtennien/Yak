@@ -1,0 +1,201 @@
+Note: escape all &, <, >, (maybe) ', ", and / with meaning.
+
+
+<h1>Getting Started</h1>
+
+<h3>About this Guide</h3>
+
+<ul>
+<li>This Guide assumes you already have some experience with programming. If you don't, consider reading one of our excellent <a>softer</a> introductions.</li>
+<li>This Guide also assumes you have a reasonable appetite to learn Yak. This does not feature lots of "in-depth" examples, but aims for concision by enumerating the precepts of the language with a few, short examples. It is the ideal guide for a programmer who wants to learn the whole lanaguage quickly.</li>
+</ul>
+
+How Do I get Yak?
+
+<I'll fill this in later.>
+
+
+<h3>More about this Guide</h3>
+
+<Here I'll talk about the font for code conventions.>
+
+
+
+
+<h1>An Overview of Yak</h1>
+
+<h3>What is Yak?</h3>
+
+Yak is the first language to conform to the funject paradigm. In the funject paradigm, neither functions nor objects exist; rather, the roles of these two concepts are merged into the idea of a "funject". Absolutely everything in Yak is a funject, including numbers, strings, booleans, and the "nil" funject.
+
+
+<h1>Builtin types</h1>
+
+<p>Yak has eight builtin types: Number, String, Boolean, Symbol, Nil, Unknown Lists, and the "plain" Funject. Any funject of any type is also a type of Funject. Each of these builtin types has its own literal syntax.</p>
+
+<h3>Numbers</h3>
+
+Yak does not distinguish between different types of numbers—integers, floats, doubles. Rather, everything is simply a number. Number literals contain a number of digits followed by some optional decimal digits and then optional scientific notation. The following are all valid numbers.
+
+1
+
+3.14159
+
+1e80
+
+2.997e+8
+
+1.213e-5
+
+<h3>Strings</h3>
+
+Strings are written as a series of characters enclosed in double or single quotes. Strings can contain some standard escape sequences beginning with the backslash character (<code\</code>): newline "\n", tab "\t", carriage return "\r", and backslash itself "\\". Valid Strings include:
+
+'yak'
+
+"5479"
+
+'By the rude bridge\nThat marked the flood...'
+
+<h3>Booleans</h3>
+
+The two Booleans are the values <code>true</code> and <code>false</code>. Yak ascribes meaning to case, so <code>True</code> does not evaluate to <code>true</true> 
+
+<h3>Symbols</h3>
+
+Symbols are like Strings but you can't edit the characters in them as easily. They are more often less important for the characters they comprise than the concepts they represent—hence their name "symbols". They are like symbols in Ruby or Lisp. You write symbols as a dot (<code>.</code>) followed by a series of numbers, letters or other characters: <code>_</code> (underscore), <code>-</code> (minus sign), <code>?</code>, <code>!</code>, <code>+</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>~</code>, <code>$</code>, <code><</code>, and <code>></code>. Symbols may not begin with a number. Valid symbols include:
+
+.i-am-a-symbol
+
+.$
+
+.yak+ice-cream->hooray!
+
+<h3>Nil</h3>
+
+The only funject of type Nil is <code>nil</code>. It represents "nothingness", much like Java's <code>null</code>, C's null pointer, Python's <code>None</code>, or Ruby's <code>nil</code>. For example, a funject that returns the index of an element in an array and fails to find an element in a particular array would probably return <code>nil</code>. 
+
+<h3>Unknown</h3>
+
+The only funject of type Unknown is <code>unknown</code>. You use it in pattern matching, so I will discuss it later.
+
+<h3>Lists<h3>
+
+Lists—like many language's Arrays—represent a series of funjects. You write lists as a series of expressions separated by commas and enclosed in square brackets. Valid lists include:
+
+['one', 2, 'three']
+
+[]
+
+['hooray!', [['nesting!']]]
+
+<h4>Funject Literals</h4> 
+
+In addition to all the aforementioned types—which are themselves funjects—you can also write "plain" funjects with the funject literal syntax:
+
+{
+	pattern1: consequent1
+	pattern2: consequent2
+	...
+}
+
+A funject literal is a series of any number of pattern-consequent pairs separated by newlines and enclosed in curly braces. A pattern-consequent pair is a pattern followed by a colon followed by an expression. A pattern is a restricted set of Yak syntax that I will explicate more fully later. When writing a funject literal, you must indent all the pairs the same distance. Valid funject literals include:
+
+{}
+
+{'pattern': "consequent"}
+
+{
+	0: {}
+	1: {'pattern': "consequent"}
+	[0, 100, ['string']]: {0: {1: 2}}
+}
+
+{
+	[1]: 'one'
+	[2]: 'two' }
+
+You can write a curly braces on the same line as a pair or you can separate it from the first (or last) pair with any number of newline characters. 
+
+
+<h1>Applications and Parameters</h1>
+
+When you write two expressions next to one another, the interpreter interprets it as an invocation and invokes the lefthand expression with the righthand expression as its argument.
+
+<code>exp1 exp2</code>
+
+Funjects always take one argument, and everything is a funject, so placing two expressions next to one another is always a syntactically legal invocation. Invocation is left-associative; this means that the interprets a series of expressions thus:
+
+exp1 exp2 exp3 exp4 ...
+
+(((exp1 exp2) exp3) exp4) ...
+
+The interpreter invokes a funject in three steps:
+
+<ul>
+<li>It attempts to match the argument to one of the funject's patterns</li>
+<li>When it finds a match, it sets up a new enviroment.</li>
+<li>It evaluates the consequent of the pair and returns the result.</li>
+</ul>
+
+For example, consider the following invocation.
+
+{
+	0: 'zero'
+	1: 'one'
+	2: 'two'
+} 1
+
+<p>The interpreter first identifies the funject literal as the receiver (to be invoked) and <code>1</code> as the argument. It then looks at each of the patterns in the receiver in the order in which they were defined. Next, it tries to match the first pattern, <code>0</code>, to the argument, <code>1</code>, but this fails. It then tries to match the second pattern, <code>1</code>, to <code>1</code>. Since this succeeds, it evaluates the consequent, <code>'one'</code>, and returns this as the result of the whole invocation.</p>
+
+<p>This may remind you of function (or procedure or method) application from languages like Java and Ruby. Like functions, funjects can contain parameters. You write a function an at sign (<code>@</code>) optionally followed by a sequence of characters the same as the ones you can put in a symbol. Valid parameters include:</p>
+
+<code>
+@I-am-A-pArAmEtEr
+
+@yak+ice-cream->hooray!
+
+@
+</code>
+
+A parameter matches any value. Moreover, when the interpreter matches a parameter to a value, it assigns the parameter that value in the scope of the consequent. For example:
+
+<code>
+{@x: [@x, @x]} 4
+</code>
+
+evaluates to [4, 4], because the interpreter matches <code>@x</code> to the argument, <code>4</code>, and simultaneously assigns <code>@x</code> the value <code>4</code>. Then, when it evaluates the expression <code>[@x, @x]</code>, it replaces all occurances of <code>@x</code> with <code>4</code>. It therefore evaluates the entire invocation as [4, 4]. 
+
+Parameters can also appear as components of patterns:
+
+{[@x, 'plumblum']: @x} ['blog', 'plumblum']
+
+This evaluates to <code>'blog'</code>: the interpreter tries to match <code>[@x, 'plumblum']</code> to <code>['blog', 'plumblum']</code> by matching each of the List's elements. It matches <code>@x</code> to <code>'blog'</code>, <code>'plumblum'</code> to <code>'plumblum'</code>, and evaluates the consequent—<code>@x</code>—as <code>'blog'</code>. 
+
+Funject supports relatively logical pattern matching, so the following:
+
+{
+	[@x, @x]: @x
+	[@x, @y]: [@y, @x]
+} [4, 5]
+
+will evaluate to <code>[5, 4]</code> because the first pattern matches only a list of two same elements. Since the parameter <code>@x</code> appears twice in the pattern, the interpreter needs to match both occurrences to the same value. Accordingly, the interpreter will evaluate the following:
+
+{
+	[@x, @x]: @x
+	[@x, @y]: [@y, @x]
+} [2, 2]
+
+as <code>2</code>, because <code>[2, 2]</code> <em>does</em> match a list of two same elements. 
+
+<h1>Inheritance and <code>own</code>(ership)</h1>
+
+<h3>What if none of the patterns match?</h3>
+
+Every funject has an parent funject; we say that a funject "inherits" from its parent. By default, funjects created with funject literals inherit from a special default parent of the type Funject. This default parent contains a number of useful pattern-consequent pairs (hence called "rules"). 
+
+If the interpreter invokes a funject with an argument and fails to match each of the parameters of a funject to that argument, then it invokes the funject's parent with the argument. Since all funjects inherit—directly or indirectly— from the default parent, if the interpreter continues to fail to find a match for an argument it will eventually invoke the default parent. The default parent contains a special, catch-all pattern that signals an error complaining that the interpreter has found no match. 
+
+<h1>Variables and Assignment</h1>
+
+<h1>Inverses</h1>

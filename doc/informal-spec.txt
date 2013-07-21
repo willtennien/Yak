@@ -1,7 +1,7 @@
 
-A (Very) Informal Specification of the Yak Language
+What is Yak?
 
-Yak is the first language to conform to the funject paradigm. In the funject paradigm, neither functions nor objects exist; rather, the roles of these two concepts are merged into the idea of a "funject". Absolutely everything in Yak is a funject, including numbers, strings, booleans, and the "nil" funject. In the following three examples I will give a breezy, high level introduction funjects. Later I will adopt some rigor. Now consider the following Yak code:
+Yak is the first programming language to conform to the funject paradigm. In the funject paradigm, neither functions nor objects exist; rather, the roles of these two concepts are merged into the idea of a "funject". Absolutely everything in Yak is a funject, including numbers, strings, booleans, and the "nil" funject. In the following three examples I will give a breezy, high level introduction funjects. Later I will adopt some rigor. Now consider the following Yak code:
 
 foo = {[0]: 1}
 
@@ -11,9 +11,9 @@ foo['bar'] = 'quux'
 
 foo['bar'] is 'quux'
 
-foo[dot, 'baz'] = 'qux'
+foo.bar = 'qux'
 
-foo[dot, 'baz'] is 'qux'
+foo.bar is 'qux'
 
 foo.baz is 'qux'
 
@@ -67,9 +67,8 @@ Funject
 Number
 String
 Boolean
-List
 Nil
-Dot
+List
 Unknown
 
 Funject is God. Everything inherits from Funject. Number, String, and Boolean, are what they sound like. Lists are like Arrays. Nil is like null in Java, None in Python, or nil in Ruby. Dot exists solely to allow the cool syntactic sugar foo.bar => foo[dot, 'bar']. (For those interested, I could not adopt JavaScript-style syntactic sugar (foo.bar => foo['bar']) because some funjects take strings as "arguments", and so it would become difficult for them to have "properties". ex: capitalize.prop => capitalize['prop'] => 'Prop'.) Unknown has to two with pattern matching. (Later versions of Yak may include a Regex type, an Undefined type, or Class type). 
@@ -161,7 +160,7 @@ This specification is incomplete. Later versions will discuss pattern matching, 
 
 
 
-
+ 
 
 
 
@@ -169,5 +168,25 @@ Syntax
 
 This section deals with the syntax of Yak.
 
-Unlike most languages, Yak does not differentiate between statements and expressions. Everything is simply an expression. Yak recognizes standard syntax:
+Unlike most languages, Yak does not differentiate between statements and expressions. Everything is simply an expression. Yak recognizes eight standard classes of funject:
+
+Number
+String
+Boolean
+Symbol
+Nil
+Unknown
+List
+Funject
+
+
+
+
+
+
+
+
+
+
+
 
