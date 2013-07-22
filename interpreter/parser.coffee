@@ -45,6 +45,7 @@ tokenizer = do ->
             c = raw[i]
             if c is '|'
                 ++i
+                start = i
                 pairs = 1
                 while pairs
                     a = raw.indexOf '#|', i
@@ -57,6 +58,7 @@ tokenizer = do ->
                     if b isnt -1 and (b < a or a is -1)
                         --pairs
                         i = b + 2
+                s += Array(raw.substring(start, i).split('\n').length).join('\n')
             else
                 j = raw.indexOf '\n', i
                 break if j is -1
