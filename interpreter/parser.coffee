@@ -202,7 +202,7 @@ tokenizer = do ->
                     break unless isIdentifier c
                 if value is 'true' or value is 'false'
                     return token 'boolean', value is 'true'
-                if value is 'nil' or value is 'unknown'
+                if value is 'nil' or value is 'unknown' or value is 'class' or value is 'module'
                     return token value, value
                 if type is 'symbol'
                     if value.length is 1
@@ -300,11 +300,44 @@ parse = do ->
         type: 'sequence'
         expressions: result
 
-    expression = (tokens, optional) ->
+    expression = (tokens, optional, noIndent) ->
         if tokens.match 'indent'
             result = sequence tokens
             tokens.require 'outdent'
             return result
+        if start = tokens.match 'class', 'module'
+            if name = tokens.match 'identifier'
+                loop
+                    if t = tokens.match 'symbol'
+                        name =
+                            type: 'application'
+                            line: t.line
+                            character: t.character
+                            funject: name
+                            argument: t
+                        continue
+                    break
+            if tokens.accept '<'
+                parent = expression tokens, false, true
+            unless tokens.here().type is 'indent'
+                parseError tokens.here(), "Expected indent"
+            body = expression tokens
+            result = {
+                type: start.type
+                line: start.line
+                character: start.character
+                body: body
+                parent
+            }
+            return result unless name
+            return {
+                type: 'assignment'
+                operator: 'strict assignment'
+                line: start.line
+                character: start.character
+                left: name
+                right: result
+            }
         e = value tokens
         if not e
             if optional
@@ -321,7 +354,26 @@ parse = do ->
                     funject: e
                     argument: value tokens
                 continue
-            if 'indent' is tokens.here().type
+            if t = tokens.match 'prototypal application'
+                symbol = tokens.require 'identifier'
+                symbol.type = 'symbol'
+                e =
+                    type: 'application'
+                    line: symbol.line
+                    character: symbol.character
+                    funject:
+                        type: 'application'
+                        line: t.line
+                        character: t.character
+                        funject: e
+                        argument:
+                            type: 'symbol'
+                            line: t.line
+                            character: t.character
+                            value: 'instance'
+                    argument: symbol
+                continue
+            if not noIndent and 'indent' is tokens.here().type
                 t = tokens.here()
                 e =
                     type: 'application'
@@ -329,15 +381,7 @@ parse = do ->
                     character: t.character
                     funject: e
                     argument: expression tokens
-                # do not continue, since we cannot directly apply sequences to values which would normally be expressions
-            if t = tokens.match 'prototypal application'
-                e =
-                    type: 'prototypal application'
-                    line: t.line
-                    character: t.character
-                    funject: e
-                    argument: value tokens
-                continue
+                break
             break
         if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance assignment'
             if assignment.type isnt 'inheritance assignment' and assignment.type isnt 'inverse assignment' and e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'strict assignment' and assignment.type isnt 'lazy assignment')
@@ -416,6 +460,11 @@ parseForRacket = (s) ->
             when 'funject' then ['Token-funject', [transform(p.pattern), transform(p.value)] for p in n.patterns]
             when 'sequence' then ['Token-sequence', transform x for x in n.expressions]
             when 'application' then ['Token-invocation', transform(n.funject), transform(n.argument)]
+            when 'class', 'module'
+                if n.parent
+                    ['Token-' + n.type, transform(n.parent), transform(n.body)]
+                else
+                    ['Token-' + n.type, transform(n.body)]
             when 'assignment'
                 switch n.operator
                     when 'strict assignment'

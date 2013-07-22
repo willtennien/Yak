@@ -1,3 +1,5 @@
+util = require 'util'
+
 environment = global ? @
 parser = require './parser.coffee'
 
@@ -42,7 +44,7 @@ class Scope
         @vars = Object.create null
         if vars?
             for name, value of vars
-                @vars[name] = value
+                @set name, value
 
     get: (name) ->
         if Object::hasOwnProperty.call @vars, name
@@ -67,12 +69,77 @@ class Scope
 class Funject
     type: 'funject'
 
-    toString: -> if @name? then "#{@name}" else '#<funject>'
+    toString: ->
+        if @name?
+            @name
+        else
+            try
+                s = new Interpreter().evaluate
+                    type: 'application'
+                    funject:
+                        type: 'value'
+                        value: @
+                    argument:
+                        type: 'symbol'
+                        value: 'to-string'
+                if s.isString
+                    s.value
+                else
+                    '#<funject>'
+            catch
+                '#<funject>'
 
     constructor: (properties) ->
         @patterns = []
         if properties
             @[key] = value for key, value of properties
+
+    methodHasArgs: ->
+        method = @
+        hasArgs = null
+        answer = (result) ->
+            if hasArgs? and hasArgs isnt result
+                throw new InterpreterError 'Method cannot match both [@self] and [@self, @arg]'
+            hasArgs = result
+        loop
+            if method.call
+                i = 0
+                length = method.call.length
+                while i < length
+                    pattern = method.call[i++]
+                    while pattern is 'own' or pattern is 'interpreter'
+                        pattern = method.call[i++]
+                    if pattern instanceof Array
+                        if pattern.length is 1
+                            answer false
+                        if pattern.length is 2
+                            answer true
+                    ++i
+            if method.patterns
+                for o in method.patterns
+                    p = o.pattern
+                    if p.type is 'list' and p.values.length is 1 and p.values[0].type is 'formal parameter'
+                        answer false
+                    if p.type is 'list' and p.values.length is 2 and p.values[0].type is 'formal parameter'
+                        answer true
+            if hasArgs?
+                return hasArgs
+            if not method = method.parent
+                throw new InterpreterError "#{@} is not a method"
+
+    hasSymbol: (name) ->
+        method = @
+        while method
+            if method.call
+                for p in method.call
+                    if p[0] is '.' and name is p.substr 1
+                        return true
+            if method.patterns
+                for p in method.patterns
+                    if p.pattern.type is 'symbol' and p.pattern.value is name
+                        return true
+            method = method.parent
+        false
 
     native: (pattern, argument) ->
         if pattern instanceof Array
@@ -180,7 +247,7 @@ class Funject
         if argument.type is 'boolean' or argument.type is 'nil' or argument.type is 'unknown'
             return lang[argument.value]
 
-    apply: (interpreter, own, argument) ->
+    apply: (interpreter, own, argument, instance = true) ->
         if @call
             i = 0
             length = @call.length
@@ -288,32 +355,51 @@ class Funject
                     interpreter.push p.expression
                 return
 
+        if instance and argument.isSymbol and @instance and @instance.hasSymbol argument.value
+            self = @
+            interpreter.pop()
+            interpreter.push
+                type: 'native'
+                value: ->
+                    method = @first()
+                    hasArgs = method.methodHasArgs()
+                    if hasArgs
+                        @return new Funject
+                            call: ['interpreter', '*', (interpreter, arg) ->
+                                interpreter.pop()
+                                interpreter.push
+                                    type: 'application'
+                                    funject:
+                                        type: 'value'
+                                        value: method
+                                    argument:
+                                        type: 'value'
+                                        value: new ListFunject [self, arg]
+                                SPECIAL_FORM]
+                    else
+                        @pop()
+                        @push
+                            type: 'application'
+                            funject:
+                                type: 'value'
+                                value: method
+                            argument:
+                                type: 'value'
+                                value: new ListFunject [self]
+            interpreter.push
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: @instance
+                argument:
+                    type: 'value'
+                    value: argument
+                instance: false
+            return
+
         return @parent.apply interpreter, own, argument if @parent and @parent isnt @
 
         throw new MatchError own, argument
-
-    @instanceFunject: (f, own) -> new Funject
-        call: [
-            '*', (a) ->
-                lazy:
-                    type: 'application'
-                    funject:
-                        type: 'value'
-                        value: f
-                    argument:
-                        type: 'value'
-                        value: new ListFunject [own, a]]
-        inverse: f.inverse and new Funject
-            call: [
-                ['*', '*'], (result, a) ->
-                    lazy:
-                        type: 'application'
-                        funject:
-                            type: 'value'
-                            value: f.inverse
-                        argument:
-                            type: 'value'
-                            value: new ListFunject [result, new ListFunject [own, a]]]
 
     @bridge: (v, context = environment) ->
         if not v?
@@ -348,103 +434,134 @@ class Funject
                         type: 'value'
                         value: Funject.bridge [].slice.call arguments
 
+yakObject = (parent, properties) ->
+    call = []
+    if properties
+        for k, v of properties
+            do (v) ->
+                call.push '.' + k, -> v
+    return new Funject {call, parent}
+
+yakFunction = (pattern, value) ->
+    return new Funject call: [pattern, value]
+
+yakClass = ({exports, instance}) ->
+    ((exports ?= new Funject).call ?= []).unshift(
+        '.instance', -> instance,
+        '.new', -> throw new InterpreterError "Unimplemented")
+    exports
+
+###
+@instanceFunject: (f, own) -> new Funject
+    call: [
+        '*', (a) ->
+            lazy:
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: f
+                argument:
+                    type: 'value'
+                    value: new ListFunject [own, a]]
+    inverse: f.inverse and new Funject
+        call: [
+            ['*', '*'], (result, a) ->
+                lazy:
+                    type: 'application'
+                    funject:
+                        type: 'value'
+                        value: f.inverse
+                    argument:
+                        type: 'value'
+                        value: new ListFunject [result, new ListFunject [own, a]]]
+###
+
 lang = {}
 
-lang.Funject = new Funject
-    parent: null
-    call: [
-        'own', '.equals', (own) -> new Funject
-            call: [
-                ['*'], (x) -> new BooleanFunject equal own, x]]
+lang.BaseFunject = yakObject null,
+    initialize: yakFunction ['*'], (x) -> lang.nil
+    equals: yakFunction ['*', '*'], (x, y) -> new BooleanFunject equal x, y
+    on: yakFunction ['*', '*'], (x, y) -> lazy:
+            type: 'application'
+            funject:
+                type: 'value'
+                value: y
+            argument:
+                type: 'value'
+                value: x
+    'symbol?': yakFunction ['*'], (x) -> new BooleanFunject x.isSymbol
+    'string?': yakFunction ['*'], (x) -> new BooleanFunject x.isString
+    'number?': yakFunction ['*'], (x) -> new BooleanFunject x.isNumber
+    'list?': yakFunction ['*'], (x) -> new BooleanFunject x.isList
+    'boolean?': yakFunction ['*'], (x) -> new BooleanFunject x.isBooleanx
+    'nil?': yakFunction ['*'], (x) -> new BooleanFunject x.isNil
+    'unknown?': yakFunction ['*'], (x) -> new BooleanFunject x.isUnknown
+    'to-string': yakFunction ['*'], (x) -> new StringFunject '' + x
 
-Funject::parent = lang.Funject
+Funject::instance = lang.BaseFunject
+lang.BaseFunject.instance = null
 
-lang.Symbol = new Funject
-    call: []
+lang.Funject = yakClass
+    instance: lang.BaseFunject
 
-lang.String = new Funject
-    call: [
-        'own', '&+', (own) -> new Funject
-            call: [
-                'string', (x) -> new StringFunject own.value + x.value]]
+lang.BaseSymbol = yakObject lang.BaseFunject
 
-lang.Number = new Funject
-    call: [
-        'own', '&+', (own) -> new Funject
-            call: [
-                'number', (x) -> new NumberFunject own + x]
-            inverse: new Funject
-                call: [
-                    ['number', 'unknown'], (x) ->
-                        new ListFunject [new NumberFunject x - own]]
-        'own', '&-', (own) -> new Funject
-            call: [
-                'number', (x) -> new NumberFunject own - x]
-            inverse: new Funject
-                call: [
-                    ['number', 'unknown'], (x) ->
-                        new ListFunject [new NumberFunject x - own]]
-        'own', '&*', (own) -> new Funject
-            call: [
-                'number', (x) => new NumberFunject own * x]
-            inverse: new Funject
-                call: [
-                    ['number', 'unknown'], (x) =>
-                        new ListFunject [new NumberFunject x / own]]
-        'own', '&/', (own) -> new Funject
-            call: [
-                'number', (x) => new NumberFunject own / x]
-            inverse: new Funject
-                call: [
-                    ['number', 'unknown'], (x) =>
-                        new ListFunject [new NumberFunject own / x]]
-        'own', '.plus', (own) -> new Funject
-            call: [
-                ['number'], (x) -> new NumberFunject own + x]
-            inverse: new Funject
-                call: [
-                    ['number', ['unknown']], (x) ->
-                        new ListFunject [new NumberFunject x - own]]
-        'own', '.minus', (own) -> new Funject
-            call: [
-                ['number'], (x) -> new NumberFunject own - x]
-            inverse: new Funject
-                call: [
-                    ['number', ['unknown']], (x) ->
-                        new ListFunject [new NumberFunject x - own]]
-        'own', '.times', (own) -> new Funject
-            call: [
-                ['number'], (x) => new NumberFunject own * x]
-            inverse: new Funject
-                call: [
-                    ['number', ['unknown']], (x) =>
-                        new ListFunject [new NumberFunject x / own]]
-        'own', '.div', (own) -> new Funject
-            call: [
-                ['number'], (x) => new NumberFunject own / x]
-            inverse: new Funject
-                call: [
-                    ['number', ['unknown']], (x) =>
-                        new ListFunject [new NumberFunject own / x]]]
+lang.BaseString = yakObject lang.BaseFunject,
+    '+': new Funject
+        call: [['string', 'string'], (x, y) -> new StringFunject x.value + y.value]
 
-lang.List = new Funject
-    call: [
-        'own', '.head', (own) ->
-            if own.values.length
-                own.values[0]
-            else
-                throw new InterpreterError 'Cannot take the head of the empty list',
-        'own', '.tail', (own) ->
-            if own.values.length > 1
-                own.values[1..]
-            else
-                lang.nil]
+lang.BaseNumber = yakObject lang.BaseFunject,
+    '+': new Funject
+        call: [
+            ['number', 'number'], (x, y) -> new NumberFunject x + y]
+        inverse: new Funject
+            call: [
+                ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) ->
+                    new ListFunject [new NumberFunject r - x]]
+    '-': new Funject
+        call: [
+            ['number', 'number'], (x, y) -> new NumberFunject x - y]
+        inverse: new Funject
+            call: [
+                ['number', ['number', 'unknown']], (r, x) ->
+                    new ListFunject [new NumberFunject x - r],
+                ['number', ['unknown', 'number']], (r, x) ->
+                    new ListFunject [new NumberFunject r + x]]
+    '*': new Funject
+        call: [
+            ['number', 'number'], (x, y) => new NumberFunject x * y]
+        inverse: new Funject
+            call: [
+                ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) =>
+                    new ListFunject [new NumberFunject r / x]]
+    '/': new Funject
+        call: [
+            ['number', 'number'], (x, y) => new NumberFunject x / y]
+        inverse: new Funject
+            call: [
+                ['number', ['number', 'unknown']], (r, x) =>
+                    new ListFunject [new NumberFunject x / r],
+                ['number', ['unknown', 'number']], (r, x) =>
+                    new ListFunject [new NumberFunject r * x]]
 
-lang.Boolean = new Funject
-    call: []
+lang.BaseList = yakObject lang.BaseFunject,
+    head: yakFunction ['list'], (x) ->
+        if x.values.length
+            x.values[0]
+        else
+            throw new InterpreterError 'Cannot take the head of the empty list'
+    tail: yakFunction ['list'], (x) ->
+        if x.values.length > 1
+            new ListFunject x.values[1..]
+        else
+            lang.nil
+    'empty?': yakFunction ['list'], (x) ->
+        new BooleanFunject x.values.length is 0
+
+lang.BaseBoolean = yakObject lang.BaseFunject
 
 class SymbolFunject extends Funject
-    parent: lang.Symbol
+    instance: lang.BaseSymbol
     type: 'symbol'
     isSymbol: true
 
@@ -452,7 +569,7 @@ class SymbolFunject extends Funject
     toString: -> "." + @value
 
 class StringFunject extends Funject
-    parent: lang.String
+    instance: lang.BaseString
     type: 'string'
     isString: true
 
@@ -462,7 +579,7 @@ class StringFunject extends Funject
     toString: -> "'" + @value.replace(/[\\]/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + "'"
 
 class NumberFunject extends Funject
-    parent: lang.Number
+    instance: lang.BaseNumber
     type: 'number'
     isNumber: true
 
@@ -471,7 +588,7 @@ class NumberFunject extends Funject
     valueOf: -> @value
 
 class ListFunject extends Funject
-    parent: lang.List
+    instance: lang.BaseList
     type: 'list'
     isList: true
 
@@ -479,11 +596,11 @@ class ListFunject extends Funject
     toString: -> "[#{@values.join ', '}]"
 
 class BooleanFunject extends Funject
-    parent: lang.Boolean
+    instance: lang.BaseBoolean
     type: 'boolean'
     isBoolean: true
 
-    constructor: (@value) ->
+    constructor: (value) -> @value = !!value
     toString: -> '' + @value
 
 lang.nil = new Funject
@@ -492,7 +609,7 @@ lang.nil = new Funject
     toString: -> 'nil'
 lang.unknown = new Funject
     type: 'unknown'
-    isUnkown: true
+    isUnknown: true
     toString: -> 'unknown'
 lang.true = new BooleanFunject true
 lang.false = new BooleanFunject false
@@ -512,10 +629,10 @@ globalScope = new class extends Scope
             else
                 throw e
 
-globalScope.set '+', '.+'
-globalScope.set '-', '.-'
-globalScope.set '*', '.*'
-globalScope.set '/', './'
+globalScope.set '+', new SymbolFunject '+'
+globalScope.set '-', new SymbolFunject '-'
+globalScope.set '*', new SymbolFunject '*'
+globalScope.set '/', new SymbolFunject '/'
 
 globalScope.set 'cons', new Funject
     call: [
@@ -538,6 +655,11 @@ globalScope.set 'error', new Funject
 globalScope.set 'print', new Funject
     call: [['string'], (message) ->
         console.log message.value
+        lang.nil]
+
+globalScope.set 'debug', new Funject
+    call: [['*'], (thing) ->
+        console.log '' + thing
         lang.nil]
 
 itself = (n) -> @return lang[n.type]
@@ -621,7 +743,7 @@ class Interpreter
                 if n.operator isnt 'lazy assignment' and @frame.arguments.length is 1
                     @push n.right
                     return
-                funject.patterns.unshift (
+                (funject.patterns ?= []).unshift (
                     if n.operator is 'lazy assignment'
                         pattern: n.left.argument
                         expression: n.right
@@ -645,49 +767,114 @@ class Interpreter
                 expression: p.value
                 scope: @scope)
             @return f
-        'prototypal application': (n) ->
-            return unless @args n.funject, n.argument
-            funject = @first()
-            argument = @second()
-            @return new Funject
-                call: [
-                    ['*'], (x) => lazy:
-                        type: 'application'
-                        funject:
-                            type: 'value'
-                            value: funject
-                        argument:
-                            type: 'value'
-                            value: argument
-                        own: x
-                    ['*', '*'], (x, y) => lazy:
-                        type: 'application'
-                        funject:
-                            type: 'native'
-                            value: ->
-                                if not @frame.arguments.length
-                                    @push
+        module: (n) ->
+            p = n.parent?
+            return if p and not @args n.parent
+            argc = if p then 1 else 0
+            if @frame.arguments.length is argc
+                @frame.super = if p then @first() else lang.Funject
+                @push type: 'pop scope'
+                @scope = @frame.scope = new Scope @scope,
+                    exports: new Funject parent: @frame.super
+                    super: @frame.super
+                if p
+                    @args n.parent, n.body
+                else
+                    @args n.body
+                return
+            exports = @frame.scope.vars.exports
+            exports.parent = @frame.super
+            @return exports
+        class: (n) ->
+            p = n.parent?
+            return if p and not @args n.parent
+            argc = if p then 1 else 0
+            if @frame.arguments.length is argc
+                @frame.super = if p then @first() else lang.Funject
+                superInstance =
+                    type: 'application'
+                    funject:
+                        type: 'value'
+                        value: @frame.super
+                    argument:
+                        type: 'symbol'
+                        value: 'instance'
+                @args (if p then [n.parent, superInstance] else [superInstance])...
+                return
+            if @frame.arguments.length is argc + 1
+                @frame.superInstance = if p then @second() else @first()
+                @push type: 'pop scope'
+                @scope = @frame.scope = new Scope @scope,
+                    exports: new Funject parent: @frame.super
+                    super: @frame.super
+                    instance: new Funject parent: @frame.superInstance
+                if p
+                    @args 0, 0, n.body
+                else
+                    @args 0, n.body
+                return
+            exports = @frame.scope.vars.exports
+            exports.parent = @frame.super
+            instance = @frame.scope.vars.instance
+            instance.parent = @frame.superInstance
+            prototype = yakObject null,
+                class: exports
+            (exports.call ?= []).unshift(
+                '.instance', -> instance
+                '.new', -> lazy:
+                    type: 'native'
+                    value: ->
+                        initializeCall =
+                            type: 'application'
+                            instance: false
+                            funject:
+                                type: 'value'
+                                value: instance
+                            argument:
+                                type: 'symbol'
+                                value: 'initialize'
+                        return unless @args initializeCall
+                        initialize = @first()
+                        hasArgs = initialize.methodHasArgs()
+                        result = new Funject { parent: prototype, instance }
+                        if hasArgs
+                            @return new Funject
+                                call: ['interpreter', '*', (interpreter, arg) ->
+                                    interpreter.pop()
+                                    interpreter.push
+                                        type: 'value'
+                                        value: result
+                                    interpreter.push
                                         type: 'application'
                                         funject:
                                             type: 'value'
-                                            value: funject
+                                            value: initialize
                                         argument:
                                             type: 'value'
-                                            value: argument
-                                        own: x
-                                    return
-                                @return @first()
-                        argument:
-                            type: 'value'
-                            value: y
-                        own: x]
+                                            value: new ListFunject [result, arg]
+                                    SPECIAL_FORM]
+                        else
+                            @pop()
+                            @push
+                                type: 'value'
+                                value: result
+                            @push
+                                type: 'application'
+                                funject:
+                                    type: 'value'
+                                    value: initialize
+                                argument:
+                                    type: 'value'
+                                    value: new ListFunject [result]
+            )
+            @return exports
         application: (n) ->
             return unless @args n.funject, n.argument
             if @frame.arguments.length > 2
                 return @return @frame.arguments[2]
             funject = @first()
             argument = @second()
-            funject.apply @, n.own ? funject, argument
+            funject.apply @, n.own ? funject, argument, n.instance
 
     evaluate: (n) ->
         @scope = globalScope
@@ -708,7 +895,7 @@ class Interpreter
                         scope = scope.parent
                     throw new RuntimeError stack
                 else
-                    console.log require('util').inspect @stack, depth: 10
+                    console.log util.inspect @stack, depth: 10
                     throw e
         last @stack[0].arguments
 
@@ -747,6 +934,7 @@ class Interpreter
 
     first: (n) -> @frame.arguments[0]
     second: (n) -> @frame.arguments[1]
+    third: (n) -> @frame.arguments[2]
 
 evaluate = (s) ->
     new Interpreter().evaluate parser.parse s
@@ -756,11 +944,12 @@ repl = ->
     process.stdin.setEncoding 'utf8'
     process.stdout.write '> '
     read = ''
-    brackets = 0
+    #brackets = 0
+    #hasBrackets = false
     process.stdin.on 'data', (string) ->
         read += string
-        brackets += (string.match(/[\[({]/g) || []).length - (string.match(/[})\]]/g) || []).length
-        if brackets is 0
+        #brackets += (string.match(/[\[({]/g) || []).length - (string.match(/[})\]]/g) || []).length
+        if not /^[\t ]|\b(class|module)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test string
             try
                 process.stdout.write '' + evaluate read
             catch e
@@ -780,29 +969,28 @@ if module?
     exports.repl = repl
     exports.evaluate = evaluate
     if not module.parent
-        expression = null
+        expressions = []
         i = 2
         argc = process.argv.length
+        interactive = argc is 2
         while i < argc
             switch arg = process.argv[i++]
+                when '-h'
+                    console.error 'Usage: coffee interpreter.coffee [ <filename> | -e <expression> | -i | -h ]'
+                    return
                 when '-i'
-                    break
+                    interactive = true
                 when '-e'
-                    expression = process.argv[i++]
-                    break
+                    expressions.push process.argv[i++]
                 else
-                    expression = require('fs').readFileSync arg
-                    break
-        if i < argc
-            console.error 'Usage: coffee interpreter.coffee [ <filename> | -e <expression> | -i ]'
-            return
-        if expression?
+                    expressions.push '' + require('fs').readFileSync arg
+        for expression in expressions
             try
-                console.log '' + evaluate expression
+                evaluate expression
             catch e
                 if e instanceof SyntaxError
                     console.error e.message
                 else
                     throw e
-        else
+        if interactive
             repl()
