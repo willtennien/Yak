@@ -453,36 +453,13 @@ yakClass = ({exports, instance}) ->
     exports.$instance = instance
     exports
 
-###
-@instanceFunject: (f, own) -> new Funject
-    call: [
-        '*', (a) ->
-            lazy:
-                type: 'application'
-                funject:
-                    type: 'value'
-                    value: f
-                argument:
-                    type: 'value'
-                    value: new ListFunject [own, a]]
-    inverse: f.inverse and new Funject
-        call: [
-            ['*', '*'], (result, a) ->
-                lazy:
-                    type: 'application'
-                    funject:
-                        type: 'value'
-                        value: f.inverse
-                    argument:
-                        type: 'value'
-                        value: new ListFunject [result, new ListFunject [own, a]]]
-###
+yakBoolean = (value) -> lang[!!value]
 
 lang = {}
 
 BaseFunject = yakObject null,
     initialize: yakFunction ['*'], (x) -> lang.nil
-    equals: yakFunction ['*', '*'], (x, y) -> new BooleanFunject equal x, y
+    equals: yakFunction ['*', '*'], (x, y) -> yakBoolean equal x, y
     on: yakFunction ['*', '*'], (x, y) -> lazy:
             type: 'application'
             funject:
@@ -491,13 +468,13 @@ BaseFunject = yakObject null,
             argument:
                 type: 'value'
                 value: x
-    'symbol?': yakFunction ['*'], (x) -> new BooleanFunject x.isSymbol
-    'string?': yakFunction ['*'], (x) -> new BooleanFunject x.isString
-    'number?': yakFunction ['*'], (x) -> new BooleanFunject x.isNumber
-    'list?': yakFunction ['*'], (x) -> new BooleanFunject x.isList
-    'boolean?': yakFunction ['*'], (x) -> new BooleanFunject x.isBoolean
-    'nil?': yakFunction ['*'], (x) -> new BooleanFunject x.isNil
-    'unknown?': yakFunction ['*'], (x) -> new BooleanFunject x.isUnknown
+    'symbol?': yakFunction ['*'], (x) -> yakBoolean x.isSymbol
+    'string?': yakFunction ['*'], (x) -> yakBoolean x.isString
+    'number?': yakFunction ['*'], (x) -> yakBoolean x.isNumber
+    'list?': yakFunction ['*'], (x) -> yakBoolean x.isList
+    'boolean?': yakFunction ['*'], (x) -> yakBoolean x.isBoolean
+    'nil?': yakFunction ['*'], (x) -> yakBoolean x.isNil
+    'unknown?': yakFunction ['*'], (x) -> yakBoolean x.isUnknown
     'to-string': yakFunction ['*'], (x) -> new StringFunject '' + x
 
 Funject::instance = BaseFunject
@@ -562,7 +539,7 @@ lang.List = yakClass
             else
                 lang.nil
         'empty?': yakFunction ['list'], (x) ->
-            new BooleanFunject x.values.length is 0
+            yakBoolean x.values.length is 0
 
 lang.Boolean = yakClass
     instance: yakObject BaseFunject
