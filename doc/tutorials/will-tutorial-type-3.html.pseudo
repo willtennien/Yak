@@ -194,8 +194,82 @@ as <code>2</code>, because <code>[2, 2]</code> <em>does</em> match a list of two
 
 Every funject has an parent funject; we say that a funject "inherits" from its parent. By default, funjects created with funject literals inherit from a special default parent of the type Funject. This default parent contains a number of useful pattern-consequent pairs (hence called "rules"). 
 
-If the interpreter invokes a funject with an argument and fails to match each of the parameters of a funject to that argument, then it invokes the funject's parent with the argument. Since all funjects inherit—directly or indirectly— from the default parent, if the interpreter continues to fail to find a match for an argument it will eventually invoke the default parent. The default parent contains a special, catch-all pattern that signals an error complaining that the interpreter has found no match. 
+If the interpreter invokes a funject with an argument and fails to match each of the parameters of a funject to that argument, then it invokes the funject's parent with the argument. Since all funjects inherit—directly or indirectly—from the default parent, if the interpreter continues to fail to find a match for an argument it will eventually invoke the default parent. The default parent contains a special, catch-all pattern that signals an error complaining that the interpreter has found no match. 
+
+<h3>Own</h3>
+
+During the execution of a consequent, a funject has access to a special keyword <code>own</code>. <code>own</code> represents the funject itself. Using <own>code</code>, a funject can invoke itself, pass itself as an argument, and even return itself. Compare <code>own</code> to JavaScript's <code>arguments.callee</code>. For example, we can write the famous recursive factorial algorithm as a funject:
+
+{
+	[0]: 1
+	[@n]: @n * own[@n - 1]
+}
+
+This definition also uses the mathematical operations times (<code>*</code>) and minus (<code>-</code>). The interpreter actually handles mathematical operations in an interesting way; the interpreter does not handle them as a special case, operation, or syntax but handles them as standard library funjects. Suffice it to know for now that the interpreter evaluates <code>a + b</code> as the sum of <code>a</code> and <code>b</code>, <code>a - b</code> as the difference of <code>a</code> and <code>b</code>, <code>a * b</code> as the product, and <code>a / b</code> as the quotient. 
+
 
 <h1>Variables and Assignment</h1>
+
+<h3>The Simple Assignment Operator</h3>
+
+Yak has a rich variety of assignment operators. The simplest is the simple assignment:
+
+x = 4
+
+When the interpreter encounters this expression, it identifies the left hand side as a variable, evaluates the right hand side, and sets the variable <code>x</code> to point to the value, <code>4</code> in whatever scope the interpreter encountered the assignment. It then evaluates the entire expression as the right hand side, and substitutes the value set in place of the assignment. This allows you such nice syntax as:
+
+x = y = 'pomegranate'
+
+The assignment <code>y = 'pomegranate'</code> evaluates to <code>'pomegranate'</code> itself, and the interpreter sets <code>x</code> equal to <code>'pomegranate'</code>.
+
+When assigning a variable, you need not declare its type; futhermore, you may reset it to a value of a different type. In many ways, the notion of a "type" is meaningless because everything is a funject. 
+
+<h3>The Lazy Assignment Operator</h3>
+
+You can also assign values lazily. The <code>:=</code> operator denotes a lazy assignment:
+
+x := 2 + 2
+
+When the interpreter encounters this expression, it identifies left hand side as a variable and sets it equal to the delayed expression on the right hand side in the scope where it encountered the assignment. Instead of returning the right hand side (which it hasn't evaluated yet) it simply returns <code>nil</code>. The interpreter evaluates the expression not when you assign the variable, but when you reference it. Thus to compute the expression:
+
+x + x
+
+The interpreter evaluates the first <code>x</code> by looking up the variable in the current scope, finding that it points to a lazy expression, evaluating that expression, and then substituting the result of the evaluation for the variable. Everytime you reference the variable, the interpreter evaluates the expression again. In the example above, the interpreter evaluates <code>x + x</code> twice for each reference to <code>x</code>. 
+
+You can use lazy assignments to great effect such as by tracking the value of a variable. Consider the following:
+
+x = 0
+y := x
+x = 1
+y
+
+In this case, the interpreter first sets x equal to 0, sets y equal to the lazy expression <code>x</code>, resets x to 1, and finally evaluates y. Because it evaluates the expression <code>x</code> when it evaluates the last line, it evaluates y as 1. When we say that "y is x", we seem to mean that y is whatever x is. Because we used lazy assignment, we will find that y always equals whatever x does. But if we had used strict assignment, as many other languages solely support, the interpreter would have evaluated y as 0. 
+
+<code>Scope</code>
+
+The interpreter evaluates the consequent of a funject in a scope that is newly created for each execution but that has access to the scope in which the funject was defined. For example:
+
+x = 'outer'
+{ []: x = 'inner' } []
+x
+
+When the interpreter evaluates this, it first sets x equal to 'outer' in the outer scope, then matches the pattern of the funject to its argument, and evaluates the consequent of the funject by creating a new scope and setting x equal to 'inner' in that scope. When it then looks up the variable <code>x</code> in the outer scope, and finds it equal to 'outer'. Lazy assignments work the same way:
+
+x := 'outer'
+{ []: x := 'inner' } []
+x
+
+On the last line, the interpreter evaluates <code>x</code> as 'outer'. 
+
+If you want to reset the variable of an outer scope, you need to use the reset assignment operators. You can reset simple values with <code>|=</code>
+
+x = 'outer'
+{ []: x |= 'inner' } []
+x
+
+When the interpreter evaluates <code>x |= 'inner'</code>, it searches for the variable <code>x</code> in an enclosing scope—not in the current scope—beginnign with the "closest" scope and working up the "scope chain" (successively enclosing scopes). If it fails to find such a variable, it signals an error. Otherwise, it resets the first variable it finds to the result of evaluating the left hand side. In this example, it searches outside of the scope of the consequent and finds the variable created in the assignment <code>x = 'outer'</code>. It then resets this to <code>'inner'</code>. When it lookups <code>x</code> on the last line, it finds it equal to <code>'inner'</code>. 
+
+The interpreter evaluates the lazy reset assignment operator (<code>|:=</code>) in much the same way, but it delays the evaluation of the right hand side until you attempt to reference the variable. 
+
 
 <h1>Inverses</h1>
