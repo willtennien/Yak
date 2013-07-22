@@ -954,7 +954,9 @@ repl = ->
     rl.prompt()
 
     read = ''
+    sigints = 0
     rl.on 'line', (line) ->
+        sigints = 0
         read += line + '\n'
         if not /^[\t ]|(^|[(\[])(class|module)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
             try
@@ -974,6 +976,22 @@ repl = ->
             rl.prompt()
             if s = /(^|\n)([ \t]+).*\n$/.exec read
                 rl.write s[2]
+
+    rl.on 'SIGINT', ->
+        rl._refreshLine() # TODO this is a bad idea
+        if rl.line is '' and read is ''
+            if sigints
+                rl.close()
+            else
+                sigints = 1
+                rl.clearLine()
+                console.log '(^C again to quit)'
+        else
+            sigints = 0
+            rl.clearLine()
+            read = ''
+        rl.setPrompt '> '
+        rl.prompt()
 
     rl.on 'close', ->
         console.log '' # put a newline after the last prompt
