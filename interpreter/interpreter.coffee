@@ -941,7 +941,14 @@ evaluate = (s) ->
     new Interpreter().evaluate parser.parse s
 
 repl = ->
-    rl = readline.createInterface process.stdin, process.stdout
+    rl = readline.createInterface
+        input: process.stdin
+        output: process.stdout
+        completer: (line) ->
+            if /^\s*$/.test line
+                [[line + '    '], line]
+            else
+                [[], line]
 
     rl.setPrompt '> '
     rl.prompt()
@@ -961,9 +968,12 @@ repl = ->
                     throw e
             read = ''
             rl.setPrompt '> '
+            rl.prompt()
         else
             rl.setPrompt '? '
-        rl.prompt()
+            rl.prompt()
+            if s = /(^|\n)([ \t]+).*\n$/.exec read
+                rl.write s[2]
 
     rl.on 'close', ->
         console.log '' # put a newline after the last prompt
