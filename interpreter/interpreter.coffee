@@ -450,6 +450,7 @@ yakClass = ({exports, instance}) ->
     ((exports ?= new Funject).call ?= []).unshift(
         '.instance', -> instance,
         '.new', -> throw new InterpreterError "Unimplemented")
+    exports.$instance = instance
     exports
 
 ###
@@ -479,7 +480,7 @@ yakClass = ({exports, instance}) ->
 
 lang = {}
 
-lang.BaseFunject = yakObject null,
+BaseFunject = yakObject null,
     initialize: yakFunction ['*'], (x) -> lang.nil
     equals: yakFunction ['*', '*'], (x, y) -> new BooleanFunject equal x, y
     on: yakFunction ['*', '*'], (x, y) -> lazy:
@@ -494,75 +495,80 @@ lang.BaseFunject = yakObject null,
     'string?': yakFunction ['*'], (x) -> new BooleanFunject x.isString
     'number?': yakFunction ['*'], (x) -> new BooleanFunject x.isNumber
     'list?': yakFunction ['*'], (x) -> new BooleanFunject x.isList
-    'boolean?': yakFunction ['*'], (x) -> new BooleanFunject x.isBooleanx
+    'boolean?': yakFunction ['*'], (x) -> new BooleanFunject x.isBoolean
     'nil?': yakFunction ['*'], (x) -> new BooleanFunject x.isNil
     'unknown?': yakFunction ['*'], (x) -> new BooleanFunject x.isUnknown
     'to-string': yakFunction ['*'], (x) -> new StringFunject '' + x
 
-Funject::instance = lang.BaseFunject
-lang.BaseFunject.instance = null
+Funject::instance = BaseFunject
+BaseFunject.instance = null
 
 lang.Funject = yakClass
-    instance: lang.BaseFunject
+    instance: BaseFunject
 
-lang.BaseSymbol = yakObject lang.BaseFunject
+lang.Symbol = yakClass
+    instance: yakObject BaseFunject
 
-lang.BaseString = yakObject lang.BaseFunject,
-    '+': new Funject
-        call: [['string', 'string'], (x, y) -> new StringFunject x.value + y.value]
+lang.String = yakClass
+    instance: yakObject BaseFunject,
+        '+': new Funject
+            call: [['string', 'string'], (x, y) -> new StringFunject x.value + y.value]
 
-lang.BaseNumber = yakObject lang.BaseFunject,
-    '+': new Funject
-        call: [
-            ['number', 'number'], (x, y) -> new NumberFunject x + y]
-        inverse: new Funject
+lang.Number = yakClass
+    instance: yakObject BaseFunject,
+        '+': new Funject
             call: [
-                ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) ->
-                    new ListFunject [new NumberFunject r - x]]
-    '-': new Funject
-        call: [
-            ['number', 'number'], (x, y) -> new NumberFunject x - y]
-        inverse: new Funject
+                ['number', 'number'], (x, y) -> new NumberFunject x + y]
+            inverse: new Funject
+                call: [
+                    ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) ->
+                        new ListFunject [new NumberFunject r - x]]
+        '-': new Funject
             call: [
-                ['number', ['number', 'unknown']], (r, x) ->
-                    new ListFunject [new NumberFunject x - r],
-                ['number', ['unknown', 'number']], (r, x) ->
-                    new ListFunject [new NumberFunject r + x]]
-    '*': new Funject
-        call: [
-            ['number', 'number'], (x, y) => new NumberFunject x * y]
-        inverse: new Funject
+                ['number', 'number'], (x, y) -> new NumberFunject x - y]
+            inverse: new Funject
+                call: [
+                    ['number', ['number', 'unknown']], (r, x) ->
+                        new ListFunject [new NumberFunject x - r],
+                    ['number', ['unknown', 'number']], (r, x) ->
+                        new ListFunject [new NumberFunject r + x]]
+        '*': new Funject
             call: [
-                ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) =>
-                    new ListFunject [new NumberFunject r / x]]
-    '/': new Funject
-        call: [
-            ['number', 'number'], (x, y) => new NumberFunject x / y]
-        inverse: new Funject
+                ['number', 'number'], (x, y) => new NumberFunject x * y]
+            inverse: new Funject
+                call: [
+                    ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) =>
+                        new ListFunject [new NumberFunject r / x]]
+        '/': new Funject
             call: [
-                ['number', ['number', 'unknown']], (r, x) =>
-                    new ListFunject [new NumberFunject x / r],
-                ['number', ['unknown', 'number']], (r, x) =>
-                    new ListFunject [new NumberFunject r * x]]
+                ['number', 'number'], (x, y) => new NumberFunject x / y]
+            inverse: new Funject
+                call: [
+                    ['number', ['number', 'unknown']], (r, x) =>
+                        new ListFunject [new NumberFunject x / r],
+                    ['number', ['unknown', 'number']], (r, x) =>
+                        new ListFunject [new NumberFunject r * x]]
 
-lang.BaseList = yakObject lang.BaseFunject,
-    head: yakFunction ['list'], (x) ->
-        if x.values.length
-            x.values[0]
-        else
-            throw new InterpreterError 'Cannot take the head of the empty list'
-    tail: yakFunction ['list'], (x) ->
-        if x.values.length > 1
-            new ListFunject x.values[1..]
-        else
-            lang.nil
-    'empty?': yakFunction ['list'], (x) ->
-        new BooleanFunject x.values.length is 0
+lang.List = yakClass
+    instance: yakObject BaseFunject,
+        head: yakFunction ['list'], (x) ->
+            if x.values.length
+                x.values[0]
+            else
+                throw new InterpreterError 'Cannot take the head of the empty list'
+        tail: yakFunction ['list'], (x) ->
+            if x.values.length > 1
+                new ListFunject x.values[1..]
+            else
+                lang.nil
+        'empty?': yakFunction ['list'], (x) ->
+            new BooleanFunject x.values.length is 0
 
-lang.BaseBoolean = yakObject lang.BaseFunject
+lang.Boolean = yakClass
+    instance: yakObject BaseFunject
 
 class SymbolFunject extends Funject
-    instance: lang.BaseSymbol
+    instance: lang.Symbol.$instance
     type: 'symbol'
     isSymbol: true
 
@@ -570,7 +576,7 @@ class SymbolFunject extends Funject
     toString: -> "." + @value
 
 class StringFunject extends Funject
-    instance: lang.BaseString
+    instance: lang.String.$instance
     type: 'string'
     isString: true
 
@@ -580,7 +586,7 @@ class StringFunject extends Funject
     toString: -> "'" + @value.replace(/[\\]/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + "'"
 
 class NumberFunject extends Funject
-    instance: lang.BaseNumber
+    instance: lang.Number.$instance
     type: 'number'
     isNumber: true
 
@@ -589,7 +595,7 @@ class NumberFunject extends Funject
     valueOf: -> @value
 
 class ListFunject extends Funject
-    instance: lang.BaseList
+    instance: lang.List.$instance
     type: 'list'
     isList: true
 
@@ -597,7 +603,7 @@ class ListFunject extends Funject
     toString: -> "[#{@values.join ', '}]"
 
 class BooleanFunject extends Funject
-    instance: lang.BaseBoolean
+    instance: lang.Boolean.$instance
     type: 'boolean'
     isBoolean: true
 
