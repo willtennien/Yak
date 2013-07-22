@@ -127,7 +127,10 @@ tokenizer = do ->
                             return token 'indent'
                 when '{', '}', '[', ']', ':', '=', ',', '(', ')'
                     ++i
-                    return token symbol[c], c
+                    if c is '=' and s[i] is '='
+                        --i
+                    else
+                        return token symbol[c], c
 
             if c is '-'
                 q = s[i + 1]

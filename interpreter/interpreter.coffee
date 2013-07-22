@@ -459,7 +459,10 @@ lang = {}
 
 BaseFunject = yakObject null,
     initialize: yakFunction ['*'], (x) -> lang.nil
-    equals: yakFunction ['*', '*'], (x, y) -> yakBoolean equal x, y
+    is: yakFunction ['*', '*'], (x, y) -> yakBoolean x is y
+    isnt: yakFunction ['*', '*'], (x, y) -> yakBoolean x isnt y
+    '==': yakFunction ['*', '*'], (x, y) -> yakBoolean equal x, y
+    '!=': yakFunction ['*', '*'], (x, y) -> yakBoolean not equal x, y
     on: yakFunction ['*', '*'], (x, y) -> lazy:
             type: 'application'
             funject:
@@ -525,6 +528,10 @@ lang.Number = yakClass
                         new ListFunject [new NumberFunject x / r],
                     ['number', ['unknown', 'number']], (r, x) =>
                         new ListFunject [new NumberFunject r * x]]
+        '>': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value > y.value
+        '<': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value < y.value
+        '>=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value >= y.value
+        '<=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value <= y.value
 
 lang.List = yakClass
     instance: yakObject BaseFunject,
@@ -617,6 +624,12 @@ globalScope.set '+', new SymbolFunject '+'
 globalScope.set '-', new SymbolFunject '-'
 globalScope.set '*', new SymbolFunject '*'
 globalScope.set '/', new SymbolFunject '/'
+globalScope.set '==', new SymbolFunject '=='
+globalScope.set '!=', new SymbolFunject '!='
+globalScope.set '<', new SymbolFunject '<'
+globalScope.set '>', new SymbolFunject '>'
+globalScope.set '<=', new SymbolFunject '<='
+globalScope.set '>=', new SymbolFunject '>='
 
 globalScope.set 'cons', new Funject
     call: [
