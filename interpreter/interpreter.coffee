@@ -946,7 +946,13 @@ repl = ->
         output: process.stdout
         completer: (line) ->
             if /^\s*$/.test line
-                [[line + '    '], line]
+                if s = /(^|\n)([ \t]+).*\n$/.exec read
+                    if line.length >= s[2].length
+                        [[line + '    '], line]
+                    else
+                        [[s[2]], line]
+                else
+                    [[line + '    '], line]
             else
                 [[], line]
 
@@ -974,8 +980,9 @@ repl = ->
         else
             rl.setPrompt '? '
             rl.prompt()
-            if s = /(^|\n)([ \t]+).*\n$/.exec read
-                rl.write s[2]
+            # TODO this breaks pasting
+            # if s = /(^|\n)([ \t]+).*\n$/.exec read
+            #     rl.write s[2]
 
     rl.on 'SIGINT', ->
         rl._refreshLine() # TODO this is a bad idea
