@@ -434,13 +434,6 @@ class Funject
                         type: 'value'
                         value: Funject.bridge [].slice.call arguments
 
-<<<<<<< HEAD
-class BaseFunject extends Funject
-    parent: null
-
-    call: [
-        'own', '.equals', (own) -> new Funject
-=======
 yakObject = (parent, properties) ->
     call = []
     if properties
