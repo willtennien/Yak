@@ -1,4 +1,5 @@
 util = require 'util'
+readline = require 'readline'
 
 environment = global ? @
 parser = require './parser.coffee'
@@ -940,29 +941,33 @@ evaluate = (s) ->
     new Interpreter().evaluate parser.parse s
 
 repl = ->
-    process.stdin.resume()
-    process.stdin.setEncoding 'utf8'
-    process.stdout.write '> '
+    rl = readline.createInterface process.stdin, process.stdout
+
+    rl.setPrompt '> '
+    rl.prompt()
+
     read = ''
-    #brackets = 0
-    #hasBrackets = false
-    process.stdin.on 'data', (string) ->
-        read += string
-        #brackets += (string.match(/[\[({]/g) || []).length - (string.match(/[})\]]/g) || []).length
-        if not /^[\t ]|\b(class|module)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test string
+    rl.on 'line', (line) ->
+        read += line + '\n'
+        if not /^[\t ]|(^|[(\[])(class|module)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
             try
-                process.stdout.write '' + evaluate read
+                console.log '' + evaluate read
             catch e
                 if e instanceof RuntimeError
-                    process.stdout.write e.stack
+                    console.log e.stack
                 else if e instanceof SyntaxError
-                    process.stdout.write e.message
+                    console.log e.message
                 else
                     throw e
             read = ''
-            process.stdout.write '\n> '
+            rl.setPrompt '> '
         else
-            process.stdout.write '? '
+            rl.setPrompt '? '
+        rl.prompt()
+
+    rl.on 'close', ->
+        console.log '' # put a newline after the last prompt
+        process.exit 0
 
 if module?
     exports.Funject = Funject
