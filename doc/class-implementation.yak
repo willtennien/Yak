@@ -12,10 +12,9 @@ class Knavery
 		.punishment: 'Usually, death'
 
 	instance = 
-		.expiation: 
+		.expiation: [@self]:
 			ajax['www.vatican.gov/find-expiation-cost?id=' + my.id]
-		.initialize
-			[@self, @name]: 
+		.initialize: [@self, @name]: 
 			my.id = knavery-ids @name.to-sym
 
 
@@ -234,6 +233,76 @@ A = {[]:
 		instance.initialize[self, @arg]
 		self }
 	exports }[]
+
+#these classes allow the programmer to invoke methods of a superclass with instances of subclasses:
+
+A = {[]:
+	super = #B or, if the user ommited a superclass, Funject
+	exports = {} 
+	instance = {}
+	private := error-cannot-find-variable 
+
+	#code
+
+	#Here we can add validations to ensure the user knows what she's doing.
+	#But those validations aren't necessary.
+	exports = exports << super
+	instance = instance << super.instance
+	privates = {}
+	protecteds = {}
+	with-env-of = {[self, meth, arg]:
+						old-private = private
+						private |= privates[self]
+						result = meth.with[{protected: protecteds[self]}] arg
+						private |= old-private
+						result }
+	exports.instance = {
+		[@meth-name]:
+			meth = instance @meth-name
+			{
+				[@self]:
+					if @self.class is exports
+						with-env-of[@self, meth, [@self]]
+					else
+						@self.endow[exports, @meth-name] [@self]
+				[@self, @arg]:
+					if @self.class is exports
+						with-env-of[@self, meth, [@self, @arg]]
+					else
+						@self.endow[exports, @meth-name] [@self, @arg] 
+			} <- (if meth.has?[.inverse]
+					meth.inverse
+				  else 
+				  	{}) }
+	exports.new = {@arg:
+		self = {
+			.class: exports
+			.endow: [@klass, @meth-arg]:
+				if @klass is exports
+					{@arg: with-env-of[self, (instance @meth), @arg]}
+				else if @klass.superclass? exports
+					
+				else
+					error['I cannot endow something other than my own class or a superclass!']
+			@else: 
+				meth = instance(@else)
+				if meth.has?[self]
+					with-env-of[self, meth, [self]]
+				else
+					{@arg:
+						with-env-of[self, meth, [self, @arg]]
+					} <- {
+						[@result, unknown]: 
+							[with-env-of[self, 
+										 {meth[self, @x]: @x },
+										 @result]] }} 
+		privates[self] = {}
+		protecteds[self] = {}
+		instance.initialize[self, @arg]
+		self }
+	exports }[]
+
+
 
 
 #modules are just syntactic sugar:
