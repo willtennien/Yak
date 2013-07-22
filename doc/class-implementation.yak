@@ -240,40 +240,29 @@ A = {[]:
 	super = #B or, if the user ommited a superclass, Funject
 	exports = {} 
 	instance = {}
-	private := error-cannot-find-variable 
-
 	#code
 
 	#Here we can add validations to ensure the user knows what she's doing.
 	#But those validations aren't necessary.
 	exports = exports << super
-	instance = instance << super.instance
 	privates = {}
 	protecteds = {}
-	with-env-of = {[self, meth, arg]:
+	with-env-of = {[@self, @meth, @arg]:
 						old-private = private
-						private |= privates[self]
-						result = meth.with[{protected: protecteds[self]}] arg
+						private |= privates[@self]
+						result = @meth.with[{.protected: protecteds[@self]}]@arg
 						private |= old-private
 						result }
-	exports.instance = {
-		[@meth-name]:
-			meth = instance @meth-name
-			{
-				[@self]:
-					if @self.class is exports
-						with-env-of[@self, meth, [@self]]
-					else
-						@self.endow[exports, @meth-name] [@self]
-				[@self, @arg]:
-					if @self.class is exports
-						with-env-of[@self, meth, [@self, @arg]]
-					else
-						@self.endow[exports, @meth-name] [@self, @arg] 
-			} <- (if meth.has?[.inverse]
-					meth.inverse
-				  else 
-				  	{}) }
+	exports.instance = ({} << super.instance) <- exports.instance
+	instance.each[{[@meth-name, @original]:
+		meth-name = @meth-name
+		exports.instance meth-name = {
+			[@self, @arg]:
+				if @self.class is exports
+					@original [@self, @arg]
+				else
+					@self.endow[exports, @meth-name, [@self, @arg]] 
+
 	exports.new = {@arg:
 		self = {
 			.class: exports
