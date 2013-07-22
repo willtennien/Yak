@@ -291,7 +291,7 @@ parse = do ->
         n = tokens.here()
         result = []
         loop
-            s = expression tokens, true
+            s = expression tokens, 0, true
             break unless s
             result.push s
             break if not tokens.match 'newline'
@@ -300,7 +300,7 @@ parse = do ->
         type: 'sequence'
         expressions: result
 
-    expression = (tokens, optional, noIndent) ->
+    expression = (tokens, precedence = 0, optional, noIndent) ->
         if tokens.match 'indent'
             result = sequence tokens
             tokens.require 'outdent'
@@ -318,7 +318,7 @@ parse = do ->
                         continue
                     break
             if tokens.accept '<'
-                parent = expression tokens, false, true
+                parent = expression tokens, 0, false, true
             unless tokens.here().type is 'indent'
                 parseError tokens.here(), "Expected indent"
             body = expression tokens
@@ -345,43 +345,62 @@ parse = do ->
             else
                 parseError tokens.here(), "Expected expression"
         loop
-            if -1 isnt ['identifier', 'formal parameter', 'string', 'symbol', 'number', 'boolean', 'nil', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
-                t = tokens.here()
+            if t = tokens.match 'symbol'
                 e =
                     type: 'application'
                     line: t.line
                     character: t.character
                     funject: e
-                    argument: value tokens
+                    argument: t
                 continue
-            if t = tokens.match 'prototypal application'
-                symbol = tokens.require 'identifier'
-                symbol.type = 'symbol'
-                e =
-                    type: 'application'
-                    line: symbol.line
-                    character: symbol.character
-                    funject:
+            if precedence < 2
+                if tokens.here().type is 'list start'
+                    t = tokens.here()
+                    e =
                         type: 'application'
                         line: t.line
                         character: t.character
                         funject: e
-                        argument:
-                            type: 'symbol'
+                        argument: value tokens
+                    continue
+                if precedence < 1
+                    if -1 isnt ['identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
+                        t = tokens.here()
+                        e =
+                            type: 'application'
                             line: t.line
                             character: t.character
-                            value: 'instance'
-                    argument: symbol
-                continue
-            if not noIndent and 'indent' is tokens.here().type
-                t = tokens.here()
-                e =
-                    type: 'application'
-                    line: t.line
-                    character: t.character
-                    funject: e
-                    argument: expression tokens
-                break
+                            funject: e
+                            argument: expression tokens, 1
+                        continue
+                    if t = tokens.match 'prototypal application'
+                        symbol = tokens.require 'identifier'
+                        symbol.type = 'symbol'
+                        e =
+                            type: 'application'
+                            line: symbol.line
+                            character: symbol.character
+                            funject:
+                                type: 'application'
+                                line: t.line
+                                character: t.character
+                                funject: e
+                                argument:
+                                    type: 'symbol'
+                                    line: t.line
+                                    character: t.character
+                                    value: 'instance'
+                            argument: symbol
+                        continue
+                    if not noIndent and 'indent' is tokens.here().type
+                        t = tokens.here()
+                        e =
+                            type: 'application'
+                            line: t.line
+                            character: t.character
+                            funject: e
+                            argument: expression tokens
+                        break
             break
         if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance assignment'
             if assignment.type isnt 'inheritance assignment' and assignment.type isnt 'inverse assignment' and e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'strict assignment' and assignment.type isnt 'lazy assignment')
