@@ -528,6 +528,15 @@ lang.Number = yakClass
                         new ListFunject [new NumberFunject x / r],
                     ['number', ['unknown', 'number']], (r, x) =>
                         new ListFunject [new NumberFunject r * x]]
+        '^': new Funject
+            call: [
+                ['number', 'number'], (x, y) => new NumberFunject Math.pow x, y]
+            inverse: new Funject
+                call: [
+                    ['number', ['number', 'unknown']], (r, x) =>
+                        new ListFunject [new NumberFunject Math.log(r) / Math.log(x)],
+                    ['number', ['unknown', 'number']], (r, x) =>
+                        new ListFunject [new NumberFunject Math.exp Math.log(r) / x]]
         '>': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value > y.value
         '<': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value < y.value
         '>=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value >= y.value
@@ -624,6 +633,7 @@ globalScope.set '+', new SymbolFunject '+'
 globalScope.set '-', new SymbolFunject '-'
 globalScope.set '*', new SymbolFunject '*'
 globalScope.set '/', new SymbolFunject '/'
+globalScope.set '^', new SymbolFunject '^'
 globalScope.set '==', new SymbolFunject '=='
 globalScope.set '!=', new SymbolFunject '!='
 globalScope.set '<', new SymbolFunject '<'
