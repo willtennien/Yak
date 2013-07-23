@@ -1,0 +1,46 @@
+#assuming primitives: [<number>], [<range>], index-of, last-index-of, uppercase? lowercase?, alpha?
+
+String.instance.repeat = {
+	[@s, 0]: ''
+	[@s, @n]: @s.repeat[@n - 1] + @s
+}
+
+String.instance.contains? = {
+	[@self, @x]: @self.index-of[@x] != -1
+}
+
+String.instance.begins-with? = {
+	[@self, @x]: @self.index-of[@x] == 0
+}
+
+String.instance.ends-with? = {
+	[@self, @x]: @self.last-index-of[@x] == ((count[@self]) - (count[@x]))
+}
+
+String.instance.capitalized? = {
+	['']: true
+	[@self]: @self[0].uppercase?
+}
+
+String.instance.quote = {
+	[@x]: '"' + (@x.replace['\\', '\\\\'].replace['"', '\\"']) + '"'
+}
+
+#|
+& -> &amp;
+< -> &lt;
+> -> &gt;
+" -> &quot;
+' -> &apos;
+|#
+String.instance.escape-html = {
+	[@x]: @x.replace['&', '&amp;'].replace['<', '&lt;'].replace['>', '&gt;'].replace['"', '&quot;'].replace['\'', '&apos;']
+}
+
+String.instance.unescape-html = {
+	[@x]: @x.replace['&amp;', '&'].replace['&lt;', '<'].replace['&gt;', '>'].replace['&quot;', '"'].replace['&apos;', '\'']
+}
+
+String.instance.lines = {
+	[@x]: @x.split['\n']
+}
