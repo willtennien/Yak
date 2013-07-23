@@ -64,7 +64,7 @@ class Scope
         if Object::hasOwnProperty.call @vars, name
             return @vars[name] = value
         if @parent
-            return @parent.set name, value
+            return @parent.reset name, value
         throw new InterpreterError "Can't reset undefined variable #{name}"
 
 class Funject
