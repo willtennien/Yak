@@ -517,25 +517,29 @@ lang.Number = yakClass
                 ['number', 'number'], (x, y) => new NumberFunject x * y]
             inverse: new Funject
                 call: [
-                    ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) =>
+                    ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) ->
                         new ListFunject [new NumberFunject r / x]]
         '/': new Funject
             call: [
-                ['number', 'number'], (x, y) => new NumberFunject x / y]
+                ['number', 'number'], (x, y) -> new NumberFunject x / y]
             inverse: new Funject
                 call: [
-                    ['number', ['number', 'unknown']], (r, x) =>
+                    ['number', ['number', 'unknown']], (r, x) ->
                         new ListFunject [new NumberFunject x / r],
-                    ['number', ['unknown', 'number']], (r, x) =>
+                    ['number', ['unknown', 'number']], (r, x) ->
                         new ListFunject [new NumberFunject r * x]]
+        '%': yakFunction ['number', 'number'], (x, y) ->
+                result = x % y
+                result += y if result < 0
+                new NumberFunject result
         '^': new Funject
             call: [
-                ['number', 'number'], (x, y) => new NumberFunject Math.pow x, y]
+                ['number', 'number'], (x, y) -> new NumberFunject Math.pow x, y]
             inverse: new Funject
                 call: [
-                    ['number', ['number', 'unknown']], (r, x) =>
+                    ['number', ['number', 'unknown']], (r, x) ->
                         new ListFunject [new NumberFunject Math.log(r) / Math.log(x)],
-                    ['number', ['unknown', 'number']], (r, x) =>
+                    ['number', ['unknown', 'number']], (r, x) ->
                         new ListFunject [new NumberFunject Math.exp Math.log(r) / x]]
         '>': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value > y.value
         '<': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value < y.value
@@ -633,6 +637,7 @@ globalScope.set '+', new SymbolFunject '+'
 globalScope.set '-', new SymbolFunject '-'
 globalScope.set '*', new SymbolFunject '*'
 globalScope.set '/', new SymbolFunject '/'
+globalScope.set '%', new SymbolFunject '%'
 globalScope.set '^', new SymbolFunject '^'
 globalScope.set '==', new SymbolFunject '=='
 globalScope.set '!=', new SymbolFunject '!='
