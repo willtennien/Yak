@@ -5,7 +5,7 @@
 	<key>name</key>
 	<string>Symbol List</string>
 	<key>scope</key>
-	<string>source.yak meta.named-funject.yak</string>
+	<string>source.yak meta.named-funject.yak, source.yak meta.named-class.yak</string>
 	<key>settings</key>
 	<dict>
 		<key>showInSymbolList</key>
@@ -13,6 +13,7 @@
 		<key>symbolTransformation</key>
 		<string>
 		s/\s*\|?\:?=\s*\{?//g;
+		s/\.instance\./::/g;
 		</string>
 	</dict>
 </dict>
