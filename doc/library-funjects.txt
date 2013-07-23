@@ -7,7 +7,7 @@ This is important for inverses:
 
 array::reflect[@x] or
 array::self[@x] requires @x to be an array.
-number::abs[@x] matches against a positive number. 
+number::abs[@x] matches against a positive number.
 
 Whenever you see a method with an exclamation at the end, define an additional method without the exclamation that does not modify the receiver.
 Ex:
@@ -41,8 +41,8 @@ integer?
 float?
 to-string #This simply returns "#<funject>"; subclasses should implement it to beautify.
 quielty or silently #once try/catch are implemented:
-	Foo.instance.quietly = {@arg: 
-	    try 
+	Foo.instance.quietly = {@arg:
+	    try
 	        self @arg
 	    catch
 	        nil }
@@ -56,7 +56,7 @@ each[f] #iterates over the key-value pairs and calls f[key, value].
 If we allow users to compare funjects for equivalence (not equality):
 keys # throws an error if any of the keys have parameters
 has-pair[f] # takes a funject and returns true if the receiver has all the pairs in f.
-keys-of[type] # returns all keys of the class/schema/type type; either ignores anything that contains parameters or throws an error. 
+keys-of[type] # returns all keys of the class/schema/type type; either ignores anything that contains parameters or throws an error.
 
 
 
@@ -229,7 +229,7 @@ map(f, [index or range]) #copies the array before iterating; if the programmer s
 invoke #underscore
 every or all #copies the array before iterating
 some or any #copies the array before iterating
-pluck #underscore 
+pluck #underscore
 filter! #replaces contents of the array with the filtered elements
 reduce #JS
 reduce-right #JS
@@ -297,4 +297,4 @@ partition[f] #Haskell: return a list of two elements: all elements that satisfy 
 ================================================================================================================================================================================================================================================================
 If we add ranges, consider letting them be added with +. This would allow arr[(0..2) + (-3..-1)] => [1, 2, 3, 98, 99, 100].
 Consider using either (start..end) syntax or Python's syntax.
-Can we use (start..end) syntax while also specifying a step? 
+Can we use (start..end) syntax while also specifying a step?
