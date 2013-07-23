@@ -25,7 +25,7 @@ tokenizer = do ->
 
     isDigit = (c) -> -1 isnt '0123456789'.indexOf c
 
-    isIdentifier = (c) -> -1 isnt '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-+*/%_$<>=?!'.indexOf c
+    isIdentifier = (c) -> -1 isnt '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-+*/%^_$<>=?!'.indexOf c
 
     (raw) ->
         token = (type, value = '') -> {

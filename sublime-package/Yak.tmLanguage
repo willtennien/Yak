@@ -28,41 +28,87 @@
                 <key>1</key>
                 <dict>
                     <key>name</key>
-                    <string>variable.yak</string>
+                    <string>keyword.yak</string>
                 </dict>
                 <key>2</key>
                 <dict>
                     <key>name</key>
-                    <string>keyword.operator.yak</string>
+                    <string>meta.variable.yak</string>
                 </dict>
                 <key>3</key>
+                <dict>
+                    <key>name</key>
+                    <string>meta.delimited.yak</string>
+                </dict>
+                <key>4</key>
+                <dict>
+                    <key>name</key>
+                    <string>meta.variable.yak</string>
+                </dict>
+                <key>5</key>
+                <dict>
+                    <key>name</key>
+                    <string>keyword.operator.yak</string>
+                </dict>
+                <key>6</key>
                 <dict>
                     <key>name</key>
                     <string>meta.brace.curly.yak</string>
                 </dict>
             </dict>
             <key>match</key>
-            <string>^\s*([\w=?\-]+)\s*(\|?\:?=)\s*(\{|$)</string>
+            <string>^\s*(?:(instance|exports)|([\w\-+*/%^$&lt;&gt;=?!]+))(?:\s*(\.|::)([\w\-+*/%^$&lt;&gt;=?!]+))*\s+(\|?:?=)\s*(\{|$)</string>
             <key>name</key>
             <string>meta.named-funject.yak</string>
         </dict>
         <dict>
+            <key>captures</key>
+            <dict>
+                <key>1</key>
+                <dict>
+                    <key>name</key>
+                    <string>keyword.yak</string>
+                </dict>
+                <key>2</key>
+                <dict>
+                    <key>name</key>
+                    <string>meta.variable.yak</string>
+                </dict>
+            </dict>
             <key>match</key>
-            <string>\b(\d*\.)?\d+(e[-+]?\d+)?(?![\w=?\-])</string>
+            <string>^\s*(class|module)\s+([\w\-+*/%^$&lt;&gt;=?!]+)</string>
+            <key>name</key>
+            <string>meta.named-class.yak</string>
+        </dict>
+        <dict>
+            <key>match</key>
+            <string>(?&lt;![\w\-+*/%^$&lt;&gt;=?!])-?(\d*\.)?\d+(e[-+]?\d+)?(?![\w\-+*/%^$&lt;&gt;=?!])</string>
             <key>name</key>
             <string>constant.numeric.yak</string>
         </dict>
         <dict>
             <key>match</key>
-            <string>\b(true|false|nil|dot|unknown)\b</string>
+            <string>(?&lt;![\w\-+*/%^$&lt;&gt;=?!])(true|false|nil|unknown)(?![\w\-+*/%^$&lt;&gt;=?!])</string>
+            <key>name</key>
+            <string>constant.yak</string>
+        </dict>
+        <dict>
+            <key>match</key>
+            <string>(?&lt;![\w\-+*/%^$&lt;&gt;=?!])(|super|exports|instance)(?![\w\-+*/%^$&lt;&gt;=?!])</string>
             <key>name</key>
             <string>keyword.yak</string>
         </dict>
         <dict>
             <key>match</key>
-            <string>\b(error|print)\b</string>
+            <string>(?&lt;![\w\-+*/%^$&lt;&gt;=?!])(\|?:?=|&lt;&lt;|&lt;-|==|[&lt;&gt;\-+/*%^])(?![\w\-+*/%^$&lt;&gt;=?!])</string>
             <key>name</key>
-            <string>support.constant.yak</string>
+            <string>keyword.operator.yak</string>
+        </dict>
+        <dict>
+            <key>match</key>
+            <string>(?&lt;![\w\-+*/%^$&lt;&gt;=?!])(error|print|by)(?![\w\-+*/%^$&lt;&gt;=?!])</string>
+            <key>name</key>
+            <string>support.function.yak</string>
         </dict>
         <dict>
             <key>captures</key>
@@ -75,29 +121,29 @@
                 <key>2</key>
                 <dict>
                     <key>name</key>
-                    <string>support.constant.yak</string>
+                    <string>support.function.yak</string>
                 </dict>
             </dict>
             <key>match</key>
-            <string>(\.)(equals|plus|minus|times|div)\b</string>
+            <string>(\.|::)(new|instance|on|symbol\?|number\?|string\?|boolean?list\?|nil\?|unknown\?|to-string|inspect|sqrt|ln|log|sin|cos|tan|sec|csc|cot|asin|acos|atan|abs|ceil|floor|round|times|and|or|not|length|contains?|index-of|split|replace|replace-all|empty\?)(?![\w\-+*/%^$&lt;&gt;=?!])</string>
         </dict>
         <dict>
             <key>match</key>
-            <string>\.</string>
-            <key>name</key>
-            <string>meta.delimiter.period.yak</string>
-        </dict>
-        <dict>
-            <key>match</key>
-            <string>\,</string>
+            <string>,</string>
             <key>name</key>
             <string>meta.delimiter.comma.yak</string>
         </dict>
         <dict>
             <key>match</key>
-            <string>\:</string>
+            <string>::</string>
             <key>name</key>
-            <string>meta.delimiter.comma.yak</string>
+            <string>meta.delimiter.colon.yak</string>
+        </dict>
+        <dict>
+            <key>match</key>
+            <string>:</string>
+            <key>name</key>
+            <string>keyword.operator.yak</string>
         </dict>
         <dict>
             <key>match</key>
@@ -119,27 +165,32 @@
         </dict>
         <dict>
             <key>match</key>
-            <string>\.</string>
-            <key>name</key>
-            <string>meta.brace.square.yak</string>
+            <string>(\.)([\w\-+*/%^$&lt;&gt;=?!]+)</string>
+            <key>captures</key>
+            <dict>
+                <key>1</key>
+                <dict>
+                    <key>name</key>
+                    <string>meta.delimiter.period.yak</string>
+                </dict>
+                <key>2</key>
+                <dict>
+                    <key>name</key>
+                    <string>symbol.yak</string>
+                </dict>
+            </dict>
         </dict>
         <dict>
             <key>match</key>
-            <string>\|?\:?=|&lt;&lt;|&lt;-</string>
+            <string>@[\w\-+*/%^$&lt;&gt;=?!]+</string>
             <key>name</key>
-            <string>keyword.operator.yak</string>
+            <string>variable.parameter.yak</string>
         </dict>
         <dict>
             <key>match</key>
-            <string>@[\w_=?\-]+</string>
+            <string>[\w\-+*/%^$&lt;&gt;=?!]+</string>
             <key>name</key>
-            <string>constant.function.parameter.yak</string>
-        </dict>
-        <dict>
-            <key>match</key>
-            <string>[\w=?\-]+</string>
-            <key>name</key>
-            <string>variable.yak</string>
+            <string>meta.variable.yak</string>
         </dict>
         <dict>
             <key>begin</key>
