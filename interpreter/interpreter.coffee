@@ -650,11 +650,6 @@ globalScope.set 'error', new Funject
     call: [['string'], (message) -> throw new InterpreterError message.value]
 
 globalScope.set 'print', new Funject
-    call: [['string'], (message) ->
-        console.log message.value
-        lang.nil]
-
-globalScope.set 'debug', new Funject
     call: [['*'], (thing) ->
         console.log '' + thing
         lang.nil]
