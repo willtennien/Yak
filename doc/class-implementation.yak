@@ -234,70 +234,43 @@ A = {[]:
 		self }
 	exports }[]
 
-#these classes allow the programmer to invoke methods of a superclass with instances of subclasses:
+#these classes allow the programmer to invoke methods of a superclass with instances of subclasses.
+#I have also removed the concept of "private" and renamed protected private.
+
+#Although we should keep this accessible, we should not directly expose it to the user.
+private-of = {}
 
 A = {[]:
 	super = #B or, if the user ommited a superclass, Funject
 	exports = {} 
 	instance = {}
-	private := error-cannot-find-variable 
-
 	#code
 
 	#Here we can add validations to ensure the user knows what she's doing.
 	#But those validations aren't necessary.
 	exports = exports << super
-	instance = instance << super.instance
-	privates = {}
-	protecteds = {}
-	with-env-of = {[self, meth, arg]:
-						old-private = private
-						private |= privates[self]
-						result = meth.with[{protected: protecteds[self]}] arg
-						private |= old-private
-						result }
-	exports.instance = {
-		[@meth-name]:
-			meth = instance @meth-name
-			{
-				[@self]:
-					if @self.class is exports
-						with-env-of[@self, meth, [@self]]
-					else
-						@self.endow[exports, @meth-name] [@self]
-				[@self, @arg]:
-					if @self.class is exports
-						with-env-of[@self, meth, [@self, @arg]]
-					else
-						@self.endow[exports, @meth-name] [@self, @arg] 
-			} <- (if meth.has?[.inverse]
-					meth.inverse
-				  else 
-				  	{}) }
+	exports.instance = {} << super.instance
+	instance.each[{[@meth-name, @meth]:
+		name = @meth-name
+		exports.instance name = 
+			if @meth.has?['single-elem']
+				{[@self]: 
+					@meth.with[{.private: private-of[@self]}] [@self]} <- @meth.inverse
+			else 
+				{[@self, @arg]: 
+					@meth.with[{.private: private-of[@self]}] [@self, @arg]} <- @meth.inverse }] 
 	exports.new = {@arg:
 		self = {
 			.class: exports
-			.endow: [@klass, @meth-arg]:
-				if @klass is exports
-					{@arg: with-env-of[self, (instance @meth), @arg]}
-				else if @klass.superclass? exports
-					
-				else
-					error['I cannot endow something other than my own class or a superclass!']
 			@else: 
 				meth = instance(@else)
-				if meth.has?[self]
-					with-env-of[self, meth, [self]]
+				if meth.has?[@self]
+					meth[@self]
 				else
 					{@arg:
-						with-env-of[self, meth, [self, @arg]]
-					} <- {
-						[@result, unknown]: 
-							[with-env-of[self, 
-										 {meth[self, @x]: @x },
-										 @result]] }} 
-		privates[self] = {}
-		protecteds[self] = {}
+						meth[@self, @arg]
+					} <- #the inverse involves magic
+		private-of[self] = {}
 		instance.initialize[self, @arg]
 		self }
 	exports }[]
