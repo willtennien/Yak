@@ -91,7 +91,7 @@ class Funject
             else
                 @basicToString()
         catch e
-            if e instanceof InterpreterError
+            if e instanceof RuntimeError
                 @basicToString()
             else
                 throw e
@@ -109,7 +109,7 @@ class Funject
 
     toSource: (depth) ->
         if depth is 0
-            @simpleToString()
+            return @simpleToString()
         try
             s = new Interpreter().evaluate
                 type: 'application'
@@ -120,12 +120,12 @@ class Funject
                     type: 'symbol'
                     value: 'inspect'
             if s.isString
-                s.value
+                return s.value
             else
-                @getSource()
+                return @getSource()
         catch e
-            if e instanceof InterpreterError
-                @getSource depth
+            if e instanceof RuntimeError
+                return @getSource depth
             else
                 throw e
 
