@@ -315,19 +315,23 @@ class Funject
                     return interpreter.return result
 
         if @patterns
-            for p, i in @patterns.slice interpreter.frame.index ? 0
+            arg = interpreter.frame.arg ? 0
+            offset = interpreter.frame.index ? 0
+            for p, i in @patterns[offset..]
                 applications = []
                 if interpreter.frame.bindings
                     bindings = interpreter.frame.bindings
                     applications = interpreter.frame.applications
-                    interpreter.frame.applications = null
-                    interpreter.frame.bindings = null
+                    delete interpreter.frame.applications
+                    delete interpreter.frame.bindings
                 else
                     bindings = {}
                     continue unless @scan p.scope, bindings, applications, p.pattern, argument
                 if applications.length
                     if interpreter.frame.step is 'match'
-                        continue unless bound = @match interpreter, bindings, p.pattern, argument
+                        unless bound = @match interpreter, bindings, p.pattern, argument
+                            delete interpreter.frame.step
+                            continue
                         extend bindings, bound
                     else if interpreter.frame.step is 'inverse'
                         n = interpreter.frame.expression
@@ -345,8 +349,8 @@ class Funject
                             step: 'match'
                             applications
                             bindings
-                            arg: 0
-                            index: i
+                            arg
+                            index: offset + i
                         }
                         interpreter.push
                             line: p.pattern.line
@@ -383,7 +387,8 @@ class Funject
                             step: 'inverse'
                             applications
                             bindings
-                            index: i
+                            arg
+                            index: offset + i
                         }
                         interpreter.push
                             line: p.pattern.line
