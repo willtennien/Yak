@@ -39,7 +39,12 @@ append[k, v] # sets k equal to v at the bottom of the funject
 number?, string?, boolean?, symbol?, unknown?, nil?, list?
 integer?
 float?
-to-string #This simply returns "#<funject>"; subclasses should implement it to beautify.
+subclass?
+superclass?
+superclass
+is-a? #receiver.is-a? klass => receiver.class is klass
+kind-of? #receiver.class is klass or receiver.class.subclass? klass 
+to-string
 quielty or silently #once try/catch are implemented:
 	Foo.instance.quietly = {@arg:
 	    try
