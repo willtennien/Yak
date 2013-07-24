@@ -809,6 +809,10 @@ yakClass 'Number', lang.Funject,
             new NumberFunject x.value * Math.PI / 180
         'radians-to-degrees': yakFunction ['number'], (x) ->
             new NumberFunject x.value * 180 / Math.PI
+        max: yakFunction ['number', ['number']], (x, y) ->
+            new NumberFunject (if x.value > y.value then x.value else y.value)
+        min: yakFunction ['number', ['number']], (x, y) ->
+            new NumberFunject (if x.value < y.value then x.value else y.value)
         sqrt: yakFunction ['number'], (x) ->
             if x.value < 0
                 throw new InterpreterError "Cannot compute #{x}.sqrt"
