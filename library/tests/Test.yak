@@ -1,0 +1,199 @@
+test-all = {
+    [@assert]:
+        print['Running full library test...']
+        failures = 0
+        tests.each {
+            [@key, @val]:
+                (@val[@assert]).on {
+                    true: nil
+                    false: failures |= failures + 1
+                }
+        }
+        (failures == 0).on {
+            true: print['Full library test completed with no errors!']
+            false: print['Full library test completed with ' + failures.to-string + ' failures.']
+        }
+}
+
+test-assert = {
+    [@x, true]: true
+    [true, false]: error['A test assertion failed. Stopping test.']
+    [false, false]:
+        print['Test failed']
+        false
+    [@x, true, @y]: true
+    [true, false, @y]: error['Test assertion failed while testing ' + @y + '. Stopping test.']
+    [false, false, @x]:
+        print['Test of ' + @x + ' failed.']
+        false
+}
+test-start = {
+    [@x]: 'Beginning test of ' + @x
+}
+
+#|
+    Test Code conventions:
+
+    Class method tests should be named as follows:
+    
+        .<Funject-Class>-<Method-Name>
+
+    Instance method tests should be named as follows:
+
+        .<Funject-Class>-i-<Method-Name>
+
+    If the test tests an operator, it should be named as follows:
+
+        .<Operator>
+
+    example:
+
+        .==: {
+            [@assert]:
+                <Unit Test>
+        }
+    
+    All tests should take a list of size 1 with the boolean parameter @assert
+
+    All tests should begin by invoking test-start['<Test-Name>']
+    
+    All tests should end with test-assert[@assert, <Test-Assert-Condition>, '<Test-Name>']
+|#
+tests = {
+    .==: {
+        [@assert]:
+            test-start['==']
+            test-assert[@assert, 1 == 1, '==']
+    }
+
+    .and: {
+        [@assert]:
+            test-start['and']
+            flag1 = true and true
+            flag2 = true and false
+            test-assert[@assert, flag1 == true and flag2 == false, 'and']
+    }
+
+    .or: {
+        [@assert]:
+            test-start['or']
+            flag1 = true or false
+            flag2 = false or false
+            test-assert[@assert, flag1 == true and flag2 == false, 'or']
+    }
+
+    .Funject-i-while-true: {
+        [@assert]:
+            test-start['Funject-i-while-true']
+            i = 0
+            condition = {[]: i < 10}
+            condition.while-true {
+                []: i |= i + 1
+            }
+            test-assert[@assert, i == 10, 'Funject-i-while-true']
+    }
+
+    .Funject-i-do-while-true: {
+        [@assert]:
+            test-start['Funject-i-do-while-true']
+            i = 0
+            condition = {[]: i < 10}
+            condition.do-while-true {
+                []: i |= i + 1
+            }
+            test-assert[@assert, i == 1, 'Funject-i-do-while-true']
+    }
+
+    # Will be implemented with the addition of try catch
+    .Funject-assert: {
+        [@assert]: true
+    }
+
+    # Will be implemented with the addition of try catch
+    .Funject-unreachable: {
+        [@assert]: true
+    }
+
+    .Boolean-i-not: {
+        [@assert]:
+            test-start['Boolean-i-not']
+            flag1 = false.not
+            flag2 = true.not
+            test-assert[@assert, (flag1 == true and flag2 == false), 'Boolean-i-not']
+    }
+
+    .Boolean-i-xor: {
+        [@assert]:
+            test-start['Boolean-i-xor']
+            flag1 = true.xor[false]
+            flag2 = true.xor[true]
+            test-assert[@assert, (flag1 == true and flag2 == false), 'Boolean-i-xor']
+    }
+
+    .Number-e: {
+        [@assert]:
+            test-start['Number-e']
+            test-assert[@assert, Number.e == 2.718281828459045, 'Number-e']
+    }
+
+    .Number-pi: {
+        [@assert]:
+            test-start['Number-pi']
+            test-assert[@assert, Number.pi == 3.141592653589793, 'Number-pi']
+    }
+
+    .Number-epsilon: {
+        [@assert]:
+            test-start['Number-epsilon']
+            test-assert[@assert, Number.epsilon == 1.0e-12, 'Number-epsilon']
+    }
+
+    .Number-i-abs: {
+        [@assert]:
+            test-start['Number-i-abs']
+            test-assert[@assert, -10.abs == 10, 'Number-i-abs']
+    }
+
+    .Number-i-negate: {
+        [@assert]:
+            test-start['Number-i-negate']
+            test-assert[@assert, 10.negate == -10 and -10.negate == 10, 'Number-i-negate']
+    }
+
+    .Number-i-factorial: {
+        [@assert]:
+            test-start['Number-i-factorial']
+            test-assert[@assert, 5.factorial == 120, 'Number-i-factorial']
+    }
+
+    .Number-i-reciprocal: {
+        [@assert]:
+            test-start['Number-i-reciprocal']
+            test-assert[@assert, 10.reciprocal == 0.1, 'Number-i-reciprocal']
+    }
+
+    .Number-i-radians-to-degrees: {
+        [@assert]:
+            test-start['Number-i-radians-to-degrees']
+            test-assert[@assert, Number.pi.radians-to-degrees == 180, 'Number-i-radians-to-degrees']
+    }
+
+    .Number-i-degrees-to-radians: {
+        [@assert]:
+            test-start['Number-i-degrees-to-radians']
+            test-assert[@assert, 180.degrees-to-radians == Number.pi, 'Number-i-degrees-to-radians']
+    }
+
+    .Number-i-sqrt: {
+        [@assert]:
+            test-start['Number-i-sqrt']
+            test-assert[@assert, 25.sqrt == 5, 'Number-i-sqrt']
+    }
+
+    .Number-i-root: {
+        [@assert]:
+            test-start['Number-i-root']
+            test-assert[@assert, 16.root[4] == 2, 'Number-i-root']
+    }
+
+}
