@@ -1,4 +1,4 @@
-Boolean.not = {
+Boolean.instance.not = {
 	[true]: false
 	[false]: true
 }
