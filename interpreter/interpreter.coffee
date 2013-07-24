@@ -1655,7 +1655,18 @@ repl = ->
             return
         read += line + '\n'
         if not /^[\t ]|(^|[(\[])(class|module)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
-            interpreter = new Interpreter().load parser.parse read, 'input', firstLine
+            try
+                interpreter = new Interpreter().load parser.parse read, 'input', firstLine
+            catch e
+                if e instanceof SyntaxError
+                    console.log e.message
+                    read = ''
+                    firstLine = replLine
+                    setPrompt '>'
+                    rl.prompt()
+                    return
+                else
+                    throw e
             timeout = setTimeout step = ->
                 iterations = 0
                 try
@@ -1669,8 +1680,6 @@ repl = ->
                 catch e
                     if e instanceof RuntimeError
                         console.log e.stack
-                    else if e instanceof SyntaxError
-                        console.log e.message
                     else
                         throw e
                 timeout = null
