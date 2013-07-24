@@ -1103,7 +1103,10 @@ yakClass 'List', lang.Funject,
                 interpreter.push
                     type: 'native'
                     value: ->
-                        if @frame.arguments[@frame.arguments.length - 1]
+                        include = @frame.arguments[@frame.arguments.length - 1]
+                        if not include.isBoolean
+                            throw new InterpreterError "Cannot filter on #{include}"
+                        if include.value
                             result.push list[i]
                         ++i
                         if i is end
@@ -1178,7 +1181,7 @@ class SymbolFunject extends Funject
     isSymbol: true
 
     constructor: (@value) ->
-    toString: -> "." + @value
+    toString: -> @value
     toSource: -> "." + @value
 
     call: ['.class', -> lang.Symbol]
