@@ -1170,8 +1170,12 @@ ListFunject::instance = lang.List.$instance
 
 yakClass 'Boolean', lang.Funject,
     instance:
-        not: yakFunction ['boolean'], (x) ->
-            yakBoolean not x.value
+        not: new Funject
+            call: [['boolean'], (x) ->
+                yakBoolean not x.value]
+            inverse: new Funject
+                call: [['boolean', ['unknown']], (x) ->
+                    new ListFunject [yakBoolean not x.value]]
         and: yakFunction ['boolean', 'boolean'], (x, y) ->
             yakBoolean x.value and y.value
         or: yakFunction ['boolean', 'boolean'], (x, y) ->
