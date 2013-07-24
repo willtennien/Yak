@@ -188,6 +188,31 @@ class Funject
             method = method.parent
         false
 
+    keys: ->
+        result = []
+        if @patterns
+            for p in @patterns when p.pattern.type is 'symbol'
+                result.push p.pattern.value
+        if @call
+            i = 0
+            length = @call.length
+            while i < length
+                p = @call[i++]
+                while p is 'interpreter' or p is 'own'
+                    p = f.call[i++]
+                if p[0] is '.'
+                    result.push p.substr 1
+        result
+
+    allKeys: ->
+        result = {}
+        f = @
+        while f
+            for k in f.keys()
+                result[k] = true
+            f = f.parent
+        Object.keys result
+
     native: (pattern, argument) ->
         if pattern instanceof Array
             if pattern[0] is '|'
@@ -589,6 +614,10 @@ BaseFunject = yakObject null,
         else
             new StringFunject '' + x
     'inspect': yakFunction ['*'], (x) -> new StringFunject x.toSource -1
+    keys: yakFunction ['funject'], (f) ->
+        new ListFunject (new StringFunject k for k in f.keys())
+    'all-keys': yakFunction ['funject'], (f) ->
+        new ListFunject (new StringFunject k for k in f.allKeys())
 
 Funject::instance = BaseFunject
 BaseFunject.instance = null
