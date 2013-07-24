@@ -804,6 +804,7 @@ yakClass 'Number', lang.Funject,
         'degrees-to-radians': yakFunction ['number'], (x) ->
             new NumberFunject x.value * Math.PI / 180
         'radians-to-degrees': yakFunction ['number'], (x) ->
+            new NumberFunject x.value * 180 / Math.PI
         sqrt: yakFunction ['number'], (x) ->
             new NumberFunject Math.sqrt x.value
         root: yakFunction ['number', ['number']], (x, y) ->
