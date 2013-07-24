@@ -3,17 +3,17 @@ Number.pi = 3.141592653589793
 Number.epsilon = 1.0e-12
 
 Number.instance.abs = {
-	[]: {
-		true: 0 - own
-		false: own
-	} (own < 0)
+	[@x]: {
+		true: 0 - @x
+		false: @x
+	} (@x < 0)
 }
 
 Number.instance.negate = {
 	[@x]: 0 - @x
 }
 
-Number.instance.factorial := {
+Number.instance.factorial = {
 	[0]: 1
 	[@n]: @n * ((@n - 1).factorial)
 }
@@ -23,54 +23,54 @@ Number.instance.reciprocal = {
 }
 
 Number.instance.radians-to-degrees = {
-	[@x]: (@x * 180) / pi
+	[@x]: (@x * 180) / Number.pi
 }
 
 Number.instance.degrees-to-radians = {
-	[@x]: (@x * pi) / 180
+	[@x]: (@x * Number.pi) / 180
 }
 
-Number.instance.sqrt {
+Number.instance.sqrt = {
 	[@x]:
 		last-guess = nil
 		guess = @x / 3
-		{[]: (guess - last-guess).abs > epsilon}.do-while-true[{
+		{[]: (guess - last-guess).abs > Number.epsilon}.do-while-true {
 			[]:
-				last-guess = guess
-				guess = (guess + (@x / guess)) / 2
-		}]
+				last-guess |= guess
+				guess |= (guess + (@x / guess)) / 2
+		}
 		guess
 }
 
 Number.instance.root = {
-	[@x, @y]: (@x.ln * @y).exp 
+	[@x, @y]: (@x.ln * @y).exp
 }
 
 Number.instance.sin = {
-	[@x]: 
-		constrained = @x % (pi / 2)
-		subtract = true
+	[@x]:
+		constrained = @x % (Number.pi / 2)
+		subtract = false
 		count = 1
 		last-guess = nil
 		guess = 0
-		{[]: (guess - last-guess).abs > epsilon}.do-while-true[{
+		{[]: (guess - last-guess).abs > Number.epsilon}.do-while-true {
 			[]:
-				last-guess = guess
+				last-guess |= guess
 				{
-					true: guess = guess - ((constrained ^ count) / (count.factorial))
-					false: guess = guess + ((constrained ^ count) / (count.factorial))
+					true: guess |= guess - ((constrained ^ count) / (count.factorial))
+					false: guess |= guess + ((constrained ^ count) / (count.factorial))
 				} subtract
-				count = count + 2
-				subtract = subtract.not
-		}]
+				count |= count + 2
+				subtract |= subtract.not
+		}
 		guess
 }
 
-Number.instance.cos {
-	[@x]: (@x + (pi / 2)).sin
+Number.instance.cos = {
+	[@x]: (@x + (Number.pi / 2)).sin
 }
 
-Number.instance.tan {
+Number.instance.tan = {
 	[@x]: (@x.sin) / (@x.cos)
 }
 
@@ -92,8 +92,8 @@ Number.instance.atan = {
 			true: 0 - ((0 - @x).atan)
 			false:
 				# make an initial guess
-				theta = (@x * (pi / 2)) / (@x + 1)
-				eps = (pi / 2) * epsilon
+				theta = (@x * (Number.pi / 2)) / (@x + 1)
+				eps = (Number.pi / 2) * Number.epsilon
 				step = theta
 				{[]: (step * step) > eps}.while-true[{
 					[]:
@@ -110,38 +110,41 @@ Number.instance.asin = {
 	[@x]:
 		{
 			true: error['Out of range']
-		} ((@x < -1.0) || (@x > 1.0))
+		} @x < -1.0 or @x > 1.0
 		{
-			true: (pi / 2) * @x
+			true: (Number.pi / 2) * @x
 			false: (@x / (1.0 - (@x * @x)).sqrt).atan
-		} ((@x == -1.0) || (@x == 1.0)
+		} ((@x == -1.0) or (@x == 1.0))
 }
 
 Number.instance.acos = {
-	[@x]: (pi / 2) - (@x.asin)
+	[@x]: (Number.pi / 2) - (@x.asin)
 }
 
+#|
 Number.instance.atan/ = {
 	[0, 0]: error['Out of range']
 	[@x, @y]: {
 		true: (@x / @y).atan
 		false: {
-			true: (@x / @y).atan + pi
+			true: (@x / @y).atan + Number.pi
 			false: {
 				{
-					true: pi / 2
+					true: Number.pi / 2
 					false: {
-						true: 0 - (pi / 2)
+						true: 0 - (Number.pi / 2)
 						false: unreachable
-					} ((@x == 0) && (@y < 0))
-				} ((@x == 0) && (@y > 0))
-			} ((@x < 0) && (@y < 0))
-		} ((@x < 0) && (@y >= 0))
+					} ((@x == 0) and (@y < 0))
+				} ((@x == 0) and (@y > 0))
+			} ((@x < 0) and (@y < 0))
+		} ((@x < 0) and (@y >= 0))
 	} (@x > 0)
 }
+|#
 
 Number.instance.asec = {
 	[@x]: 1 / (@x.acos)
+}
 
 Number.instance.acsc = {
 	[@x]: 1 / (@x.asin)

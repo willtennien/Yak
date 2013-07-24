@@ -3,7 +3,7 @@ Funject.instance.while-true = {
 	[@p, @f]: {
 		true:
 			@f[]
-			@p.while-true[@f]
+			@p.while-true @f
 		false: nil
 	} @p[]
 }
@@ -11,7 +11,7 @@ Funject.instance.while-true = {
 Funject.instance.do-while-true = {
 	[@p, @f]:
 		@f[]
-		@p.while-true[@f]
+		@p.while-true @f
 }
 
 Funject.instance.on = {

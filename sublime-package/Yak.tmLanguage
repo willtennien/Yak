@@ -94,13 +94,13 @@
         </dict>
         <dict>
             <key>match</key>
-            <string>(?&lt;![\w\-+*/%^$&lt;&gt;=?!])(|super|exports|instance)(?![\w\-+*/%^$&lt;&gt;=?!])</string>
+            <string>(?&lt;![\w\-+*/%^$&lt;&gt;=?!])(super|exports|instance)(?![\w\-+*/%^$&lt;&gt;=?!])</string>
             <key>name</key>
             <string>keyword.yak</string>
         </dict>
         <dict>
             <key>match</key>
-            <string>(?&lt;![\w\-+*/%^$&lt;&gt;=?!])(\|?:?=|&lt;&lt;|&lt;-|==|[&lt;&gt;\-+/*%^])(?![\w\-+*/%^$&lt;&gt;=?!])</string>
+            <string>(?&lt;![\w\-+*/%^$&lt;&gt;=?!])(and|or|not|is|isnt|\|?:?=|&lt;&lt;|&lt;-|[=!&lt;&gt;]=|[&lt;&gt;\-+/*%^])(?![\w\-+*/%^$&lt;&gt;=?!])</string>
             <key>name</key>
             <string>keyword.operator.yak</string>
         </dict>
