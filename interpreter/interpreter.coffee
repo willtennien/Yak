@@ -1021,6 +1021,8 @@ yakClass 'List', lang.Funject,
                 lang.nil
         'empty?': yakFunction ['list'], (x) ->
             yakBoolean x.values.length is 0
+        length: yakFunction ['list'], (x) ->
+            new NumberFunject x.values.length
         sort: new Funject
             call: [
                 ['list', []], (x) ->
