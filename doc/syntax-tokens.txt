@@ -22,6 +22,10 @@
 
     <Pattern> = <Exp-perhaps-containing-parameter>
 
+<Class> = (Class <Exp>) | (Class <Exp> <Exp>)
+
+<Module> = (Module <Exp>) | (Module <Exp> <Exp>)
+
 <Sequence> = (Sequence (<Exp>, ...))
 
 <Strict-assignment>  = (Strict-assignment> <Exp> <Exp>)
