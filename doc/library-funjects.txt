@@ -32,7 +32,7 @@ Funject Methods -- need to gather
 ================================================================================================================================================================================================================================================================
 is the-other #is literally equal to the-other; when the user modifies one, the-other should change.
 apply[args] is receiver(args)
-then[f] is f(funject) #ex: arr.lots-of-long-methods.then[{[arr]: arr[arr.length - 1]}]
+then[f] is f[receiver] #ex: arr.lots-of-long-methods.then[{[arr]: arr[arr.length - 1]}]
 has?[k]
 clone #equivalent to ({} << receiver)
 append[k, v] # sets k equal to v at the bottom of the funject
@@ -67,9 +67,9 @@ Number Methods -- need to gather
 ================================================================================================================================================================================================================================================================
 sources: Ruby, JS
 
-math.e
-math.pi
-math.random #if the user supplies no arguments, this returns a random number on the range [0, 1). If the programmer supplies a number, it returns an integer between 0 and n - 1. If the programmer supplies two numbers, it returns an integer between that number and the other minus 1. If the ranges ever don't make sense, it signals an error.
+Number.e
+Number.pi
+Number.random #if the user supplies no arguments, this returns a random number on the range [0, 1). If the programmer supplies a number, it returns an integer between 0 and n - 1. If the programmer supplies two numbers, it returns an integer between that number and the other minus 1. If the ranges ever don't make sense, it signals an error.
 +
 -
 *
@@ -117,6 +117,7 @@ downto  #if we use ranges, this produces a range; otherwise, it produces an arra
 upto    #if we use ranges, this produces a range; otherwise, it produces an array.
 to-fixed[n]
 to-pennies
+to-dollars
 
 
 

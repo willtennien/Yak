@@ -194,15 +194,10 @@
 
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Syntax Parser
 
 (define odsl 'doesnt-matter)
-(define parse ((lambda ()
-                 (define (string-capitalize-word str)
-                   (string-append (string-titlecase (substring str 0 1))
-                                  (substring str 1)))
-                 
+(define parse ((lambda ()   
                  (define (is-in-string str)
                    (lambda (matched)
                      (matches matched str)))
@@ -334,9 +329,9 @@
                  (define (base-indent x) (<= 0 x))
                  (define (any-indent _) true) 
                  (define (tokenize . args)
-                   (apply list (cons (string->symbol (string-append (string-append "Token-")
-                                                                    (string-downcase (symbol->string (car args)))))
-                                     (cdr args))))
+                   (cons (string->symbol (string-append "Token-"
+                                                        (string-downcase (symbol->string (car args)))))
+                         (cdr args)))
                  (define (token-contents token f)
                    (apply f (cdr token)))
                  
@@ -1195,6 +1190,10 @@
 
 (define env-pairs mlist)
 
+(define env-pairs-append mappend)
+
+(define env-pairs-cons mcons)
+
 (define (create-env-pair-strict name val)
   (create-env-pair name (bind-as-though-unevaled val)))
 
@@ -1363,6 +1362,10 @@
       (token-funject-inheritance? exp)
       (token-inverse-definition? exp)))
 
+(define (tokenize . args)
+  (apply mlist (cons (string->symbol (string-append "Token-"
+                                                    (string-downcase (symbol->string (car args)))))
+                     (cdr args))))
 (define (token-contents tokens f)
   (assert (token-any? tokens)) ;to optimize, remove this line.
   (apply f (mlist->list (mcdr tokens))))
@@ -1401,7 +1404,8 @@
          (apply mlist args)))
 
 (define (lang? sym exp)
-  (eq? sym (mcar exp)))
+  (and (mlist? exp)
+       (eq? sym (mcar exp))))
 
 (define (lang-any? exp)
   (and (mlist? exp)
@@ -1604,7 +1608,8 @@
                                                        (lambda (env)
                                                          (each-evaled (list areceiver aright) env
                                                                       (lambda (ereceiver eright)
-                                                                        (push-funject-pair! ereceiver (bind-funject-pair (create-funject-pair pattern (mlist 'Evaled eright)) global-env))))))))))))
+                                                                        (push-funject-pair! ereceiver (bind-funject-pair (create-funject-pair pattern (mlist 'Evaled eright)) env))
+                                                                        eright))))))))))
 
 
 (define (analyze-funject-lazy-assignment tokens)
@@ -1724,18 +1729,45 @@
        (lambda (tokens)
          (cond 
            [(= 2 (mlength tokens))
-            (after-analyze-module (lambda (env) 
-                                    primitive-funject-god)
-                                  (if (token-sequence? (mcadr tokens))
-                                      (analyze-sequence-without-own-scope (mcadr tokens))
-                                      (analyze (mcadr tokens))))]
+            (callback (lambda (env) 
+                        primitive-funject-god)
+                      (if (token-sequence? (mcadr tokens))
+                          (analyze-sequence-without-own-scope (mcadr tokens))
+                          (analyze (mcadr tokens))))]
            [(= 3 (mlength tokens))
-            (after-analyze-module (analyze (mcadr tokens))
-                                  (if (token-sequence? (mcaddr tokens))
-                                      (analyze-sequence-without-own-scope (mcaddr tokens))
-                                      (analyze (mcaddr tokens))))])))
+            (callback (analyze (mcadr tokens))
+                      (if (token-sequence? (mcaddr tokens))
+                          (analyze-sequence-without-own-scope (mcaddr tokens))
+                          (analyze (mcaddr tokens))))])))
 
-
+     (define (wrap-instance-conseqs-in-private! instance)
+       (set-funject-pairs! instance
+                           (mmap (lambda (p)
+                                   (let ((pattern (funject-pair-pattern-of p))
+                                         (original (funject-pair-conseq-of p))
+                                         (original-env (funject-pair-env-of p)))
+                                     (create-funject-bound-pair pattern
+                                                                (mlist 'Unevaled 
+                                                                       (lambda (env)
+                                                                         (let* ((meth (if (eq? 'Unevaled (mcar original))
+                                                                                          ((mcadr original) env)
+                                                                                          (mcadr original))))
+                                                                           (set-funject-pairs! meth
+                                                                                               (mmap (lambda (p)
+                                                                                                       (let ((pattern (funject-pair-pattern-of p))
+                                                                                                             (original-unevaled (mcadr (funject-pair-conseq-of p)))
+                                                                                                             (original-env (funject-pair-env-of p)))
+                                                                                                         (create-funject-bound-pair pattern
+                                                                                                                                    (mlist 'Unevaled 
+                                                                                                                                           (lambda (env)
+                                                                                                                                             (let ((self (lookup-identifier "@self" env)))
+                                                                                                                                               (original-unevaled (env-extend (env-pairs-for-private-of self) env)))))
+                                                                                                                                    original-env)))
+                                                                                                     (funject-pairs-of meth)))
+                                                                           meth)))
+                                                                original-env)))
+                                 (funject-pairs-of instance))))
+     
      (define (after-analyze-class aparent aseq)
        (lambda (env)
          (let* ((parent (eval aparent env))
@@ -1753,23 +1785,33 @@
                                                    (gen-funject-id)
                                                    '() 
                                                    parent
-                                                   primitive-funject-inverse-god))
+                                                   primitive-funject-inverse-god)
+                                      module-env)
            (eval aseq module-env)
            (let ((exports (general-with-new-parent! (lookup-identifier "exports" module-env) parent))
                  (instance (general-with-new-parent! (lookup-identifier "instance" module-env) parent)))
-             (push-funject-pair! exports (bind-funject-pair (create-funject-pair (create-lang 'Symbol "instance")
-                                                                                 (mlist 'Evaled instance))
-                                                            module-env))
+             (if (funject-has? instance (create-lang 'Symbol "initialize"))
+                 'ok
+                 (push-funject-pair! instance (bind-funject-pair (create-funject-pair (create-lang 'Symbol "initialize")
+                                                                                      (mlist 'Evaled 
+                                                                                             default-class-initialize))
+                                                                 module-env)))
+             (wrap-instance-conseqs-in-private! instance)
+             (push-funject-pair! exports 
+                                 (bind-funject-pair (create-funject-pair (create-lang 'Symbol 
+                                                                                      "instance")
+                                                                         (mlist 'Evaled 
+                                                                                instance))
+                                                    module-env))
              (push-funject-pair! exports (bind-funject-pair (create-funject-pair (create-lang 'Symbol "new")
                                                                                  (mlist 'Evaled (create-primitive-class-new module-env)))
                                                             module-env))
-             (assign-strict-identifier! "exports" exports module-env)
              exports))))
              
                   
      (mlist (analyze-header after-analyze-module)
             (analyze-header after-analyze-class)))))
-  
+
 (define analyze-module (mcar analyze-module--analyze-class))
 (define analyze-class (mcadr analyze-module--analyze-class))
 
@@ -1778,10 +1820,13 @@
 
 ;;;;    invoke
 
-(define (invoke receiver arg . maybe-own)
-  (define own (if (empty? maybe-own)
+(define (invoke receiver arg . maybe-own-and-extra-bindings)
+  (define own (if (empty? maybe-own-and-extra-bindings)
                   receiver
-                  (car maybe-own)))
+                  (car maybe-own-and-extra-bindings)))
+  (define extra-bindings (if (= 2 (length maybe-own-and-extra-bindings))
+                             (cadr maybe-own-and-extra-bindings)
+                             (env-pairs)))
   (cond 
     [(primitive? receiver) 
      (invoke-primitive receiver arg own)]
@@ -1791,8 +1836,8 @@
           (lang? 'Symbol arg) 
           (equal? "has?" (mcadr arg))) 
      (create-primitive-has?-match own)]
-    [(lang? 'Funject receiver) 
-     (invoke-funject receiver arg own)]
+    [(lang? 'Funject receiver)
+     (invoke-funject receiver arg own extra-bindings)]
     [else 
      (error "invoke: I know not how to invoke " receiver "!")]))
 
@@ -1802,7 +1847,7 @@
                         (funject arg own))))
 
 (define (invoke-number receiver arg own)
-  (unless (lang? 'String arg)
+  (unless (lang? 'Symbol arg)
           (invoke primitive-funject-god arg own)
           (lang-contents arg
                          (lambda (str)
@@ -1813,10 +1858,17 @@
                              [(equal? str "/") (create-primitive-number-div (mcadr receiver))]
                              [else (invoke primitive-funject-god arg own)])))))
 
-                 
 
-(define (invoke-funject receiver arg own . extra-bindings)
-  (let ((apairs (funject-pairs-of receiver))
+(define (invoke-funject-itself-with-bindings receiver arg extra-bindings)
+  (invoke-funject receiver arg receiver extra-bindings))
+(define (invoke-funject receiver arg own . maybe-extra-bindings)
+  (if (void? receiver) (error "I cannot invoke a void receiver!") 'ok)
+  (let ((extra-bindings (env-pairs-cons (create-env-pair "own" 
+                                                         (bind-as-though-unevaled own))
+                                        (if (empty? maybe-extra-bindings)
+                                            (env-pairs)
+                                            (car maybe-extra-bindings))))
+        (apairs (funject-pairs-of receiver))
         (parent (funject-parent-of receiver))
         (inverse (funject-inverse-of receiver)))
     (define (iter apairs)
@@ -1832,10 +1884,7 @@
             (if bindings
                 (cond
                   [(eq? 'Unevaled (mcar consequent))
-                   (force-bound (bind-analyzed (mcadr consequent) (env-extend (env-pairs (create-env-pair "own" 
-                                                                                                          (bind-as-though-unevaled own)))
-                                                                              (env-extend extra-bindings
-                                                                                          bindings))))]
+                   (force-bound (bind-analyzed (mcadr consequent) (env-extend extra-bindings bindings)))]
                   [(eq? 'Evaled (mcar consequent))
                    (mcadr consequent)]
                   [else
@@ -1973,7 +2022,8 @@
                   (lambda (pattern consequent)
                     (create-funject-bound-pair pattern consequent env))))
 
-
+;funject-pairs
+(define funject-pairs mlist)
 
 
 
@@ -2092,8 +2142,8 @@
      (define bindings-from-matching-list-literal
        ((lambda () 
           (define (iter elems arg-elems bindings env)
-            (if (empty? elems)
-                (if (empty? arg-elems)
+            (if (or (empty? elems) (empty? arg-elems))
+                (if (equal? (empty? elems) (empty? arg-elems))
                     (possibility bindings)
                     (impossibility))
                 (given (bindings-from-matching-once (mcar elems)
@@ -2297,21 +2347,29 @@
                                                                            (create-lang 'List left)
                                                                            (user-error-no-matching-pattern (list "is of " left) (create-lang 'List result (create-lang 'Unknown)))))))
 
-(define (create-primitive-has?-match own)
-  (if (lang? 'Funject own)
-      (create-primitive (lambda (arg _)
-                          (if (mormap (lambda (pair) 
-                                       (choice-bindings-from-matching (mcar pair) arg (mcaddr pair)))
-                                     (funject-pairs-of own))
-                              (create-lang 'Boolean true)
-                              (invoke (invoke (funject-parent-of own) (create-lang 'Symbol "has?")) arg)))
-                        (lambda (has-or-doesnt _)
-                          (unless (lang? 'Boolean has-or-doesnt)
-                                  (create-lang 'List '())
-                                  (if (mcadr has-or-doesnt)
-                                      (create-lang 'List '())   ;Todo: invent a proper inverse for .has?
-                                      (create-lang 'List '())))))
-      (error "I cannot call has? on a non-funject; I should have passed that to a builtin!")))
+(define (funject-has? own arg . maybe-extra-bindings)
+  (or (not (lang? 'Funject own))
+      (mcadr (apply invoke (append (list (create-primitive-has?-match own) arg)
+                                   maybe-extra-bindings)))))
+(define (create-primitive-has?-match own . maybe-extra-bindings)
+  (let ((extra-bindings (env-pairs-cons (create-env-pair "own" own)
+                                        (if (empty? maybe-extra-bindings)
+                                            (env-pairs)
+                                            (car maybe-extra-bindings)))))
+    (if (lang? 'Funject own)
+        (create-primitive (lambda (arg _)
+                            (if (mormap (lambda (pair) 
+                                          (choice-bindings-from-matching (mcar pair) arg (env-extend extra-bindings (mcaddr pair))))
+                                        (funject-pairs-of own))
+                                (create-lang 'Boolean true)
+                                (invoke (invoke (funject-parent-of own) (create-lang 'Symbol "has?")) arg)))
+                          (lambda (has-or-doesnt _)
+                            (unless (lang? 'Boolean has-or-doesnt)
+                              (create-lang 'List '())
+                              (if (mcadr has-or-doesnt)
+                                  (create-lang 'List '())   ;Todo: invent a proper inverse for .has?
+                                  (create-lang 'List '())))))
+        (error "I cannot call has? on a non-funject; I should have passed that to a builtin!"))))
 
 (define funject-god-method-names (list "is" "has?"))
 (define primitive-funject-god-has?-match 
@@ -2331,42 +2389,52 @@
 
 (define create-primitive-number-plus (create-primitive-unoverloaded-infix-operator 'Number 'Number + -))
 
-(define create-primitive-number-minus (create-primitive-unoverloaded-infix-operator 'Number 'Number - +))
+(define create-primitive-number-minus (create-primitive-unoverloaded-infix-operator 'Number 'Number - (compose - -)))
 
 (define create-primitive-number-times (create-primitive-unoverloaded-infix-operator 'Number 'Number * /))
 
-(define create-primitive-number-div (create-primitive-unoverloaded-infix-operator 'Number 'Number / *))
+(define create-primitive-number-div (create-primitive-unoverloaded-infix-operator 'Number 'Number / (compose / /)))
 
 
 (define (create-primitive-class-new module-env) 
   (let* ((exports (lookup-identifier "exports" module-env))
          (instance (lookup-identifier "instance" module-env)))
-    (lambda (constructor-arg)
-      (define self (create-lang 'Funject
-                                (gen-funject-id)
-                                (mlist (bind-funject-pair (create-funject-pair (create-lang 'Symbol "class")
-                                                                               (mlist 'Evaled exports))
-                                                          module-env)
-                                       (bind-funject-pair (create-funject-pair (create-lang 'Parameter "else")
-                                                                               (mlist 'Unevaled (lambda (env)
-                                                                                                  (let ((meth (invoke instance (lookup-identifier "@else" env))))
-                                                                                                    (if (equal? (create-lang 'Boolean true) 
-                                                                                                                ((create-primitive-has?-match meth) (create-lang 'List self)))
-                                                                                                        (invoke meth (create-lang 'List self))
-                                                                                                        (create-primitive-class-instance-method meth self))))))
-                                                          module-env))
-                                primitive-funject-never-to-be-called
-                                primitive-funject-inverse-god))
-      (invoke (invoke instance 
-                      (create-lang 'Symbol 
-                                   "initialize"))
-              constructor-arg)
-      self)))
+    (create-primitive (lambda (constructor-arg own)
+                        (define self (create-lang 'Funject
+                                                  (gen-funject-id)
+                                                  (mlist (bind-funject-pair (create-funject-pair (create-lang 'Symbol "class")
+                                                                                                 (mlist 'Evaled exports))
+                                                                            module-env)
+                                                         (bind-funject-pair (create-funject-pair (tokenize 'Parameter "@else")
+                                                                                                 (mlist 'Unevaled (lambda (env)
+                                                                                                                    (let ((meth (invoke instance (lookup-identifier "@else" env))))
+                                                                                                                      (if (funject-has? meth (create-lang 'List (mlist self)))
+                                                                                                                          (invoke meth (create-lang 'List (mlist self)) meth (env-pairs-for-private-of self))
+                                                                                                                          (create-primitive-class-instance-method meth self))))))
+                                                                            module-env))
+                                                  primitive-funject-never-to-be-called
+                                                  primitive-funject-inverse-god))
+                        (env-set! self 
+                                  (create-lang 'Funject 
+                                               (gen-funject-id) 
+                                               '()
+                                               primitive-funject-god
+                                               primitive-funject-inverse-god)
+                                  privates)
+                        (invoke-funject-itself-with-bindings (invoke instance 
+                                                                     (create-lang 'Symbol 
+                                                                                  "initialize"))
+                                                             (create-lang 'List (mlist self constructor-arg))
+                                                             (env-pairs-for-private-of self))
+                        self)
+                      (lambda (arg own)
+                        (invoke primitive-funject-inverse-god arg own)))))
 
 (define (create-primitive-class-instance-method meth self)
-  (create-primitive (lambda (arg) 
-                      (invoke meth (create-lang 'List (mlist self arg))))
-                    (lambda (arg)
+  (create-primitive (lambda (arg own) 
+                      ;(error "" (lookup-identifier "private" (env-create (env-pairs-for-private-of self))))
+                      (invoke meth (create-lang 'List (mlist self arg)) meth (env-pairs-for-private-of self)))
+                    (lambda (arg own)
                       (assert (and (lang? 'List arg)
                                    (mlength (mcadr arg))) "create-primitive-class-instance-method: my inverse was passed not an array of two arguments, but this:" arg)
                       (let ((result (mcaadr arg))
@@ -2376,9 +2444,9 @@
                                                                                                               inverse-arg)))))))))
 
 (define primitive-funject-never-to-be-called 
-  (create-primitive (lambda (arg)
+  (create-primitive (lambda (arg own)
                       (error "primitive-funject-never-to-be-called: I said don't call me!"))
-                    (lambda (arg)
+                    (lambda (arg own)
                       (error "primitive-funject-never-to-be-called: why did you call my inverse?"))))
 
 (define primitive-funject-god
@@ -2400,15 +2468,42 @@
 
 
 
-(define global-env (env-create (env-pairs (create-env-pair "Yin" primitive-funject-god)
-                                          (create-env-pair "Yang" primitive-funject-inverse-god)
-                                          (create-env-pair-strict "+" (create-lang 'String "+"))
-                                          (create-env-pair-strict "-" (create-lang 'String "-"))
-                                          (create-env-pair-strict "*" (create-lang 'String "*"))
-                                          (create-env-pair-strict "/" (create-lang 'String "/"))
-                                          (create-env-pair-strict "is" (create-lang 'String "is")))))
+(define global-env (env-create (env-pairs (create-env-pair-strict "Yin" primitive-funject-god)
+                                          (create-env-pair-strict "Yang" primitive-funject-inverse-god)
+                                          (create-env-pair-strict "+" (create-lang 'Symbol "+"))
+                                          (create-env-pair-strict "-" (create-lang 'Symbol "-"))
+                                          (create-env-pair-strict "*" (create-lang 'Symbol "*"))
+                                          (create-env-pair-strict "/" (create-lang 'Symbol "/"))
+                                          (create-env-pair-strict "is" (create-lang 'Symbol "is")))))
 
+;I placed this down here because it relies on the global enviroment.
+;This serves as default Klass.instance.initialize.
+(define default-class-initialize 
+  (create-lang 'Funject
+               (gen-funject-id)
+               (funject-pairs (bind-funject-pair (create-funject-pair (tokenize 'List-literal
+                                                                                (mlist (tokenize 'Parameter 
+                                                                                                 "@self")
+                                                                                       (tokenize 'Parameter
+                                                                                                 "@arg")))
+                                                                      (mlist 'Unevaled 
+                                                                             (lambda (env)
+                                                                               lang-nil)))
+                                                 global-env))
+               primitive-funject-god
+               primitive-funject-inverse-god))
+(define lang-identity (create-lang 'Funject
+                                   (gen-funject-id)
+                                   (mlist (bind-funject-pair (create-funject-pair (tokenize 'Parameter "@other")
+                                                                                  (mlist 'Unevaled (partial lookup-identifier "@other")))
+                                                             global-env))
+                                   primitive-funject-god
+                                   primitive-funject-inverse-god))
 
+(define (env-pairs-for-private-of funject)
+  (env-pairs (create-env-pair-strict "private" (private-of funject))))
+(define privates (env-create (env-pairs)))
+(define (private-of funject) (env-get funject privates))
 
 
 ;;;;    user-error

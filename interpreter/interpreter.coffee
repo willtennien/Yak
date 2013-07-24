@@ -205,10 +205,19 @@ class Funject
         false
 
     keys: ->
+        pattern = (p) =>
+            switch p.type
+                when 'list'
+                    new ListFunject (pattern v for v in p.values)
+                when 'symbol' then yakSymbol p.value
+                when 'string' then new StringFunject p.value
+                when 'number' then new NumberFunject p.value
+                when 'nil', 'unknown' then lang[p.value]
+                else throw new InterpreterError "#{@} has non-constant keys"
         result = []
         if @patterns
-            for p in @patterns when p.pattern.type is 'symbol'
-                result.push p.pattern.value
+            for p in @patterns
+                result.push pattern p.pattern
         if @call
             i = 0
             length = @call.length
@@ -217,17 +226,40 @@ class Funject
                 while p is 'interpreter' or p is 'own'
                     p = @call[i++]
                 if p[0] is '.'
-                    result.push p.substr 1
-        result
+                    result.push yakSymbol p.substr 1
+                else if p[0] is '"'
+                    result.push new StringFunject p.substr 1
+        new ListFunject result
 
-    allKeys: ->
-        result = {}
+    symbolicKeys: ->
+        result = []
+        if @patterns
+            for p in @patterns when p.pattern.type is 'symbol'
+                result.push yakSymbol p.pattern.value
+        if @call
+            i = 0
+            length = @call.length
+            while i < length
+                p = @call[i++]
+                while p is 'interpreter' or p is 'own'
+                    p = @call[i++]
+                if p[0] is '.'
+                    result.push yakSymbol p.substr 1
+        new ListFunject result
+
+    allKeys: (symbolic = false) ->
+        result = []
         f = @
         while f
-            for k in f.keys()
-                result[k] = true
+            for k in (if symbolic then f.symbolicKeys() else f.keys()).values
+                add = true
+                for l in result
+                    if equal l, k
+                        add = false
+                if add
+                    result.push k
             f = f.parent
-        Object.keys result
+        new ListFunject result
 
     native: (pattern, argument) ->
         if pattern instanceof Array
@@ -560,10 +592,11 @@ yakClass = (name, extend, {exports, instance, _instance} = {}) ->
     methods = _instance ? yakObject extend?.$instance, instance
     result = yakObject extend, exports ? {}, ClassFunject
     delete result.parent unless extend?
-    result.call.unshift(
-        '.instance', -> methods,
-        '.new', -> throw new InterpreterError "Unimplemented")
     result.$instance = methods
+    result.$super = extend
+    result.$subclasses = new ListFunject []
+    if extend
+        extend.$subclasses.values.push result
     result.instance = (lang.Class ? result).$instance
     result.name = name
     lang[name] = result
@@ -644,10 +677,44 @@ BaseFunject = yakObject null,
             new StringFunject x.getSource -1
         else
             new StringFunject x.toSource()
-    keys: yakFunction ['*'], (f) ->
-        new ListFunject (new StringFunject k for k in f.keys())
-    'all-keys': yakFunction ['*'], (f) ->
-        new ListFunject (new StringFunject k for k in f.allKeys())
+    keys: yakFunction ['*'], (f) -> f.keys()
+    'all-keys': yakFunction ['*'], (f) -> f.allKeys()
+    each: new Funject
+        call: ['interpreter', ['funject', ['funject']], (interpreter, f, iterator) ->
+            next = ->
+                interpreter.push
+                    type: 'application'
+                    funject:
+                        type: 'value'
+                        value: iterator
+                    argument:
+                        type: 'list'
+                        values: [{
+                            type: 'value'
+                            value: keys[i]
+                        }, {
+                            type: 'application'
+                            funject:
+                                type: 'value'
+                                value: f
+                            argument:
+                                type: 'value'
+                                value: keys[i]
+                        }]
+            i = 0
+            keys = f.keys().values
+            end = keys.length
+            return lang.nil if end is 0
+            interpreter.pop()
+            interpreter.push
+                type: 'native'
+                value: ->
+                    ++i
+                    if i is end
+                        return @return new ListFunject @frame.arguments
+                    next()
+            next()
+            SPECIAL_FORM]
 
 Funject::instance = BaseFunject
 BaseFunject.instance = null
@@ -656,31 +723,35 @@ class ClassFunject extends Funject
     type: 'class'
     isClass: true
 
+class ListFunject extends Funject
+    type: 'list'
+    isList: true
+
+    constructor: (@values) ->
+    toString: -> "[#{@values.join ', '}]"
+    toSource: (depth) -> "[#{(v.toSource depth - 1 for v in @values).join ', '}]"
+
+    call: ['.class', -> lang.List]
+
 yakClass 'Class', null,
     instance:
-        methods: new Funject
-            call: ['interpreter', ['class'], (interpreter, f) ->
-                interpreter.pop()
-                interpreter.push
-                    type: 'native'
-                    value: ->
-                        @return new ListFunject (new StringFunject k for k in @first().allKeys())
-                interpreter.push
-                    type: 'application'
-                    funject:
-                        type: 'value'
-                        value: f
-                    argument:
-                        type: 'symbol'
-                        value: 'instance'
-                SPECIAL_FORM]
+        superclass: yakFunction ['class'], (f) -> f.$super ? lang.nil
+        subclasses: yakFunction ['class'], (f) -> f.$subclasses
+        instance: yakFunction ['class'], (f) -> f.$instance
+        methods: yakFunction ['class'], (f) -> f.$instance.symbolicKeys()
+        'all-methods': yakFunction ['class'], (f) -> f.$instance.allKeys true
 
 ClassFunject::parent = yakObject null,
     class: lang.Class
 ClassFunject::instance = lang.Class.$instance
 
+lang.Class.$instance.parent = BaseFunject
+
 yakClass 'Funject', null,
     _instance: BaseFunject
+
+lang.Class.$super = lang.Funject
+lang.Funject.$subclasses.values.push lang.Class
 
 Funject::parent = yakObject null,
     class: lang.Funject
@@ -719,8 +790,6 @@ integerIdentityInverse = new Funject
 
 yakClass 'Number', lang.Funject,
     exports:
-        e: 2.718281828459045
-        pi: 3.141592653589793
         random: new Funject call: [
             [], -> new NumberFunject Math.random(),
             ['number'], (x) ->
@@ -933,6 +1002,10 @@ yakClass 'Number', lang.Funject,
         '>=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value >= y.value
         '<=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value <= y.value
 
+lang.Number.call.unshift(
+    '.e', -> new NumberFunject 2.718281828459045
+    '.pi', -> new NumberFunject 3.141592653589793)
+
 yakClass 'List', lang.Funject,
     instance:
         head: yakFunction ['list'], (x) ->
@@ -1048,6 +1121,8 @@ yakClass 'List', lang.Funject,
                         value: new ListFunject [list[i]]
                 SPECIAL_FORM]
 
+ListFunject::instance = lang.List.$instance
+
 yakClass 'Boolean', lang.Funject,
     instance:
         not: yakFunction ['boolean'], (x) ->
@@ -1110,17 +1185,6 @@ class NumberFunject extends Funject
     valueOf: -> @value
 
     call: ['.class', -> lang.Number]
-
-class ListFunject extends Funject
-    instance: lang.List.$instance
-    type: 'list'
-    isList: true
-
-    constructor: (@values) ->
-    toString: -> "[#{@values.join ', '}]"
-    toSource: (depth) -> "[#{(v.toSource depth - 1 for v in @values).join ', '}]"
-
-    call: ['.class', -> lang.List]
 
 class BooleanFunject extends Funject
     instance: lang.Boolean.$instance
@@ -1370,12 +1434,14 @@ class Interpreter
                 return
             exports = @frame.scope.vars.exports
             exports.parent = @frame.super
+            exports.$instance = instance
+            exports.$super = @frame.super
+            exports.$subclasses = new ListFunject []
             instance = @frame.scope.vars.instance
             instance.parent = @frame.superInstance
             prototype = yakObject null,
                 class: exports
             (exports.call ?= []).unshift(
-                '.instance', -> instance
                 'interpreter', '.new', (interpreter) ->
                     exp = interpreter.frame.expression
                     interpreter.pop()
@@ -1454,39 +1520,52 @@ class Interpreter
         or: logical
         and: logical
 
-    evaluate: (n) ->
+    load: (n) ->
         @scope = globalScope
         @stack = [ arguments: [] ]
         @callStack = []
         n.isProxy = true
         @push n
+        @
+
+    evaluate: (n) ->
+        @load n
         while @stack.length > 1
-            @frame = last @stack
-            try
-                @expression()
-            catch error
-                if error instanceof InterpreterError
-                    stack = ''
-                    calls = @callStack[0..]
-                    calls.push expression: @frame.expression
-                    name = null
-                    for {expression: e, name: n} in calls
-                        if name
-                            if e.file
-                                stack = "\n at #{name} (#{e.file}:#{e.line}:#{e.character})" + stack
-                            else
-                                stack = "\n at #{name}" + stack
+            @step()
+        last @stack[0].arguments
+
+    step: (n) ->
+        if @stack.length is 1
+            return true
+        @frame = last @stack
+        try
+            @expression()
+        catch error
+            if error instanceof InterpreterError
+                stack = ''
+                calls = @callStack[0..]
+                calls.push expression: @frame.expression
+                name = null
+                for {expression: e, name: n} in calls
+                    if name
+                        if e.file
+                            stack = "\n at #{name} (#{e.file}:#{e.line}:#{e.character})" + stack
                         else
-                            if e.file
-                                stack = "\n at #{e.file}:#{e.line}:#{e.character}" + stack
-                            else
-                                stack = "\n at <anonymous>" + stack
-                        name = n
-                    stack = error.message + stack
-                    throw new RuntimeError stack
-                else
-                    console.log util.inspect @stack, depth: 10
-                    throw error
+                            stack = "\n at #{name}" + stack
+                    else
+                        if e.file
+                            stack = "\n at #{e.file}:#{e.line}:#{e.character}" + stack
+                        else
+                            stack = "\n at <anonymous>" + stack
+                    name = n
+                stack = error.message + stack
+                throw new RuntimeError stack
+            else
+                console.log util.inspect @stack, depth: 10
+                throw error
+        false
+
+    value: ->
         last @stack[0].arguments
 
     args: (args...) ->
@@ -1549,8 +1628,10 @@ repl = ->
             else
                 [[], line]
 
-    replLine = 1
+    MAX_ITERATIONS = 1000
     FIXED_LINE_LENGTH = 4
+
+    replLine = 1
     setPrompt = (postfix = '>') ->
         s = '' + replLine
         while s.length < FIXED_LINE_LENGTH
@@ -1563,6 +1644,7 @@ repl = ->
     read = ''
     firstLine = 1
     sigints = 0
+    timeout = null
     rl.on 'line', (line) ->
         ++replLine
         sigints = 0
@@ -1573,19 +1655,29 @@ repl = ->
             return
         read += line + '\n'
         if not /^[\t ]|(^|[(\[])(class|module)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
-            try
-                console.log evaluate(read, 'input', firstLine).toSource 3
-            catch e
-                if e instanceof RuntimeError
-                    console.log e.stack
-                else if e instanceof SyntaxError
-                    console.log e.message
-                else
-                    throw e
-            read = ''
-            firstLine = replLine
-            setPrompt '>'
-            rl.prompt()
+            interpreter = new Interpreter().load parser.parse read, 'input', firstLine
+            timeout = setTimeout step = ->
+                iterations = 0
+                try
+                    loop
+                        if interpreter.step()
+                            console.log interpreter.value().toSource 3
+                            break
+                        else if ++iterations > MAX_ITERATIONS
+                            timeout = setTimeout step
+                            return
+                catch e
+                    if e instanceof RuntimeError
+                        console.log e.stack
+                    else if e instanceof SyntaxError
+                        console.log e.message
+                    else
+                        throw e
+                timeout = null
+                read = ''
+                firstLine = replLine
+                setPrompt '>'
+                rl.prompt()
         else
             setPrompt ':'
             rl.prompt()
@@ -1594,18 +1686,23 @@ repl = ->
             #     rl.write s[2]
 
     rl.on 'SIGINT', ->
-        rl._refreshLine() # TODO this is a bad idea
-        if rl.line is '' and read is ''
-            if sigints
-                rl.close()
-            else
-                sigints = 1
-                rl.clearLine()
-                console.log '(^C again to quit)'
-        else
-            sigints = 0
-            rl.clearLine()
+        if timeout?
+            clearTimeout timeout
+            timeout = null
             read = ''
+        else
+            rl._refreshLine() # TODO this is a bad idea
+            if rl.line is '' and read is ''
+                if sigints
+                    rl.close()
+                else
+                    sigints = 1
+                    rl.clearLine()
+                    console.log '(^C again to quit)'
+            else
+                sigints = 0
+                rl.clearLine()
+                read = ''
         ++replLine
         firstLine = replLine
         setPrompt '>'
