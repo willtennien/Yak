@@ -558,7 +558,7 @@ yakClass = ({exports, instance}) ->
 yakBoolean = (value) -> lang[!!value]
 
 yakSymbol = (value) ->
-    if Object::hasOwnProperty.call SymbolFunject, value
+    if Object::hasOwnProperty.call SymbolFunject.instances, value
         SymbolFunject.instances[value]
     else
         SymbolFunject.instances[value] = new SymbolFunject value
