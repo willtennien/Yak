@@ -531,18 +531,47 @@ lang = {}
 
 BaseFunject = yakObject null,
     initialize: yakFunction ['*'], (x) -> lang.nil
+    clone: yakFunction ['*'], (x) -> new Funject parent: x
+    apply: new Funject
+        call: ['interpreter', ['*', ['*']], (interpreter, f, x) ->
+            interpreter.pop()
+            interpreter.push
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: f
+                argument:
+                    type: 'value'
+                    value: x
+            SPECIAL_FORM]
+    on: new Funject
+        call: ['interpreter', ['*', '*'], (interpreter, x, y) ->
+            interpreter.pop()
+            interpreter.push
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: y
+                argument:
+                    type: 'value'
+                    value: x
+            SPECIAL_FORM]
+    then: new Funject
+        call: ['interpreter', ['*', ['*']], (interpreter, x, y) ->
+            interpreter.pop()
+            interpreter.push
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: y
+                argument:
+                    type: 'value'
+                    value: x
+            SPECIAL_FORM]
     is: yakFunction ['*', '*'], (x, y) -> yakBoolean x is y
     isnt: yakFunction ['*', '*'], (x, y) -> yakBoolean x isnt y
     '==': yakFunction ['*', '*'], (x, y) -> yakBoolean equal x, y
     '!=': yakFunction ['*', '*'], (x, y) -> yakBoolean not equal x, y
-    on: yakFunction ['*', '*'], (x, y) -> lazy:
-            type: 'application'
-            funject:
-                type: 'value'
-                value: y
-            argument:
-                type: 'value'
-                value: x
     'symbol?': yakFunction ['*'], (x) -> yakBoolean x.isSymbol
     'string?': yakFunction ['*'], (x) -> yakBoolean x.isString
     'number?': yakFunction ['*'], (x) -> yakBoolean x.isNumber
@@ -550,13 +579,16 @@ BaseFunject = yakObject null,
     'boolean?': yakFunction ['*'], (x) -> yakBoolean x.isBoolean
     'nil?': yakFunction ['*'], (x) -> yakBoolean x.isNil
     'unknown?': yakFunction ['*'], (x) -> yakBoolean x.isUnknown
+    'integer?': yakFunction ['*'], (x) ->
+        yakBoolean x.isNumber and x.isInteger()
+    'float?': yakFunction ['*'], (x) ->
+        yakBoolean x.isNumber and x.isFloat()
     'to-string': yakFunction ['*'], (x) ->
         if x.type is 'funject'
             new StringFunject Funject::basicToString.call x
         else
             new StringFunject '' + x
     'inspect': yakFunction ['*'], (x) -> new StringFunject x.toSource -1
-    '__name__': yakFunction ['*'], (x) -> if x.name? then new StringFunject x.name else lang.nil
 
 Funject::instance = BaseFunject
 BaseFunject.instance = null
@@ -671,6 +703,8 @@ class NumberFunject extends Funject
     instance: lang.Number.$instance
     type: 'number'
     isNumber: true
+    isInteger: -> @value % 1 is 0
+    isFloat: -> @value % 1 isnt 0
 
     constructor: (@value) ->
     toString: -> '' + @value
