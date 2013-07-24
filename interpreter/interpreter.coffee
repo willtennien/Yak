@@ -601,8 +601,24 @@ lang.Symbol = yakClass
 
 lang.String = yakClass
     instance: yakObject BaseFunject,
+        length: yakFunction ['string'], (s) ->
+            new NumberFunject s.value.length
         '+': new Funject
-            call: [['string', 'string'], (x, y) -> new StringFunject x.value + y.value]
+            call: [['string', 'string'], (x, y) ->
+                new StringFunject x.value + y.value]
+            inverse: new Funject
+                call: [
+                    ['string', ['unknown', 'string']], (s, x) ->
+                        if x.value isnt s.value.slice -x.value.length
+                            new ListFunject []
+                        else
+                            new ListFunject [new StringFunject s.value.slice 0, -x.value.length]
+                    ['string', ['string', 'unknown']], (s, x) ->
+                        if x.value isnt s.value.slice 0, x.value.length
+                            new ListFunject []
+                        else
+                            new ListFunject [new StringFunject s.value.slice x.value.length]]
+        '*': yakFunction ['string', 'number'], (s, n) -> s.repeat n
 
 lang.Number = yakClass
     instance: yakObject BaseFunject,
@@ -694,6 +710,18 @@ class StringFunject extends Funject
     isString: true
 
     constructor: (@value) ->
+
+    call: ['own', ['number'], (s, n) ->
+        i = if n.value < 0 then s.value.length + n.value else n.value
+        if i < 0 or i >= s.value.length
+            lang.nil
+        else
+            new StringFunject s.value.charAt i]
+
+    repeat: (n) ->
+        if not n.isInteger() or n.value < 0
+            throw new InterpreterError "Cannot create #{s.toSource()} * #{n}"
+        new StringFunject Array(n.value + 1).join @value
 
     # The [] are there to avoid a syntax highlighting bug
     toString: -> @value
