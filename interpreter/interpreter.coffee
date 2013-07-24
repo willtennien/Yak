@@ -1255,9 +1255,15 @@ class Interpreter
                 @frame.superInstance = if p then @second() else @first()
                 @push type: 'pop scope'
                 @scope = @frame.scope = new Scope @scope, {
-                    exports: new Funject parent: @frame.super, name: @frame.name, expression: n
+                    exports: new ClassFunject
+                        parent: @frame.super
+                        name: @frame.name
+                        expression: n
                     super: @frame.super
-                    instance: new Funject parent: @frame.superInstance, name: "#{@frame.name}.instance", expression: n
+                    instance: new Funject
+                        parent: @frame.superInstance
+                        name: "#{@frame.name}.instance"
+                        expression: n
                 }, true
                 if p
                     @args 0, 0, n.body
