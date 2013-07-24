@@ -861,9 +861,14 @@ lang.List = yakClass
 
 lang.Boolean = yakClass
     instance: yakObject BaseFunject,
-        not: yakFunction ['boolean'], (x) -> yakBoolean not x.value
-        and: yakFunction ['boolean', 'boolean'], (x, y) -> yakBoolean x.value and y.value
-        or: yakFunction ['boolean', 'boolean'], (x, y) -> yakBoolean x.value or y.value
+        not: yakFunction ['boolean'], (x) ->
+            yakBoolean not x.value
+        and: yakFunction ['boolean', 'boolean'], (x, y) ->
+            yakBoolean x.value and y.value
+        or: yakFunction ['boolean', 'boolean'], (x, y) ->
+            yakBoolean x.value or y.value
+        xor: yakFunction ['boolean', 'boolean'], (x, y) ->
+            yakBoolean x.value isnt y.value
 
 class SymbolFunject extends Funject
     @instances: {}
