@@ -1,4 +1,0 @@
-.DS_Store
-private
-*.rkt~
-/interpreter/*.js
