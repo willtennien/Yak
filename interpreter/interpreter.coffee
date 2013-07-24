@@ -858,6 +858,67 @@ lang.List = yakClass
                 lang.nil
         'empty?': yakFunction ['list'], (x) ->
             yakBoolean x.values.length is 0
+        map: new Funject
+            call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
+                i = 0
+                list = x.values.slice 0
+                end = list.length
+                return new ListFunject [] if end is 0
+                interpreter.pop()
+                interpreter.push
+                    type: 'native'
+                    value: ->
+                        ++i
+                        if i is end
+                            return @return new ListFunject @frame.arguments
+                        @push
+                            type: 'application'
+                            funject:
+                                type: 'value'
+                                value: f
+                            argument:
+                                type: 'value'
+                                value: new ListFunject [list[i]]
+                interpreter.push
+                    type: 'application'
+                    funject:
+                        type: 'value'
+                        value: f
+                    argument:
+                        type: 'value'
+                        value: new ListFunject [list[i]]
+                SPECIAL_FORM]
+        each: new Funject
+            call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
+                i = 0
+                list = x.values.slice 0
+                end = list.length
+                return lang.nil if end is 0
+                interpreter.pop()
+                interpreter.push
+                    type: 'native'
+                    value: ->
+                        @frame.arguments.pop()
+                        ++i
+                        if i is end
+                            return @return lang.nil
+                        @push
+                            type: 'application'
+                            funject:
+                                type: 'value'
+                                value: f
+                            argument:
+                                type: 'value'
+                                value: new ListFunject [list[i]]
+                interpreter.push
+                    type: 'application'
+                    funject:
+                        type: 'value'
+                        value: f
+                    argument:
+                        type: 'value'
+                        value: new ListFunject [list[i]]
+                SPECIAL_FORM]
 
 lang.Boolean = yakClass
     instance: yakObject BaseFunject,
