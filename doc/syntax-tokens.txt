@@ -49,3 +49,5 @@
 <Funject-inheritance> = (Funject-inheritance <Exp> <Exp>)
 
 <Inverse-definition> = (Inverse-definition <Exp> <Exp>)
+
+<Try> = (Try <Exp> <Exp>) | (Try <Exp> <Exp> <Exp>)

@@ -207,7 +207,7 @@ tokenizer = do ->
                     break unless isIdentifier c
                 if value is 'true' or value is 'false'
                     return token 'boolean', value is 'true'
-                if value is 'nil' or value is 'unknown' or value is 'class' or value is 'module'
+                if -1 isnt ['nil', 'unknown', 'class', 'module', 'try', 'catch', 'finally'].indexOf value
                     return token value, value
                 if type is 'symbol'
                     if value.length is 1
@@ -357,7 +357,7 @@ parse = do ->
                 file: start.file
                 line: start.line
                 character: start.character
-                body: body
+                body
                 parent
             }
             return result unless name
@@ -370,6 +370,21 @@ parse = do ->
                 left: name
                 right: result
             }
+        if start = tokens.match 'try'
+            body = expression tokens
+            tokens.require 'catch'
+            handler = expression tokens
+            result = {
+                type: 'try'
+                file: start.file
+                line: start.line
+                character: start.character
+                body
+                catch: handler
+            }
+            if tokens.match 'finally'
+                result.finally = expression tokens
+            return result
         e = value tokens
         if not e
             if optional
@@ -574,6 +589,11 @@ parseForRacket = (s) ->
                     ['Token-' + n.type, transform(n.parent), transform(n.body)]
                 else
                     ['Token-' + n.type, transform(n.body)]
+            when 'try'
+                if n.finally
+                    ['Token-try', transform(n.body), transform(n.catch), transform(n.finally)]
+                else
+                    ['Token-try', transform(n.body), transform(n.catch)]
             when 'assignment'
                 switch n.operator
                     when 'strict assignment'

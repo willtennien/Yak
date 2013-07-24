@@ -1263,6 +1263,12 @@ logical = (n) ->
     if not right.isBoolean
         throw new InterpreterError "##{n.type} applied to non-boolean"
     @return yakBoolean right.value
+proxy = (f) -> (n) ->
+    f.call @, n
+    if @frame.arguments.length
+        @return @first()
+    else
+        @pop()
 
 class Interpreter
     expressions:
@@ -1275,26 +1281,11 @@ class Interpreter
 
         value: (n) -> @return n.value
 
-        'pop scope': (n) ->
-            @scope = @scope.parent
-            if @frame.arguments.length
-                @return @first()
-            else
-                @pop()
-
-        'set scope': (n) ->
-            @scope = n.scope
-            if @frame.arguments.length
-                @return @first()
-            else
-                @pop()
-
-        'pop call stack': ->
-            @callStack.pop()
-            if @frame.arguments.length
-                @return @first()
-            else
-                @pop()
+        'pop scope': proxy (n) -> @scope = @scope.parent
+        'set scope': proxy (n) -> @scope = n.scope
+        'pop call stack': proxy -> @callStack.pop()
+        'pop catch stack': proxy -> @catchStack.pop()
+        'ignore arguments': -> @pop()
 
         'reapply funject': (n) ->
             n.funject.apply @, n.own, n.argument
@@ -1374,6 +1365,17 @@ class Interpreter
                 expression: p.value
                 scope: @scope)
             @return f
+        try: (n) ->
+            @pop()
+            if n.finally
+                @push n.finally
+                @push type: 'ignore arguments'
+            @catchStack.push
+                index: @stack.length
+                catch: n.catch
+                scope: @scope
+            @push type: 'pop catch stack'
+            @push n.body
         module: (n) ->
             p = n.parent?
             return if p and not @args n.parent
@@ -1524,6 +1526,7 @@ class Interpreter
         @scope = globalScope
         @stack = [ arguments: [] ]
         @callStack = []
+        @catchStack = []
         n.isProxy = true
         @push n
         @
@@ -1559,7 +1562,13 @@ class Interpreter
                             stack = "\n at <anonymous>" + stack
                     name = n
                 stack = error.message + stack
-                throw new RuntimeError stack
+                if @catchStack.length
+                    entry = @catchStack.pop()
+                    @stack = @stack[0..entry.index]
+                    @scope = entry.scope
+                    @push entry.catch
+                else
+                    throw new RuntimeError stack
             else
                 console.log util.inspect @stack, depth: 10
                 throw error
@@ -1654,7 +1663,7 @@ repl = ->
             firstLine = replLine
             return
         read += line + '\n'
-        if not /^[\t ]|(^|[(\[])(class|module)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
+        if not /^[\t ]|(^|[(\[])(class|module|try$|catch$|finally$)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
             try
                 interpreter = new Interpreter().load parser.parse read, 'input', firstLine
             catch e
