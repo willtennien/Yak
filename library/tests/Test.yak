@@ -196,4 +196,53 @@ tests = {
             test-assert[@assert, 16.root[4] == 2, 'Number-i-root']
     }
 
+    .Number-i-sin: {
+    	[@assert]:
+    		test-start['Number-i-sin']
+    		test-assert[@assert, 10.sin == -0.5440211108893698, 'Number-i-sin']
+    }
+
+    .Number-i-cos: {
+    	[@assert]:
+    		test-start['Number-i-cos']
+    		test-assert[@assert, 10.cos == -0.8390715290764524, 'Number-i-cos']
+    }
+
+    .Number-i-tan: {
+    	[@assert]:
+    		test-start['Number-i-tan']
+    		test-assert[@assert, 10.tan == 0.6483608274590866, 'Number-i-tan']
+    }
+
+    .Number-i-sec: {
+    	[@assert]:
+    		test-start['Number-i-sec']
+    		test-assert[@assert, 10.sec == -1.1917935066878957, 'Number-i-sec']
+    }
+
+    .Number-i-csc: {
+    	[@assert]:
+    		test-start['Number-i-csc']
+    		test-assert[@assert, 10.csc == -1.8381639608896658, 'Number-i-csc']
+    }
+
+    .Number-i-cot: {
+    	[@assert]:
+    		test-start['Number-i-cot']
+    		test-assert[@assert, 11.cot == -0.0044257413313241135, 'Number-i-cot']
+    }
+
+    .Number-i-atan: {
+    	[@assert]:
+    		test-start['Number-i-atan']
+    		test-assert[@assert, 10.atan == 1.4711276743037347, 'Number-i-atan']
+    }
+
+    .Number-i-asin: {
+    	[@assert]:
+    		test-start['Number-i-asin']
+    		flag1 = 1000.asin.to-string == 'NaN'
+    		flag2 = 0.5.asin == 0.5235987755982989
+    		test-assert[@assert, flag1 and flag2, 'Number-i-asin']
+    }
 }
