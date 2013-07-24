@@ -1454,39 +1454,52 @@ class Interpreter
         or: logical
         and: logical
 
-    evaluate: (n) ->
+    load: (n) ->
         @scope = globalScope
         @stack = [ arguments: [] ]
         @callStack = []
         n.isProxy = true
         @push n
+        @
+
+    evaluate: (n) ->
+        @load n
         while @stack.length > 1
-            @frame = last @stack
-            try
-                @expression()
-            catch error
-                if error instanceof InterpreterError
-                    stack = ''
-                    calls = @callStack[0..]
-                    calls.push expression: @frame.expression
-                    name = null
-                    for {expression: e, name: n} in calls
-                        if name
-                            if e.file
-                                stack = "\n at #{name} (#{e.file}:#{e.line}:#{e.character})" + stack
-                            else
-                                stack = "\n at #{name}" + stack
+            @step()
+        last @stack[0].arguments
+
+    step: (n) ->
+        if @stack.length is 1
+            return true
+        @frame = last @stack
+        try
+            @expression()
+        catch error
+            if error instanceof InterpreterError
+                stack = ''
+                calls = @callStack[0..]
+                calls.push expression: @frame.expression
+                name = null
+                for {expression: e, name: n} in calls
+                    if name
+                        if e.file
+                            stack = "\n at #{name} (#{e.file}:#{e.line}:#{e.character})" + stack
                         else
-                            if e.file
-                                stack = "\n at #{e.file}:#{e.line}:#{e.character}" + stack
-                            else
-                                stack = "\n at <anonymous>" + stack
-                        name = n
-                    stack = error.message + stack
-                    throw new RuntimeError stack
-                else
-                    console.log util.inspect @stack, depth: 10
-                    throw error
+                            stack = "\n at #{name}" + stack
+                    else
+                        if e.file
+                            stack = "\n at #{e.file}:#{e.line}:#{e.character}" + stack
+                        else
+                            stack = "\n at <anonymous>" + stack
+                    name = n
+                stack = error.message + stack
+                throw new RuntimeError stack
+            else
+                console.log util.inspect @stack, depth: 10
+                throw error
+        false
+
+    value: ->
         last @stack[0].arguments
 
     args: (args...) ->
@@ -1549,8 +1562,10 @@ repl = ->
             else
                 [[], line]
 
-    replLine = 1
+    MAX_ITERATIONS = 1000
     FIXED_LINE_LENGTH = 4
+
+    replLine = 1
     setPrompt = (postfix = '>') ->
         s = '' + replLine
         while s.length < FIXED_LINE_LENGTH
@@ -1563,6 +1578,7 @@ repl = ->
     read = ''
     firstLine = 1
     sigints = 0
+    timeout = null
     rl.on 'line', (line) ->
         ++replLine
         sigints = 0
@@ -1573,19 +1589,29 @@ repl = ->
             return
         read += line + '\n'
         if not /^[\t ]|(^|[(\[])(class|module)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
-            try
-                console.log evaluate(read, 'input', firstLine).toSource 3
-            catch e
-                if e instanceof RuntimeError
-                    console.log e.stack
-                else if e instanceof SyntaxError
-                    console.log e.message
-                else
-                    throw e
-            read = ''
-            firstLine = replLine
-            setPrompt '>'
-            rl.prompt()
+            interpreter = new Interpreter().load parser.parse read, 'input', firstLine
+            timeout = setTimeout step = ->
+                iterations = 0
+                try
+                    loop
+                        if interpreter.step()
+                            console.log interpreter.value().toSource 3
+                            break
+                        else if ++iterations > MAX_ITERATIONS
+                            timeout = setTimeout step
+                            return
+                catch e
+                    if e instanceof RuntimeError
+                        console.log e.stack
+                    else if e instanceof SyntaxError
+                        console.log e.message
+                    else
+                        throw e
+                timeout = null
+                read = ''
+                firstLine = replLine
+                setPrompt '>'
+                rl.prompt()
         else
             setPrompt ':'
             rl.prompt()
@@ -1594,18 +1620,23 @@ repl = ->
             #     rl.write s[2]
 
     rl.on 'SIGINT', ->
-        rl._refreshLine() # TODO this is a bad idea
-        if rl.line is '' and read is ''
-            if sigints
-                rl.close()
-            else
-                sigints = 1
-                rl.clearLine()
-                console.log '(^C again to quit)'
-        else
-            sigints = 0
-            rl.clearLine()
+        if timeout?
+            clearTimeout timeout
+            timeout = null
             read = ''
+        else
+            rl._refreshLine() # TODO this is a bad idea
+            if rl.line is '' and read is ''
+                if sigints
+                    rl.close()
+                else
+                    sigints = 1
+                    rl.clearLine()
+                    console.log '(^C again to quit)'
+            else
+                sigints = 0
+                rl.clearLine()
+                read = ''
         ++replLine
         firstLine = replLine
         setPrompt '>'
