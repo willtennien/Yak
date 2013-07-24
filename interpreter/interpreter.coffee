@@ -90,8 +90,11 @@ class Funject
                 s.value
             else
                 @basicToString()
-        catch
-            @basicToString()
+        catch e
+            if e instanceof InterpreterError
+                @basicToString()
+            else
+                throw e
 
     basicToString: ->
         if @call and @call.length isnt 0 then '#primitive' else '#funject'
@@ -112,11 +115,16 @@ class Funject
                 s.value
             else
                 @getSource()
-        catch
-            @getSource()
+        catch e
+            if e instanceof InterpreterError
+                @getSource depth
+            else
+                throw e
 
-    getSource: ->
-        if @call and @call.length isnt 0
+    getSource: (depth) ->
+        if depth is 0
+            @simpleToString()
+        else if @call and @call.length isnt 0
             @basicToString()
         else if not @patterns or @patterns.length is 0
             '{}'
