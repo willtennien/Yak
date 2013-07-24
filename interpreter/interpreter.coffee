@@ -947,6 +947,45 @@ yakClass 'List', lang.Funject,
                 lang.nil
         'empty?': yakFunction ['list'], (x) ->
             yakBoolean x.values.length is 0
+        sort: new Funject
+            call: [
+                ['list', []], (x) ->
+                    return new ListFunject x.values.slice(0).sort (a, b) ->
+                        if a.type is 'funject' or a.type is 'class'
+                            0
+                        else
+                            ('' + a).localeCompare('' + b)
+                'interpreter', ['list', ['funject']], (interpreter, x, f) ->
+                    i = 0
+                    list = x.values.slice 0
+                    end = list.length
+                    return new ListFunject [] if end is 0
+                    interpreter.pop()
+                    interpreter.push
+                        type: 'native'
+                        value: ->
+                            ++i
+                            if i is end
+                                xs = @frame.arguments
+                                return @return new ListFunject list.slice(0).sort (a, b) ->
+                                    xs[list.indexOf a] - xs[list.indexOf b]
+                            @push
+                                type: 'application'
+                                funject:
+                                    type: 'value'
+                                    value: f
+                                argument:
+                                    type: 'value'
+                                    value: new ListFunject [list[i]]
+                    interpreter.push
+                        type: 'application'
+                        funject:
+                            type: 'value'
+                            value: f
+                        argument:
+                            type: 'value'
+                            value: new ListFunject [list[i]]
+                    SPECIAL_FORM]
         map: new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
                 i = 0
