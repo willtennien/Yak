@@ -97,7 +97,15 @@ class Funject
                 throw e
 
     basicToString: ->
-        if @call and @call.length isnt 0 then '#primitive' else '#funject'
+        if @isClass
+            if @name
+                "#<class #{@name}>"
+            else
+                '#<class>'
+        else if @call and @call.length isnt 0
+            '#<primitive>'
+        else
+            '#<funject>'
 
     toSource: (depth) ->
         if depth is 0
@@ -537,23 +545,29 @@ class Funject
                         type: 'value'
                         value: Funject.bridge [].slice.call arguments
 
-yakObject = (parent, properties) ->
+yakObject = (parent, properties, Type = Funject) ->
     call = []
     if properties
         for k, v of properties
             do (v) ->
                 call.push '.' + k, -> v
-    return new Funject {call, parent}
+    return new Type {call, parent}
 
 yakFunction = (pattern, value) ->
     return new Funject call: [pattern, value]
 
-yakClass = ({exports, instance}) ->
-    ((exports ?= new Funject).call ?= []).unshift(
-        '.instance', -> instance,
+yakClass = (name, extend, {exports, instance, _instance} = {}) ->
+    methods = _instance ? yakObject extend?.$instance, instance
+    result = yakObject extend, exports ? {}, ClassFunject
+    delete result.parent unless extend?
+    result.call.unshift(
+        '.instance', -> methods,
         '.new', -> throw new InterpreterError "Unimplemented")
-    exports.$instance = instance
-    exports
+    result.$instance = methods
+    result.instance = (lang.Class ? result).$instance
+    result.name = name
+    lang[name] = result
+    result
 
 yakBoolean = (value) -> lang[!!value]
 
@@ -615,32 +629,67 @@ BaseFunject = yakObject null,
     'boolean?': yakFunction ['*'], (x) -> yakBoolean x.isBoolean
     'nil?': yakFunction ['*'], (x) -> yakBoolean x.isNil
     'unknown?': yakFunction ['*'], (x) -> yakBoolean x.isUnknown
+    'class?': yakFunction ['*'], (x) -> yakBoolean x.isClass
     'integer?': yakFunction ['*'], (x) ->
         yakBoolean x.isNumber and x.isInteger()
     'float?': yakFunction ['*'], (x) ->
         yakBoolean x.isNumber and x.isFloat()
     'to-string': yakFunction ['*'], (x) ->
-        if x.type is 'funject'
+        if x.type is 'funject' or x.type is 'class'
             new StringFunject Funject::basicToString.call x
         else
             new StringFunject '' + x
-    'inspect': yakFunction ['*'], (x) -> new StringFunject x.toSource -1
-    keys: yakFunction ['funject'], (f) ->
+    inspect: yakFunction ['*'], (x) ->
+        if x.type is 'funject' or x.type is 'class'
+            new StringFunject x.getSource -1
+        else
+            new StringFunject x.toSource()
+    keys: yakFunction ['*'], (f) ->
         new ListFunject (new StringFunject k for k in f.keys())
-    'all-keys': yakFunction ['funject'], (f) ->
+    'all-keys': yakFunction ['*'], (f) ->
         new ListFunject (new StringFunject k for k in f.allKeys())
 
 Funject::instance = BaseFunject
 BaseFunject.instance = null
 
-lang.Funject = yakClass
-    instance: BaseFunject
+class ClassFunject extends Funject
+    type: 'class'
+    isClass: true
 
-lang.Symbol = yakClass
-    instance: yakObject BaseFunject
+yakClass 'Class', null,
+    instance:
+        methods: new Funject
+            call: ['interpreter', ['class'], (interpreter, f) ->
+                interpreter.pop()
+                interpreter.push
+                    type: 'native'
+                    value: ->
+                        @return new ListFunject (new StringFunject k for k in @first().allKeys())
+                interpreter.push
+                    type: 'application'
+                    funject:
+                        type: 'value'
+                        value: f
+                    argument:
+                        type: 'symbol'
+                        value: 'instance'
+                SPECIAL_FORM]
 
-lang.String = yakClass
-    instance: yakObject BaseFunject,
+ClassFunject::parent = yakObject null,
+    class: lang.Class
+ClassFunject::instance = lang.Class.$instance
+
+yakClass 'Funject', null,
+    _instance: BaseFunject
+
+Funject::parent = yakObject null,
+    class: lang.Funject
+
+yakClass 'Symbol', lang.Funject,
+    instance: {}
+
+yakClass 'String', lang.Funject,
+    instance:
         length: yakFunction ['string'], (s) ->
             new NumberFunject s.value.length
         '+': new Funject
@@ -668,8 +717,8 @@ integerIdentityInverse = new Funject
             else
                 new ListFunject []]
 
-lang.Number = yakClass
-    exports: yakObject null,
+yakClass 'Number', lang.Funject,
+    exports:
         e: 2.718281828459045
         pi: 3.141592653589793
         random: new Funject call: [
@@ -682,7 +731,7 @@ lang.Number = yakClass
                 if not x.isInteger() or not y.isInteger() or y.value <= x.value
                     throw new InterpreterError "Cannot generate random[#{x}, #{y}]"
                 new NumberFunject x.value + Math.floor Math.random() * (y.value - x.value)]
-    instance: yakObject BaseFunject,
+    instance:
         'degrees-to-radians': yakFunction ['number'], (x) ->
             new NumberFunject x.value * Math.PI / 180
         'radians-to-degrees': yakFunction ['number'], (x) ->
@@ -884,8 +933,8 @@ lang.Number = yakClass
         '>=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value >= y.value
         '<=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value <= y.value
 
-lang.List = yakClass
-    instance: yakObject BaseFunject,
+yakClass 'List', lang.Funject,
+    instance:
         head: yakFunction ['list'], (x) ->
             if x.values.length
                 x.values[0]
@@ -960,8 +1009,8 @@ lang.List = yakClass
                         value: new ListFunject [list[i]]
                 SPECIAL_FORM]
 
-lang.Boolean = yakClass
-    instance: yakObject BaseFunject,
+yakClass 'Boolean', lang.Funject,
+    instance:
         not: yakFunction ['boolean'], (x) ->
             yakBoolean not x.value
         and: yakFunction ['boolean', 'boolean'], (x, y) ->
@@ -982,6 +1031,8 @@ class SymbolFunject extends Funject
     toString: -> "." + @value
     toSource: -> "." + @value
 
+    call: ['.class', -> lang.Symbol]
+
 class StringFunject extends Funject
     instance: lang.String.$instance
     type: 'string'
@@ -989,12 +1040,14 @@ class StringFunject extends Funject
 
     constructor: (@value) ->
 
-    call: ['own', ['number'], (s, n) ->
-        i = if n.value < 0 then s.value.length + n.value else n.value
-        if i < 0 or i >= s.value.length
-            lang.nil
-        else
-            new StringFunject s.value.charAt i]
+    call: [
+        'own', ['number'], (s, n) ->
+            i = if n.value < 0 then s.value.length + n.value else n.value
+            if i < 0 or i >= s.value.length
+                lang.nil
+            else
+                new StringFunject s.value.charAt i
+        '.class', -> lang.String]
 
     repeat: (n) ->
         if not n.isInteger() or n.value < 0
@@ -1017,6 +1070,8 @@ class NumberFunject extends Funject
     toSource: -> '' + @value
     valueOf: -> @value
 
+    call: ['.class', -> lang.Number]
+
 class ListFunject extends Funject
     instance: lang.List.$instance
     type: 'list'
@@ -1026,6 +1081,8 @@ class ListFunject extends Funject
     toString: -> "[#{@values.join ', '}]"
     toSource: (depth) -> "[#{(v.toSource depth - 1 for v in @values).join ', '}]"
 
+    call: ['.class', -> lang.List]
+
 class BooleanFunject extends Funject
     instance: lang.Boolean.$instance
     type: 'boolean'
@@ -1034,6 +1091,8 @@ class BooleanFunject extends Funject
     constructor: (value) -> @value = !!value
     toString: -> '' + @value
     toSource: -> '' + @value
+
+    call: ['.class', -> lang.Boolean]
 
 lang.nil = new Funject
     type: 'nil'
