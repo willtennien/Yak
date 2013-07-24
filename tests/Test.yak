@@ -1,0 +1,389 @@
+pass := assert[true]
+fail := assert[false]
+assert-error = {
+    [@x]:
+        success = true
+        try
+            @x[]
+            success |= false
+        catch
+            nil
+        assert[success]
+}
+
+tests = 0
+failures = 0
+
+run-all-tests :=
+    tests |= 0
+    failures |= 0
+    TestCase.subclasses.each[{[@Class]: @Class.new.run }]
+
+    print['-------']
+    failures.on {
+        0: print['Ran ' + tests + ' tests']
+        @: print[failures.to-string + ' / ' + tests.to-string + ' tests failed']
+    }
+
+class TestCase
+    instance.set-up = {[@self]: nil}
+    instance.tear-down = {[@self]: nil}
+    instance.run = {[@self]:
+        @self.class.methods.sort[].each[{[@method]:
+            @method.on {
+                .set-up: nil
+                .tear-down: nil
+                @:
+                    tests |= tests + 1
+                    @self.run-named[@method].on {
+                        true: nil
+                        false: failures |= failures + 1
+                    }
+            }
+        }]
+    }
+    instance.run-named = {[@self, [@name]]:
+        try
+            @self.set-up
+            @self @name
+            @self.tear-down
+            print['  ' + @self.class.name + '::' + @name.to-string]
+            true
+        catch
+            print['! ' + @self.class.name + '::' + @name.to-string + ' (failed)']
+            false
+    }
+
+class TestNumber < TestCase
+    instance.test-== = {[@self]:
+        assert==[true, 10 == 10]
+        assert==[false, 2 == 10]
+        assert==[false, 5 == '5']
+    }
+
+    instance.test-+ = {[@self]:
+        assert==[10, 10 + 0]
+        assert==[15, 10 + 5]
+
+        assert==[{Number::+[@x, 3]: @x} 10, 7]
+        assert==[{Number::+[4, @x]: @x} 10, 6]
+    }
+
+    instance.test-- = {[@self]:
+        assert==[1, 1 - 0]
+        assert==[5, 10 - 5]
+
+        assert==[{Number::-[@x, 3]: @x} 10, 13]
+        assert==[{Number::-[4, @x]: @x} 10, -6]
+    }
+
+    instance.test-abs = {[@self]:
+        assert==[10, -10.abs]
+        assert==[10, 10.abs]
+        assert==[0, 0.abs]
+
+        assert==[4, {Number::abs[@x]: @x} 4]
+    }
+
+    instance.test-negate = {[@self]:
+        assert==[-10, 10.negate]
+        assert==[10, -10.negate]
+
+        assert==[-4, {Number::negate[@x]: @x} 4]
+    }
+
+    instance.test-factorial = {[@self]:
+        assert==[1, 0.factorial]
+        assert==[1, 1.factorial]
+        assert==[120, 5.factorial]
+    }
+
+    instance.test-reciprocal = {[@self]:
+        assert==[.1, 10.reciprocal]
+        assert==[5, .2.reciprocal]
+
+        assert==[.2, {Number::reciprocal[@x]: @x} 5]
+        assert==[10, {Number::reciprocal[@x]: @x} .1]
+    }
+
+    instance.test-radians-to-degrees = {[@self]:
+        assert==[0, 0.radians-to-degrees]
+        assert==[180, Number.pi.radians-to-degrees]
+    }
+
+    instance.test-degrees-to-radians = {[@self]:
+        assert==[0, 0.radians-to-degrees]
+        assert==[Number.pi, 180.degrees-to-radians]
+    }
+
+    instance.test-sqrt = {[@self]:
+        assert==[0, 0.sqrt]
+        assert==[5, 25.sqrt]
+
+        pass = true
+        try
+            -1.sqrt
+            pass |= false
+        catch
+            nil
+        assert[pass]
+    }
+
+    instance.test-root = {[@self]:
+        assert==[2, 16.root[4]]
+        assert==[5, 5.root[1]]
+        assert-error[{[]:
+            5.root[0]
+        }]
+    }
+
+class TestBoolean < TestCase
+    instance.test-and = {[@self]:
+        assert==[true, (true and true)]
+        assert==[false, (true and false)]
+        assert==[false, (false and true)]
+        assert==[false, (false and false)]
+
+        # short-circuiting
+        false and fail
+        pass
+    }
+
+    instance.test-or = {[@self]:
+        assert==[true, (true or true)]
+        assert==[true, (true or false)]
+        assert==[true, (false or true)]
+        assert==[false, (false or false)]
+
+        # short-circuiting
+        true or fail
+        pass
+    }
+
+    instance.test-xor = {[@self]:
+        assert==[false, (true.xor true)]
+        assert==[true, (true.xor false)]
+        assert==[true, (false.xor true)]
+        assert==[false, (false.xor false)]
+    }
+
+    instance.test-not = {[@self]:
+        assert==[true, not false]
+        assert==[false, not true]
+
+        assert==[true, {Boolean::not[@flag]:@flag} false]
+    }
+
+class TestTypePredicates < TestCase
+    instance.test-number? = {[@self]:
+        assert==[true, 10.number?]
+        assert==[true, .92.number?]
+        assert==[false, '5'.number?]
+        assert==[false, '.1'.number?]
+        assert==[false, 'foo'.number?]
+        assert==[false, .foo.number?]
+        assert==[false, true.number?]
+        assert==[false, false.number?]
+        assert==[false, unknown.number?]
+        assert==[false, nil.number?]
+        assert==[false, [].number?]
+        assert==[false, [10].number?]
+        assert==[false, [1.5].number?]
+        assert==[false, {}.number?]
+    }
+    instance.test-string? = {[@self]:
+        assert==[false, 10.string?]
+        assert==[false, .92.string?]
+        assert==[true, '5'.string?]
+        assert==[true, '.1'.string?]
+        assert==[true, 'foo'.string?]
+        assert==[false, .foo.string?]
+        assert==[false, true.string?]
+        assert==[false, false.string?]
+        assert==[false, unknown.string?]
+        assert==[false, nil.string?]
+        assert==[false, [].string?]
+        assert==[false, [10].string?]
+        assert==[false, [1.5].string?]
+        assert==[false, {}.string?]
+    }
+    instance.test-boolean? = {[@self]:
+        assert==[false, 10.boolean?]
+        assert==[false, .92.boolean?]
+        assert==[false, '5'.boolean?]
+        assert==[false, '.1'.boolean?]
+        assert==[false, 'foo'.boolean?]
+        assert==[false, .foo.boolean?]
+        assert==[true, true.boolean?]
+        assert==[true, false.boolean?]
+        assert==[false, unknown.boolean?]
+        assert==[false, nil.boolean?]
+        assert==[false, [].boolean?]
+        assert==[false, [10].boolean?]
+        assert==[false, [1.5].boolean?]
+        assert==[false, {}.boolean?]
+    }
+    instance.test-symbol? = {[@self]:
+        assert==[false, 10.symbol?]
+        assert==[false, .92.symbol?]
+        assert==[false, '5'.symbol?]
+        assert==[false, '.1'.symbol?]
+        assert==[false, 'foo'.symbol?]
+        assert==[true, .foo.symbol?]
+        assert==[false, true.symbol?]
+        assert==[false, false.symbol?]
+        assert==[false, unknown.symbol?]
+        assert==[false, nil.symbol?]
+        assert==[false, [].symbol?]
+        assert==[false, [10].symbol?]
+        assert==[false, [1.5].symbol?]
+        assert==[false, {}.symbol?]
+    }
+    instance.test-unknown? = {[@self]:
+        assert==[false, 10.unknown?]
+        assert==[false, .92.unknown?]
+        assert==[false, '5'.unknown?]
+        assert==[false, '.1'.unknown?]
+        assert==[false, 'foo'.unknown?]
+        assert==[false, .foo.unknown?]
+        assert==[false, true.unknown?]
+        assert==[false, false.unknown?]
+        assert==[true, unknown.unknown?]
+        assert==[false, nil.unknown?]
+        assert==[false, [].unknown?]
+        assert==[false, [10].unknown?]
+        assert==[false, [1.5].unknown?]
+        assert==[false, {}.unknown?]
+    }
+    instance.test-nil? = {[@self]:
+        assert==[false, 10.nil?]
+        assert==[false, .92.nil?]
+        assert==[false, '5'.nil?]
+        assert==[false, '.1'.nil?]
+        assert==[false, 'foo'.nil?]
+        assert==[false, .foo.nil?]
+        assert==[false, true.nil?]
+        assert==[false, false.nil?]
+        assert==[false, unknown.nil?]
+        assert==[true, nil.nil?]
+        assert==[false, [].nil?]
+        assert==[false, [10].nil?]
+        assert==[false, [1.5].nil?]
+        assert==[false, {}.nil?]
+    }
+    instance.test-list? = {[@self]:
+        assert==[false, 10.list?]
+        assert==[false, .92.list?]
+        assert==[false, '5'.list?]
+        assert==[false, '.1'.list?]
+        assert==[false, 'foo'.list?]
+        assert==[false, .foo.list?]
+        assert==[false, true.list?]
+        assert==[false, false.list?]
+        assert==[false, unknown.list?]
+        assert==[false, nil.list?]
+        assert==[true, [].list?]
+        assert==[true, [10].list?]
+        assert==[true, [1.5].list?]
+        assert==[false, {}.list?]
+    }
+    instance.test-integer? = {[@self]:
+        assert==[true, 10.integer?]
+        assert==[false, .92.integer?]
+        assert==[false, '5'.integer?]
+        assert==[false, '.1'.integer?]
+        assert==[false, 'foo'.integer?]
+        assert==[false, .foo.integer?]
+        assert==[false, true.integer?]
+        assert==[false, false.integer?]
+        assert==[false, unknown.integer?]
+        assert==[false, nil.integer?]
+        assert==[false, [].integer?]
+        assert==[false, [10].integer?]
+        assert==[false, [1.5].integer?]
+        assert==[false, {}.integer?]
+    }
+    instance.test-float? = {[@self]:
+        assert==[false, 10.float?]
+        assert==[true, .92.float?]
+        assert==[false, '5'.float?]
+        assert==[false, '.1'.float?]
+        assert==[false, 'foo'.float?]
+        assert==[false, .foo.float?]
+        assert==[false, true.float?]
+        assert==[false, false.float?]
+        assert==[false, unknown.float?]
+        assert==[false, nil.float?]
+        assert==[false, [].float?]
+        assert==[false, [10].float?]
+        assert==[false, [1.5].float?]
+        assert==[false, {}.float?]
+    }
+
+class TestFunjectKeys < TestCase
+    instance.set-up = {[@self]:
+        a-funject := {
+            .foo: 1
+            .bar: 2
+            .baz: 'qux'
+        }
+        @self.fun = a-funject
+        @self.fun2 = a-funject
+        @self.non-dict = {
+            .foo: 1
+            [@bar]: 2
+        }
+    }
+    instance.test-has? = {[@self]:
+        assert[@self.fun.has?[.foo]]
+        assert[@self.fun.has?[.baz]]
+        assert[not @self.fun.has?[.qux]]
+    }
+    instance.test-== = {[@self]:
+        assert[@self.fun == @self.fun2]
+        assert[not @self.fun == @self.non-dict]
+    }
+    instance.test-each = {[@self]:
+        key-count = 0
+        @self.fun.each[{
+            [@key, @value]: key-count |= key-count + 1
+        }]
+        assert==[3, key-count]
+
+        assert-error[{[]:
+            @self.non-dict.each[{[@key, @value]: nil}]
+        }]
+    }
+    instance.test-keys = {[@self]:
+        assert==[[.bar, .baz, .foo], @self.fun.keys.sort[]]
+
+        assert-error[{[]:
+            @self.non-dict.keys
+        }]
+    }
+
+class TestWhile < TestCase
+    instance.test-while-true = {[@self]:
+        i = 0
+        {[]: i < 10}.while-true {
+            []: i |= i + 1
+        }
+        assert==[10, i]
+
+        {[]: false}.while-true {[]: fail}
+        pass
+    }
+
+    instance.test-do-while-true = {[@self]:
+        i = 0
+        {[]: i < 10}.do-while-true {
+            []: i |= i + 1
+        }
+        assert==[10, i]
+
+        ran = false
+        {[]: false}.do-while-true {
+            []: ran |= true
+        }
+        assert[ran]
+    }
