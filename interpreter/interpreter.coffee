@@ -441,7 +441,6 @@ class Funject
                 return
 
         if instance and argument.isSymbol and @instance and @instance.hasSymbol argument.value
-            self = @
             exp = interpreter.frame.expression
             interpreter.pop()
             interpreter.pop()
@@ -470,7 +469,7 @@ class Funject
                                         value: method
                                     argument:
                                         type: 'value'
-                                        value: new ListFunject [self, arg]
+                                        value: new ListFunject [own, arg]
                                 SPECIAL_FORM]
                     else
                         @pop()
@@ -484,7 +483,7 @@ class Funject
                                 value: method
                             argument:
                                 type: 'value'
-                                value: new ListFunject [self]
+                                value: new ListFunject [own]
             interpreter.push
                 type: 'application'
                 file: exp?.file
