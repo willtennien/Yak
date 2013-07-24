@@ -1608,7 +1608,7 @@
                                                        (lambda (env)
                                                          (each-evaled (list areceiver aright) env
                                                                       (lambda (ereceiver eright)
-                                                                        (push-funject-pair! ereceiver (bind-funject-pair (create-funject-pair pattern (mlist 'Evaled eright)) global-env))
+                                                                        (push-funject-pair! ereceiver (bind-funject-pair (create-funject-pair pattern (mlist 'Evaled eright)) env))
                                                                         eright))))))))))
 
 
@@ -1743,13 +1743,29 @@
      (define (wrap-instance-conseqs-in-private! instance)
        (set-funject-pairs! instance
                            (mmap (lambda (p)
-                                      (let ((pattern (funject-pair-pattern-of p))
-                                            (original-uneval (mcadr (funject-pair-conseq-of p))))
-                                        (create-funject-pair pattern
-                                                             (mlist 'Uneval 
-                                                                    (lambda (env)
-                                                                      (let ((self (lookup-identifier "@self" env)))
-                                                                        (original-uneval (env-extend (env-pairs-for-private-of self) env)))))))]))
+                                   (let ((pattern (funject-pair-pattern-of p))
+                                         (original (funject-pair-conseq-of p))
+                                         (original-env (funject-pair-env-of p)))
+                                     (create-funject-bound-pair pattern
+                                                                (mlist 'Unevaled 
+                                                                       (lambda (env)
+                                                                         (let* ((meth (if (eq? 'Unevaled (mcar original))
+                                                                                          ((mcadr original) env)
+                                                                                          (mcadr original))))
+                                                                           (set-funject-pairs! meth
+                                                                                               (mmap (lambda (p)
+                                                                                                       (let ((pattern (funject-pair-pattern-of p))
+                                                                                                             (original-unevaled (mcadr (funject-pair-conseq-of p)))
+                                                                                                             (original-env (funject-pair-env-of p)))
+                                                                                                         (create-funject-bound-pair pattern
+                                                                                                                                    (mlist 'Unevaled 
+                                                                                                                                           (lambda (env)
+                                                                                                                                             (let ((self (lookup-identifier "@self" env)))
+                                                                                                                                               (original-unevaled (env-extend (env-pairs-for-private-of self) env)))))
+                                                                                                                                    original-env)))
+                                                                                                     (funject-pairs-of meth)))
+                                                                           meth)))
+                                                                original-env)))
                                  (funject-pairs-of instance))))
      
      (define (after-analyze-class aparent aseq)
@@ -1778,7 +1794,7 @@
                  'ok
                  (push-funject-pair! instance (bind-funject-pair (create-funject-pair (create-lang 'Symbol "initialize")
                                                                                       (mlist 'Evaled 
-                                                                                             lang-identity))
+                                                                                             default-class-initialize))
                                                                  module-env)))
              (wrap-instance-conseqs-in-private! instance)
              (push-funject-pair! exports 
@@ -1790,7 +1806,6 @@
              (push-funject-pair! exports (bind-funject-pair (create-funject-pair (create-lang 'Symbol "new")
                                                                                  (mlist 'Evaled (create-primitive-class-new module-env)))
                                                             module-env))
-             (assign-strict-identifier! "exports" exports module-env)
              exports))))
              
                   
@@ -1847,6 +1862,7 @@
 (define (invoke-funject-itself-with-bindings receiver arg extra-bindings)
   (invoke-funject receiver arg receiver extra-bindings))
 (define (invoke-funject receiver arg own . maybe-extra-bindings)
+  (if (void? receiver) (error "I cannot invoke a void receiver!") 'ok)
   (let ((extra-bindings (env-pairs-cons (create-env-pair "own" 
                                                          (bind-as-though-unevaled own))
                                         (if (empty? maybe-extra-bindings)
@@ -2006,7 +2022,8 @@
                   (lambda (pattern consequent)
                     (create-funject-bound-pair pattern consequent env))))
 
-
+;funject-pairs
+(define funject-pairs mlist)
 
 
 
@@ -2372,11 +2389,11 @@
 
 (define create-primitive-number-plus (create-primitive-unoverloaded-infix-operator 'Number 'Number + -))
 
-(define create-primitive-number-minus (create-primitive-unoverloaded-infix-operator 'Number 'Number - +))
+(define create-primitive-number-minus (create-primitive-unoverloaded-infix-operator 'Number 'Number - (compose - -)))
 
 (define create-primitive-number-times (create-primitive-unoverloaded-infix-operator 'Number 'Number * /))
 
-(define create-primitive-number-div (create-primitive-unoverloaded-infix-operator 'Number 'Number / *))
+(define create-primitive-number-div (create-primitive-unoverloaded-infix-operator 'Number 'Number / (compose / /)))
 
 
 (define (create-primitive-class-new module-env) 
@@ -2451,8 +2468,8 @@
 
 
 
-(define global-env (env-create (env-pairs (create-env-pair "Yin" primitive-funject-god)
-                                          (create-env-pair "Yang" primitive-funject-inverse-god)
+(define global-env (env-create (env-pairs (create-env-pair-strict "Yin" primitive-funject-god)
+                                          (create-env-pair-strict "Yang" primitive-funject-inverse-god)
                                           (create-env-pair-strict "+" (create-lang 'Symbol "+"))
                                           (create-env-pair-strict "-" (create-lang 'Symbol "-"))
                                           (create-env-pair-strict "*" (create-lang 'Symbol "*"))
@@ -2461,6 +2478,20 @@
 
 ;I placed this down here because it relies on the global enviroment.
 ;This serves as default Klass.instance.initialize.
+(define default-class-initialize 
+  (create-lang 'Funject
+               (gen-funject-id)
+               (funject-pairs (bind-funject-pair (create-funject-pair (tokenize 'List-literal
+                                                                                (mlist (tokenize 'Parameter 
+                                                                                                 "@self")
+                                                                                       (tokenize 'Parameter
+                                                                                                 "@arg")))
+                                                                      (mlist 'Unevaled 
+                                                                             (lambda (env)
+                                                                               lang-nil)))
+                                                 global-env))
+               primitive-funject-god
+               primitive-funject-inverse-god))
 (define lang-identity (create-lang 'Funject
                                    (gen-funject-id)
                                    (mlist (bind-funject-pair (create-funject-pair (tokenize 'Parameter "@other")
