@@ -790,8 +790,6 @@ integerIdentityInverse = new Funject
 
 yakClass 'Number', lang.Funject,
     exports:
-        e: 2.718281828459045
-        pi: 3.141592653589793
         random: new Funject call: [
             [], -> new NumberFunject Math.random(),
             ['number'], (x) ->
@@ -1003,6 +1001,10 @@ yakClass 'Number', lang.Funject,
         '<': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value < y.value
         '>=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value >= y.value
         '<=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value <= y.value
+
+lang.Number.call.unshift(
+    '.e', -> new NumberFunject 2.718281828459045
+    '.pi', -> new NumberFunject 3.141592653589793)
 
 yakClass 'List', lang.Funject,
     instance:
