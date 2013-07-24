@@ -620,53 +620,225 @@ lang.String = yakClass
                             new ListFunject [new StringFunject s.value.slice x.value.length]]
         '*': yakFunction ['string', 'number'], (s, n) -> s.repeat n
 
+integerIdentityInverse = new Funject
+    call: [
+        ['number', ['unknown']], (x) ->
+            if x.isInteger()
+                new ListFunject [x]
+            else
+                new ListFunject []]
+
 lang.Number = yakClass
+    exports: yakObject null,
+        e: 2.718281828459045
+        pi: 3.141592653589793
+        random: new Funject call: [
+            [], -> new NumberFunject Math.random(),
+            ['number'], (x) ->
+                if not x.isInteger()
+                    throw new InterpreterError "Cannot generate random[#{x}]"
+                new NumberFunject Math.floor Math.random() * x.value
+            ['number', 'number'], (x, y) ->
+                if not x.isInteger() or not y.isInteger() or y.value <= x.value
+                    throw new InterpreterError "Cannot generate random[#{x}, #{y}]"
+                new NumberFunject x.value + Math.floor Math.random() * (y.value - x.value)]
     instance: yakObject BaseFunject,
+        'degrees-to-radians': yakFunction ['number'], (x) ->
+            new NumberFunject x.value * Math.PI / 180
+        'radians-to-degrees': yakFunction ['number'], (x) ->
+        sqrt: yakFunction ['number'], (x) ->
+            new NumberFunject Math.sqrt x.value
+        root: yakFunction ['number', ['number']], (x, y) ->
+            new NumberFunject Math.pow x.value, 1 / y.value
+        ln: yakFunction ['number'], (x) ->
+            new NumberFunject Math.log x.value
+        log: yakFunction ['number', ['number']], (x, b) ->
+            new NumberFunject Math.log(x.value) / Math.log(b.value)
+        sin: yakFunction ['number'], (x) ->
+            new NumberFunject Math.sin x.value
+        cos: yakFunction ['number'], (x) ->
+            new NumberFunject Math.cos x.value
+        tan: yakFunction ['number'], (x) ->
+            new NumberFunject Math.tan x.value
+        sec: yakFunction ['number'], (x) ->
+            new NumberFunject 1 / Math.cos x.value
+        csc: yakFunction ['number'], (x) ->
+            new NumberFunject 1 / Math.sin x.value
+        cot: yakFunction ['number'], (x) ->
+            new NumberFunject 1 / Math.tan x.value
+        asin: yakFunction ['number'], (x) ->
+            new NumberFunject Math.asin x.value
+        acos: yakFunction ['number'], (x) ->
+            new NumberFunject Math.acos x.value
+        atan: yakFunction ['number'], (x) ->
+            new NumberFunject Math.atan x.value
+        'atan/': yakFunction ['number', ['number']], (y, x) ->
+            new NumberFunject Math.atan2 y.value, x.value
+        asec: yakFunction ['number'], (x) ->
+            new NumberFunject Math.acos 1 / x
+        acsc: yakFunction ['number'], (x) ->
+            new NumberFunject Math.asin 1 / x
+        acot: yakFunction ['number'], (x) ->
+            new NumberFunject Math.atan 1 / x
+        sinh: yakFunction ['number'], (x) ->
+            new NumberFunject (Math.exp(x.value) - Math.exp(-x.value)) / 2
+        cosh: yakFunction ['number'], (x) ->
+            new NumberFunject (Math.exp(x.value) + Math.exp(-x.value)) / 2
+        tanh: yakFunction ['number'], (x) ->
+            new NumberFunject (Math.exp(x.value * 2) - 1) / (Math.exp(x.value * 2) + 1)
+        coth: yakFunction ['number'], (x) ->
+            new NumberFunject (Math.exp(x.value * 2) + 1) / (Math.exp(x.value * 2) - 1)
+        sech: yakFunction ['number'], (x) ->
+            new NumberFunject 2 / (Math.exp(x.value) + Math.exp(-x.value))
+        csch: yakFunction ['number'], (x) ->
+            new NumberFunject 2 / (Math.exp(x.value) - Math.exp(-x.value))
+        asinh: yakFunction ['number'], (x) ->
+            new NumberFunject Math.log x.value + Math.sqrt x.value * x.value + 1
+        acosh: yakFunction ['number'], (x) ->
+            new NumberFunject Math.log x.value + Math.sqrt x.value * x.value - 1
+        atanh: yakFunction ['number'], (x) ->
+            new NumberFunject Math.log((1 + x.value) / (1 - x.value)) / 2
+        acoth: yakFunction ['number'], (x) ->
+            new NumberFunject Math.log((1 - x.value) / (1 + x.value)) / 2
+        asech: yakFunction ['number'], (x) ->
+            new NumberFunject Math.log(1 / x.value + Math.sqrt(1 - x.value * x.value) / x.value)
+        acsch: yakFunction ['number'], (x) ->
+            new NumberFunject Math.log(1 / x.value + Math.sqrt(1 + x.value * x.value) / Math.abs(x.value))
+        abs: new Funject
+            call: [['number'], (x) ->
+                new NumberFunject if x.value < 0 then -x.value else x.value]
+            inverse: new Funject
+                call: [['number', ['unknown']], (x) ->
+                    new ListFunject [new NumberFunject(x.value), new NumberFunject(-x.value)]]
+        ceil: new Funject
+            call: [['number'], (x) ->
+                new NumberFunject Math.ceil x.value]
+            inverse: integerIdentityInverse
+        floor: new Funject
+            call: [['number'], (x) ->
+                new NumberFunject Math.floor x.value]
+            inverse: integerIdentityInverse
+        round: new Funject
+            call: [['number'], (x) ->
+                new NumberFunject Math.round x.value]
+            inverse: integerIdentityInverse
+        'to-fixed': new Funject
+            call: [['number', ['number']], (x, y) ->
+                if y.value < 0 or y.value > 20
+                    throw new InterpreterError "Cannot convert #{x}.to-fixed[#{y}]"
+                new StringFunject x.value.toFixed y.value]
+            inverse: integerIdentityInverse
+        'to-pennies': new Funject
+            call: [['number'], (x) ->
+                new NumberFunject Math.round x.value * 100]
+            inverse: new Funject
+                call: [
+                    ['number', ['unknown']], (x) ->
+                        if x.isInteger()
+                            new ListFunject [new NumberFunject Math.round(x.value) / 100]
+                        else
+                            new ListFunject []]
+        'to-dollars': new Funject
+            call: [['number'], (x) ->
+                new NumberFunject Math.round(x.value) / 100]
+            inverse: new Funject
+                call: [
+                    ['number', ['unknown']], (x) ->
+                        if x.isInteger()
+                            new ListFunject [new NumberFunject Math.round(x.value) / 100]
+                        else
+                            new ListFunject []]
+        times: new Funject
+            call: ['interpreter', ['number', ['*']], (interpreter, x, f) ->
+                if not x.isInteger() or x.value < 0
+                    throw new InterpreterError "Cannot #{x}.times[...]"
+                i = 0
+                end = x.value
+                return new ListFunject [] if end is 0
+                interpreter.pop()
+                interpreter.push
+                    type: 'native'
+                    value: ->
+                        ++i
+                        if i is end
+                            return @return new ListFunject @frame.arguments
+                        @push
+                            type: 'application'
+                            funject:
+                                type: 'value'
+                                value: f
+                            argument:
+                                type: 'value'
+                                value: new ListFunject [new NumberFunject i]
+                interpreter.push
+                    type: 'application'
+                    funject:
+                        type: 'value'
+                        value: f
+                    argument:
+                        type: 'value'
+                        value: new ListFunject [new NumberFunject i]
+                SPECIAL_FORM]
+        upto: yakFunction ['number', ['number']], (x, y) ->
+            if y.value < x.value
+                new ListFunject []
+            else
+                new ListFunject (new NumberFunject i for i in [x.value..y.value])
+        downto: yakFunction ['number', ['number']], (x, y) ->
+            if y.value > x.value
+                new ListFunject []
+            else
+                new ListFunject (new NumberFunject i for i in [x.value..y.value])
         '+': new Funject
             call: [
-                ['number', 'number'], (x, y) -> new NumberFunject x + y]
+                ['number', 'number'], (x, y) ->
+                    new NumberFunject x.value + y.value]
             inverse: new Funject
                 call: [
                     ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) ->
-                        new ListFunject [new NumberFunject r - x]]
+                        new ListFunject [new NumberFunject r.value - x.value]]
         '-': new Funject
             call: [
-                ['number', 'number'], (x, y) -> new NumberFunject x - y]
+                ['number', 'number'], (x, y) ->
+                    new NumberFunject x.value - y.value]
             inverse: new Funject
                 call: [
                     ['number', ['number', 'unknown']], (r, x) ->
-                        new ListFunject [new NumberFunject x - r],
+                        new ListFunject [new NumberFunject x.value - r.value],
                     ['number', ['unknown', 'number']], (r, x) ->
-                        new ListFunject [new NumberFunject r + x]]
+                        new ListFunject [new NumberFunject r.value + x.value]]
         '*': new Funject
             call: [
-                ['number', 'number'], (x, y) => new NumberFunject x * y]
+                ['number', 'number'], (x, y) ->
+                    new NumberFunject x.value * y.value
+                ['number', 'string'], (n, s) -> s.repeat n]
             inverse: new Funject
                 call: [
                     ['number', ['|', ['number', 'unknown'], ['unknown', 'number']]], (r, x) ->
-                        new ListFunject [new NumberFunject r / x]]
+                        new ListFunject [new NumberFunject r.value / x.value]]
         '/': new Funject
             call: [
-                ['number', 'number'], (x, y) -> new NumberFunject x / y]
+                ['number', 'number'], (x, y) ->
+                    new NumberFunject x.value / y.value]
             inverse: new Funject
                 call: [
                     ['number', ['number', 'unknown']], (r, x) ->
-                        new ListFunject [new NumberFunject x / r],
+                        new ListFunject [new NumberFunject x.value / r.value],
                     ['number', ['unknown', 'number']], (r, x) ->
-                        new ListFunject [new NumberFunject r * x]]
+                        new ListFunject [new NumberFunject r.value * x.value]]
         '%': yakFunction ['number', 'number'], (x, y) ->
-                result = x % y
-                result += y if result < 0
+                result = x.value % y.value
+                result += y.value if result < 0
                 new NumberFunject result
         '^': new Funject
             call: [
-                ['number', 'number'], (x, y) -> new NumberFunject Math.pow x, y]
+                ['number', 'number'], (x, y) -> new NumberFunject Math.pow x.value, y.value]
             inverse: new Funject
                 call: [
                     ['number', ['number', 'unknown']], (r, x) ->
-                        new ListFunject [new NumberFunject Math.log(r) / Math.log(x)],
+                        new ListFunject [new NumberFunject Math.log(r.value) / Math.log(x.value)],
                     ['number', ['unknown', 'number']], (r, x) ->
-                        new ListFunject [new NumberFunject Math.exp Math.log(r) / x]]
+                        new ListFunject [new NumberFunject Math.pow r.value, 1 / x.value]]
         '>': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value > y.value
         '<': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value < y.value
         '>=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value >= y.value
