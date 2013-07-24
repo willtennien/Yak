@@ -615,6 +615,8 @@ lang = {}
 BaseFunject = yakObject null,
     initialize: yakFunction ['*'], (x) -> lang.nil
     clone: yakFunction ['*'], (x) -> new Funject parent: x
+    name: yakFunction ['*'], (x) ->
+        if x.name then new StringFunject x.name else lang.nil
     apply: new Funject
         call: ['interpreter', ['*', ['*']], (interpreter, f, x) ->
             interpreter.pop()
@@ -727,6 +729,8 @@ class ListFunject extends Funject
     type: 'list'
     isList: true
 
+    copy: -> new ListFunject @values
+
     constructor: (@values) ->
     toString: -> "[#{@values.join ', '}]"
     toSource: (depth) -> "[#{(v.toSource depth - 1 for v in @values).join ', '}]"
@@ -736,7 +740,7 @@ class ListFunject extends Funject
 yakClass 'Class', null,
     instance:
         superclass: yakFunction ['class'], (f) -> f.$super ? lang.nil
-        subclasses: yakFunction ['class'], (f) -> f.$subclasses
+        subclasses: yakFunction ['class'], (f) -> f.$subclasses.copy()
         instance: yakFunction ['class'], (f) -> f.$instance
         methods: yakFunction ['class'], (f) -> f.$instance.symbolicKeys()
         'all-methods': yakFunction ['class'], (f) -> f.$instance.allKeys true
@@ -1021,6 +1025,8 @@ yakClass 'List', lang.Funject,
                 lang.nil
         'empty?': yakFunction ['list'], (x) ->
             yakBoolean x.values.length is 0
+        length: yakFunction ['list'], (x) ->
+            new NumberFunject x.values.length
         length: yakFunction ['list'], (x) ->
             new NumberFunject x.values.length
         sort: new Funject
@@ -1444,18 +1450,8 @@ class Interpreter
             argc = if p then 1 else 0
             if @frame.arguments.length is argc
                 @frame.super = if p then @first() else lang.Funject
-                superInstance =
-                    type: 'application'
-                    funject:
-                        type: 'value'
-                        value: @frame.super
-                    argument:
-                        type: 'symbol'
-                        value: 'instance'
-                @args (if p then [n.parent, superInstance] else [superInstance])...
-                return
-            if @frame.arguments.length is argc + 1
-                @frame.superInstance = if p then @second() else @first()
+                if not @frame.super.isClass
+                    throw new InterpreterError "Cannot inherit from #{@frame.super}"
                 @push type: 'pop scope'
                 @scope = @frame.scope = new Scope @scope, {
                     exports: new ClassFunject
@@ -1464,22 +1460,22 @@ class Interpreter
                         expression: n
                     super: @frame.super
                     instance: new Funject
-                        parent: @frame.superInstance
+                        parent: @frame.super.$instance
                         name: "#{@frame.name}.instance"
                         expression: n
                 }, true
                 if p
-                    @args 0, 0, n.body
-                else
                     @args 0, n.body
+                else
+                    @args n.body
                 return
             exports = @frame.scope.vars.exports
             exports.parent = @frame.super
-            exports.$instance = instance
             exports.$super = @frame.super
             exports.$subclasses = new ListFunject []
-            instance = @frame.scope.vars.instance
-            instance.parent = @frame.superInstance
+            @frame.super.$subclasses.values.push exports
+            instance = exports.$instance = @frame.scope.vars.instance
+            instance.parent = @frame.super.$instance
             prototype = yakObject null,
                 class: exports
             (exports.call ?= []).unshift(
@@ -1609,7 +1605,7 @@ class Interpreter
                 else
                     throw new RuntimeError stack
             else
-                console.log util.inspect @stack, depth: 10
+                console.log util.inspect @stack, depth: 5
                 throw error
         false
 
