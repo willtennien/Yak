@@ -1,5 +1,5 @@
 parseError = (token, message) ->
-    throw new SyntaxError "#{message} at :#{token.line}:#{token.character}"
+    throw new SyntaxError "#{message} at #{token.file}:#{token.line}:#{token.character}"
 
 last = (thing) -> thing[thing.length - 1]
 
@@ -27,13 +27,13 @@ tokenizer = do ->
 
     isIdentifier = (c) -> -1 isnt '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-+*/%^_$<>=?!'.indexOf c
 
-    (raw) ->
+    (raw, file = '<anonymous>', startLine = 1) ->
         token = (type, value = '') -> {
-            type, value, line
+            type, value, line, file
             character: character }
 
         syntaxError = (message) ->
-            throw new SyntaxError "#{message} at :#{line}:#{character}"
+            throw new SyntaxError "#{message} at #{file}:#{line}:#{character}"
 
         s = ''
         i = 0
@@ -69,7 +69,7 @@ tokenizer = do ->
         i = 0
         character = 0
         lastNewline = 0
-        line = 1
+        line = startLine
         length = s.length
         indent = ['']
         tokens = []
@@ -80,12 +80,12 @@ tokenizer = do ->
             while isSpace c
                 ++i
                 c = s[i]
+            character = 1 + i - lastNewline
             if i >= length
                 if indent.length > 1
                     indent.pop()
                     return token 'outdent'
                 return token 'end'
-            character = 1 + i - lastNewline
             if (q = s.substr i, 3) is '|:=' or (q = s.substr i, 2) is ':=' or q is '|=' or q is '<-' or q is '<<' or q is '::'
                 i += q.length
                 return token symbol[q], q
@@ -264,6 +264,7 @@ tokenizer = do ->
                 return {
                     type: 'newline'
                     value: ''
+                    file: prev.file
                     line: prev.line
                     character: prev.character
                 }
@@ -280,14 +281,36 @@ tokenizer = do ->
 parse = do ->
     symbols = {}
 
+    BINARY_OPERATORS =
+        '^': -7
+        '*': 6
+        '/': 6
+        '%': 6
+        '+': 5
+        '-': 5
+        '>': 4
+        '<': 4
+        '>=': 4
+        '<=': 4
+        '==': 3
+        '!=': 3
+        'is': 3
+        'isnt': 3
+        'and': 2
+        'or': 2
+
+    PREFIX_OPERATORS =
+        'not': 2
+
     class Symbol
         null: ->
             parseError "Unexpected operator"
         left: ->
             parseError "Unexpected value"
 
-    parse = (s) ->
-        tokens = tokenizer s
+    parse = (s, file, startLine) ->
+        tokens = tokenizer s, file, startLine
+        while tokens.match 'newline' then
         result = sequence tokens
         tokens.require 'end'
         result
@@ -300,6 +323,7 @@ parse = do ->
             break unless s
             result.push s
             break if not tokens.match 'newline'
+        file: n.file
         line: n.line
         character: n.character
         type: 'sequence'
@@ -316,6 +340,7 @@ parse = do ->
                     if t = tokens.match 'symbol'
                         name =
                             type: 'application'
+                            file: t.file
                             line: t.line
                             character: t.character
                             funject: name
@@ -329,6 +354,7 @@ parse = do ->
             body = expression tokens
             result = {
                 type: start.type
+                file: start.file
                 line: start.line
                 character: start.character
                 body: body
@@ -338,6 +364,7 @@ parse = do ->
             return {
                 type: 'assignment'
                 operator: 'strict assignment'
+                file: start.file
                 line: start.line
                 character: start.character
                 left: name
@@ -353,59 +380,98 @@ parse = do ->
             if t = tokens.match 'symbol'
                 e =
                     type: 'application'
+                    file: t.file
                     line: t.line
                     character: t.character
                     funject: e
                     argument: t
                 continue
-            if precedence < 2
-                if tokens.here().type is 'list start'
-                    t = tokens.here()
-                    e =
-                        type: 'application'
-                        line: t.line
-                        character: t.character
-                        funject: e
-                        argument: value tokens
-                    continue
-                if precedence < 1
-                    if -1 isnt ['identifier', 'formal parameter', 'string', 'number', 'boolean', 'nil', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
-                        t = tokens.here()
-                        e =
-                            type: 'application'
-                            line: t.line
-                            character: t.character
-                            funject: e
-                            argument: expression tokens, 1
-                        continue
-                    if t = tokens.match 'prototypal application'
-                        symbol = tokens.require 'identifier'
-                        symbol.type = 'symbol'
-                        e =
-                            type: 'application'
-                            line: symbol.line
-                            character: symbol.character
-                            funject:
+            if tokens.here().type is 'list start'
+                t = tokens.here()
+                e =
+                    type: 'application'
+                    file: t.file
+                    line: t.line
+                    character: t.character
+                    funject: e
+                    argument: value tokens
+                continue
+            if precedence < 7
+                if tokens.here().type is 'identifier'
+                    cont = false
+                    for op, p of BINARY_OPERATORS
+                        if precedence < Math.abs(p) and t = tokens.accept op
+                            e =
                                 type: 'application'
+                                file: t.file
                                 line: t.line
                                 character: t.character
                                 funject: e
-                                argument:
-                                    type: 'symbol'
+                                argument: t
+
+                            ep = if p < 0 then -1 - p else p
+                            if operand = expression tokens, ep, true
+                                e =
+                                if op is 'and' or op is 'or'
+                                    type: op
+                                    file: t.file
                                     line: t.line
                                     character: t.character
-                                    value: 'instance'
-                            argument: symbol
-                        continue
-                    if not noIndent and 'indent' is tokens.here().type
-                        t = tokens.here()
-                        e =
+                                    left: e.funject
+                                    right: operand
+                                else
+                                    type: 'application'
+                                    file: t.file
+                                    line: t.line
+                                    character: t.character
+                                    funject: e
+                                    argument: operand
+
+                            cont = true
+                            break
+                    continue if cont
+                if 'identifier' is tokens.here().type and not BINARY_OPERATORS[tokens.here().value] or -1 isnt ['formal parameter', 'string', 'number', 'boolean', 'nil', 'unknown', 'funject start', 'group start', 'list start'].indexOf tokens.here().type
+                    t = tokens.here()
+                    e =
+                        type: 'application'
+                        file: t.file
+                        line: t.line
+                        character: t.character
+                        funject: e
+                        argument: expression tokens, 7
+                    continue
+                if t = tokens.match 'prototypal application'
+                    symbol = tokens.require 'identifier'
+                    symbol.type = 'symbol'
+                    e =
+                        type: 'application'
+                        file: t.file
+                        line: symbol.line
+                        character: symbol.character
+                        funject:
                             type: 'application'
+                            file: t.file
                             line: t.line
                             character: t.character
                             funject: e
-                            argument: expression tokens
-                        break
+                            argument:
+                                type: 'symbol'
+                                file: t.file
+                                line: t.line
+                                character: t.character
+                                value: 'instance'
+                        argument: symbol
+                    continue
+                if not noIndent and 'indent' is tokens.here().type
+                    t = tokens.here()
+                    e =
+                        type: 'application'
+                        file: t.file
+                        line: t.line
+                        character: t.character
+                        funject: e
+                        argument: expression tokens
+                    break
             break
         if assignment = tokens.match 'strict assignment', 'lazy assignment', 'reset strict assignment', 'reset lazy assignment', 'inverse assignment', 'inheritance assignment'
             if assignment.type isnt 'inheritance assignment' and assignment.type isnt 'inverse assignment' and e.type isnt 'identifier' and (e.type isnt 'application' or assignment.type isnt 'strict assignment' and assignment.type isnt 'lazy assignment')
@@ -413,6 +479,7 @@ parse = do ->
             e =
                 type: 'assignment'
                 operator: assignment.type
+                file: assignment.file
                 line: assignment.line
                 character: assignment.character
                 left: e
@@ -432,6 +499,7 @@ parse = do ->
                     break if tokens.match 'list end'
                     tokens.require 'list delimiter'
             return {
+                file: t.file
                 line: t.line
                 character: t.character
                 type: 'list'
@@ -450,10 +518,26 @@ parse = do ->
                     patterns.push pattern tokens
                     tokens.require 'funject end'
             return {
+                file: t.file
                 line: t.line
                 character: t.character
                 type: 'funject'
                 patterns
+            }
+        if tokens.here().type is 'identifier' and Object::hasOwnProperty.call PREFIX_OPERATORS, tokens.here().value
+            t = tokens.advance()
+            return {
+                type: 'application'
+                file: t.file
+                line: t.line
+                character: t.character
+                funject: expression tokens, PREFIX_OPERATORS[t.value]
+                argument:
+                    type: 'symbol'
+                    file: t.file
+                    line: t.line
+                    character: t.character
+                    value: 'not'
             }
         if t = tokens.match 'identifier', 'formal parameter', 'symbol', 'string', 'number', 'boolean', 'nil', 'unknown'
             return t
@@ -484,6 +568,7 @@ parseForRacket = (s) ->
             when 'funject' then ['Token-funject', [transform(p.pattern), transform(p.value)] for p in n.patterns]
             when 'sequence' then ['Token-sequence', transform x for x in n.expressions]
             when 'application' then ['Token-invocation', transform(n.funject), transform(n.argument)]
+            when 'or', 'and' then ['Token-' + n.type, transform(n.left), transform(n.right)]
             when 'class', 'module'
                 if n.parent
                     ['Token-' + n.type, transform(n.parent), transform(n.body)]
@@ -526,8 +611,34 @@ printTokens = (s) ->
             else
                 console.log "#{indent}(:#{t.line}:#{t.character}) <#{t.type}> #{t.value}"
 
+printTree = (s) ->
+    print = (n, indent = '') ->
+        if n instanceof Array
+            if typeof n[0] is 'string'
+                name = n[0].replace /^Token-/, ''
+                if n.length is 2 and typeof n[1] isnt 'object'
+                    console.log "#{indent}#{name}: #{n[1]}"
+                else
+                    console.log "#{indent}#{name}"
+                    if n[1] and typeof n[1][0] isnt 'string'
+                        for v in n[1]
+                            print v, indent + '    '
+                    else
+                        for v in n[1..]
+                            print v, indent + '    '
+            else
+                console.log "#{indent}pattern:"
+                for v in n[0..]
+                    print v, indent + '    '
+        else
+            console.log indent + n
+    print parseForRacket s
+
+stringify = (n) ->
+
 if module?
     exports.parse = parse
+    exports.stringify = stringify
     exports.tokenizer = tokenizer
     exports.parseForRacket = parseForRacket
     if not module.parent
@@ -535,11 +646,13 @@ if module?
         racket = false
         i = 2
         tokens = false
+        verbose = false
         argc = process.argv.length
         while i < argc
             switch arg = process.argv[i++]
                 when '-r' then racket = true
                 when '-t' then tokens = true
+                when '-v' then verbose = true
                 when '-e'
                     expression = process.argv[i++]
                     break
@@ -547,14 +660,16 @@ if module?
                     expression = '' + require('fs').readFileSync arg
                     break
         if i < argc or not expression?
-            console.error 'Usage: coffee parser.coffee [ -r | -t ] [ <filename> | -e <expression> ]'
+            console.error 'Usage: coffee parser.coffee [ -r | -t | -v ] [ <filename> | -e <expression> ]'
             return
         try
             if tokens
                 printTokens expression
-            else
+            else if verbose or racket
                 p = if racket then parseForRacket else parse
                 console.log JSON.stringify p(expression), undefined, 2
+            else
+                printTree expression
         catch e
             if e instanceof SyntaxError
                 console.error e.message

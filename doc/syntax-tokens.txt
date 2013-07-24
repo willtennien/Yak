@@ -38,6 +38,10 @@
 
 <Invocation> = (Invocation <Exp> <Exp>)
 
+<And> = (And <Exp> <Exp>)
+
+<Or> = (Or <Exp> <Exp>)
+
 <Funject-inheritance> = (Funject-inheritance <Exp> <Exp>)
 
 <Inverse-definition> = (Inverse-definition <Exp> <Exp>)

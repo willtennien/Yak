@@ -1,5 +1,7 @@
 util = require 'util'
 readline = require 'readline'
+fs = require 'fs'
+path = require 'path'
 
 environment = global ? @
 parser = require './parser.coffee'
@@ -41,11 +43,14 @@ class MatchError extends InterpreterError
         super "No match for #{funject} applied to #{argument}"
 
 class Scope
-    constructor: (@parent, vars) ->
+    constructor: (@parent, vars, unnamed = true) ->
         @vars = Object.create null
         if vars?
             for name, value of vars
-                @set name, value
+                if unnamed
+                    @vars[name] = value
+                else
+                    @set name, value
 
     get: (name) ->
         if Object::hasOwnProperty.call @vars, name
@@ -58,6 +63,7 @@ class Scope
         if @isProxy
             @parent.set name, value
         else
+            value.name ?= name
             @vars[name] = value
 
     reset: (name, value) ->
@@ -71,24 +77,64 @@ class Funject
     type: 'funject'
 
     toString: ->
-        if @name?
-            @name
+        try
+            s = new Interpreter().evaluate
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: @
+                argument:
+                    type: 'symbol'
+                    value: 'to-string'
+            if s.isString
+                s.value
+            else
+                @basicToString()
+        catch
+            @basicToString()
+
+    basicToString: ->
+        if @call and @call.length isnt 0 then '#primitive' else '#funject'
+
+    toSource: (depth) ->
+        if depth is 0
+            @simpleToString()
+        try
+            s = new Interpreter().evaluate
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: @
+                argument:
+                    type: 'symbol'
+                    value: 'inspect'
+            if s.isString
+                s.value
+            else
+                @getSource()
+        catch
+            @getSource()
+
+    getSource: ->
+        if @call and @call.length isnt 0
+            @basicToString()
+        else if not @patterns or @patterns.length is 0
+            '{}'
         else
-            try
-                s = new Interpreter().evaluate
-                    type: 'application'
-                    funject:
-                        type: 'value'
-                        value: @
-                    argument:
-                        type: 'symbol'
-                        value: 'to-string'
-                if s.isString
-                    s.value
+            ###
+            s = "{"
+            for p in @patterns
+                s += "\n    "
+                s += parser.stringify p.pattern
+                s += ": "
+                s += (if p.expression
+                    parser.stringify p.expression
                 else
-                    '#<funject>'
-            catch
-                '#<funject>'
+                    p.value.toSource depth - 1
+                ).replace /\n/g, '\n    '
+            s += "\n}"
+            ###
+            @basicToString() # TODO
 
     constructor: (properties) ->
         @patterns = []
@@ -351,25 +397,36 @@ class Funject
                     interpreter.pop()
                     scope = interpreter.scope
                     bindings.own = own
-                    interpreter.scope = new Scope p.scope, bindings
+                    interpreter.scope = new Scope p.scope, bindings, true
                     interpreter.push { type: 'set scope', scope }
                     interpreter.push p.expression
                 return
 
         if instance and argument.isSymbol and @instance and @instance.hasSymbol argument.value
             self = @
+            exp = interpreter.frame.expression
+            interpreter.pop()
             interpreter.pop()
             interpreter.push
                 type: 'native'
                 value: ->
                     method = @first()
+                    method.name ?= 'instance.' + argument.value
+                    if method.expression
+                        (@frame.expression ?= {}).file = method.expression.file
+                        @frame.expression.line = method.expression.line
+                        @frame.expression.character = method.expression.character
                     hasArgs = method.methodHasArgs()
+                    @callStack.pop()
                     if hasArgs
                         @return new Funject
                             call: ['interpreter', '*', (interpreter, arg) ->
                                 interpreter.pop()
                                 interpreter.push
                                     type: 'application'
+                                    file: exp?.file
+                                    line: exp?.line
+                                    character: exp?.character
                                     funject:
                                         type: 'value'
                                         value: method
@@ -381,6 +438,9 @@ class Funject
                         @pop()
                         @push
                             type: 'application'
+                            file: exp?.file
+                            line: exp?.line
+                            character: exp?.character
                             funject:
                                 type: 'value'
                                 value: method
@@ -389,6 +449,9 @@ class Funject
                                 value: new ListFunject [self]
             interpreter.push
                 type: 'application'
+                file: exp?.file
+                line: exp?.line
+                character: exp?.character
                 funject:
                     type: 'value'
                     value: @instance
@@ -398,7 +461,9 @@ class Funject
                 instance: false
             return
 
-        return @parent.apply interpreter, own, argument if @parent and @parent isnt @
+        return @parent.apply interpreter, own, argument, instance if @parent and @parent isnt @
+
+        interpreter.callStack.pop()
 
         throw new MatchError own, argument
 
@@ -478,7 +543,13 @@ BaseFunject = yakObject null,
     'boolean?': yakFunction ['*'], (x) -> yakBoolean x.isBoolean
     'nil?': yakFunction ['*'], (x) -> yakBoolean x.isNil
     'unknown?': yakFunction ['*'], (x) -> yakBoolean x.isUnknown
-    'to-string': yakFunction ['*'], (x) -> new StringFunject '' + x
+    'to-string': yakFunction ['*'], (x) ->
+        if x.type is 'funject'
+            new StringFunject Funject::basicToString.call x
+        else
+            new StringFunject '' + x
+    'inspect': yakFunction ['*'], (x) -> new StringFunject x.toSource -1
+    '__name__': yakFunction ['*'], (x) -> if x.name? then new StringFunject x.name else lang.nil
 
 Funject::instance = BaseFunject
 BaseFunject.instance = null
@@ -562,7 +633,10 @@ lang.List = yakClass
             yakBoolean x.values.length is 0
 
 lang.Boolean = yakClass
-    instance: yakObject BaseFunject
+    instance: yakObject BaseFunject,
+        not: yakFunction ['boolean'], (x) -> yakBoolean not x.value
+        and: yakFunction ['boolean', 'boolean'], (x, y) -> yakBoolean x.value and y.value
+        or: yakFunction ['boolean', 'boolean'], (x, y) -> yakBoolean x.value or y.value
 
 class SymbolFunject extends Funject
     instance: lang.Symbol.$instance
@@ -571,6 +645,7 @@ class SymbolFunject extends Funject
 
     constructor: (@value) ->
     toString: -> "." + @value
+    toSource: -> "." + @value
 
 class StringFunject extends Funject
     instance: lang.String.$instance
@@ -580,7 +655,8 @@ class StringFunject extends Funject
     constructor: (@value) ->
 
     # The [] are there to avoid a syntax highlighting bug
-    toString: -> "'" + @value.replace(/[\\]/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + "'"
+    toString: -> @value
+    toSource: -> "'" + @value.replace(/[\\]/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + "'"
 
 class NumberFunject extends Funject
     instance: lang.Number.$instance
@@ -589,6 +665,7 @@ class NumberFunject extends Funject
 
     constructor: (@value) ->
     toString: -> '' + @value
+    toSource: -> '' + @value
     valueOf: -> @value
 
 class ListFunject extends Funject
@@ -598,6 +675,7 @@ class ListFunject extends Funject
 
     constructor: (@values) ->
     toString: -> "[#{@values.join ', '}]"
+    toSource: (depth) -> "[#{(v.toSource depth - 1 for v in @values).join ', '}]"
 
 class BooleanFunject extends Funject
     instance: lang.Boolean.$instance
@@ -606,16 +684,22 @@ class BooleanFunject extends Funject
 
     constructor: (value) -> @value = !!value
     toString: -> '' + @value
+    toSource: -> '' + @value
 
 lang.nil = new Funject
     type: 'nil'
     isNil: true
     toString: -> 'nil'
+    toSource: -> 'nil'
+
 lang.unknown = new Funject
     type: 'unknown'
     isUnknown: true
     toString: -> 'unknown'
+    toSource: -> 'unknown'
+
 lang.true = new BooleanFunject true
+
 lang.false = new BooleanFunject false
 
 globalScope = new class extends Scope
@@ -633,44 +717,41 @@ globalScope = new class extends Scope
             else
                 throw e
 
-globalScope.set '+', new SymbolFunject '+'
-globalScope.set '-', new SymbolFunject '-'
-globalScope.set '*', new SymbolFunject '*'
-globalScope.set '/', new SymbolFunject '/'
-globalScope.set '%', new SymbolFunject '%'
-globalScope.set '^', new SymbolFunject '^'
-globalScope.set '==', new SymbolFunject '=='
-globalScope.set '!=', new SymbolFunject '!='
-globalScope.set '<', new SymbolFunject '<'
-globalScope.set '>', new SymbolFunject '>'
-globalScope.set '<=', new SymbolFunject '<='
-globalScope.set '>=', new SymbolFunject '>='
-
-globalScope.set 'cons', new Funject
-    call: [
-        ['*', '*'], (x, y) -> new ListFunject [x, y]]
-    inverse: new Funject
-        call: [
-            [['*', '*'], ['unknown', '*']], (x, y) -> new ListFunject [x]
-            [['*', '*'], ['*', 'unknown']], (x, y) -> new ListFunject [y]]
-
-globalScope.set 'square', new Funject
-    call: [
-        ['number'], (x) -> new NumberFunject x * x]
-    inverse: new Funject
-        call: [
-            ['number', ['unknown']], (x) -> new ListFunject [new NumberFunject Math.sqrt x]]
+for operator in ['^', '*', '/', '%', '+', '-', '==', '!=', '<', '>', '<=', '>=', 'is', 'isnt']
+    globalScope.set operator, new SymbolFunject operator
 
 globalScope.set 'error', new Funject
-    call: [['string'], (message) -> throw new InterpreterError message.value]
+    call: ['interpreter', ['*'], (interpreter, message) ->
+        interpreter.pop()
+        interpreter.pop()
+        interpreter.callStack.pop()
+        throw new InterpreterError '' + message
+        SPECIAL_FORM]
 
 globalScope.set 'print', new Funject
     call: [['*'], (thing) ->
         console.log '' + thing
         lang.nil]
 
+globalScope.set 'debug', new Funject
+    call: [['*'], (thing) ->
+        console.log thing.toSource -1
+        lang.nil]
+
 itself = (n) -> @return lang[n.type]
 variable = (n) -> @return @scope.get n.value
+logical = (n) ->
+    return unless @args n.left
+    left = @first()
+    if not left.isBoolean
+        throw new InterpreterError "Non-boolean applied to ##{n.type}"
+    if (if n.type is 'and' then not left.value else left.value)
+        return @return yakBoolean n.type is 'or'
+    return unless @args n.left, n.right
+    right = @second()
+    if not right.isBoolean
+        throw new InterpreterError "##{n.type} applied to non-boolean"
+    @return yakBoolean right.value
 
 class Interpreter
     expressions:
@@ -692,6 +773,13 @@ class Interpreter
 
         'set scope': (n) ->
             @scope = n.scope
+            if @frame.arguments.length
+                @return @first()
+            else
+                @pop()
+
+        'pop call stack': ->
+            @callStack.pop()
             if @frame.arguments.length
                 @return @first()
             else
@@ -769,6 +857,7 @@ class Interpreter
             @return new ListFunject @frame.arguments
         funject: (n) ->
             f = new Funject
+            f.expression = n
             f.patterns = (for p in n.patterns
                 pattern: p.pattern
                 expression: p.value
@@ -781,9 +870,10 @@ class Interpreter
             if @frame.arguments.length is argc
                 @frame.super = if p then @first() else lang.Funject
                 @push type: 'pop scope'
-                @scope = @frame.scope = new Scope @scope,
+                @scope = @frame.scope = new Scope @scope, {
                     exports: new Funject parent: @frame.super
                     super: @frame.super
+                }, true
                 if p
                     @args n.parent, n.body
                 else
@@ -793,6 +883,10 @@ class Interpreter
             exports.parent = @frame.super
             @return exports
         class: (n) ->
+            if (e = @stack[@stack.length - 2].expression) and e.type is 'assignment' and e.left.type is 'identifier'
+                @frame.name = e.left.value
+            else
+                @frame.name = '<class>'
             p = n.parent?
             return if p and not @args n.parent
             argc = if p then 1 else 0
@@ -811,10 +905,11 @@ class Interpreter
             if @frame.arguments.length is argc + 1
                 @frame.superInstance = if p then @second() else @first()
                 @push type: 'pop scope'
-                @scope = @frame.scope = new Scope @scope,
-                    exports: new Funject parent: @frame.super
+                @scope = @frame.scope = new Scope @scope, {
+                    exports: new Funject parent: @frame.super, name: @frame.name, expression: n
                     super: @frame.super
-                    instance: new Funject parent: @frame.superInstance
+                    instance: new Funject parent: @frame.superInstance, name: "#{@frame.name}.instance", expression: n
+                }, true
                 if p
                     @args 0, 0, n.body
                 else
@@ -828,51 +923,67 @@ class Interpreter
                 class: exports
             (exports.call ?= []).unshift(
                 '.instance', -> instance
-                '.new', -> lazy:
-                    type: 'native'
-                    value: ->
-                        initializeCall =
-                            type: 'application'
-                            instance: false
-                            funject:
-                                type: 'value'
-                                value: instance
-                            argument:
-                                type: 'symbol'
-                                value: 'initialize'
-                        return unless @args initializeCall
-                        initialize = @first()
-                        hasArgs = initialize.methodHasArgs()
-                        result = new Funject { parent: prototype, instance }
-                        if hasArgs
-                            @return new Funject
-                                call: ['interpreter', '*', (interpreter, arg) ->
-                                    interpreter.pop()
-                                    interpreter.push
-                                        type: 'value'
-                                        value: result
-                                    interpreter.push
-                                        type: 'application'
-                                        funject:
-                                            type: 'value'
-                                            value: initialize
-                                        argument:
-                                            type: 'value'
-                                            value: new ListFunject [result, arg]
-                                    SPECIAL_FORM]
-                        else
-                            @pop()
-                            @push
-                                type: 'value'
-                                value: result
-                            @push
+                'interpreter', '.new', (interpreter) ->
+                    exp = interpreter.frame.expression
+                    interpreter.pop()
+                    interpreter.pop()
+                    interpreter.callStack.pop()
+                    interpreter.push
+                        type: 'native'
+                        value: ->
+                            initializeCall =
                                 type: 'application'
+                                file: exp?.file
+                                line: exp?.line
+                                character: exp?.character
+                                instance: false
                                 funject:
                                     type: 'value'
-                                    value: initialize
+                                    value: instance
                                 argument:
+                                    type: 'symbol'
+                                    value: 'initialize'
+                            return unless @args initializeCall
+                            initialize = @first()
+                            initialize.name ?= 'instance.initialize'
+                            hasArgs = initialize.methodHasArgs()
+                            result = new Funject { parent: prototype, instance }
+                            if hasArgs
+                                @return new Funject
+                                    call: ['interpreter', '*', (interpreter, arg) ->
+                                        interpreter.pop()
+                                        interpreter.push
+                                            type: 'value'
+                                            value: result
+                                        interpreter.push
+                                            type: 'application'
+                                            file: exp?.file
+                                            line: exp?.line
+                                            character: exp?.character
+                                            funject:
+                                                type: 'value'
+                                                value: initialize
+                                            argument:
+                                                type: 'value'
+                                                value: new ListFunject [result, arg]
+                                        SPECIAL_FORM]
+                            else
+                                @pop()
+                                @push
                                     type: 'value'
-                                    value: new ListFunject [result]
+                                    value: result
+                                @push
+                                    type: 'application'
+                                    file: exp?.file
+                                    line: exp?.line
+                                    character: exp?.character
+                                    funject:
+                                        type: 'value'
+                                        value: initialize
+                                    argument:
+                                        type: 'value'
+                                        value: new ListFunject [result]
+                    SPECIAL_FORM
             )
             @return exports
         application: (n) ->
@@ -881,29 +992,48 @@ class Interpreter
                 return @return @frame.arguments[2]
             funject = @first()
             argument = @second()
+            @stack.splice @stack.length - 1, 0,
+                expression:
+                    type: 'pop call stack'
+                arguments: []
+            @callStack.push expression: n, name: funject.name
             funject.apply @, n.own ? funject, argument, n.instance
+        or: logical
+        and: logical
 
     evaluate: (n) ->
         @scope = globalScope
         @stack = [ arguments: [] ]
+        @callStack = []
         n.isProxy = true
         @push n
         while @stack.length > 1
             @frame = last @stack
             try
                 @expression()
-            catch e
-                if e instanceof InterpreterError
-                    n = @frame.expression
-                    stack = "#{e.message} at :#{n.line}:#{n.character}"
-                    scope = @scope
-                    while scope and scope isnt globalScope
-                        stack += "\n at #{(scope.name ? "") + (if scope.line? then ":#{scope.line}:#{scope.character}" else "")}"
-                        scope = scope.parent
+            catch error
+                if error instanceof InterpreterError
+                    stack = ''
+                    calls = @callStack[0..]
+                    calls.push expression: @frame.expression
+                    name = null
+                    for {expression: e, name: n} in calls
+                        if name
+                            if e.file
+                                stack = "\n at #{name} (#{e.file}:#{e.line}:#{e.character})" + stack
+                            else
+                                stack = "\n at #{name}" + stack
+                        else
+                            if e.file
+                                stack = "\n at #{e.file}:#{e.line}:#{e.character}" + stack
+                            else
+                                stack = "\n at <anonymous>" + stack
+                        name = n
+                    stack = error.message + stack
                     throw new RuntimeError stack
                 else
                     console.log util.inspect @stack, depth: 10
-                    throw e
+                    throw error
         last @stack[0].arguments
 
     args: (args...) ->
@@ -911,12 +1041,16 @@ class Interpreter
         if length and (value = @frame.arguments[length - 1]).lazy
             @frame.arguments.pop()
             scope = @scope
+            #@stack.splice @stack.length - 1, 0, { arguments: [], expression: type: 'pop call stack' }
             @push { type: 'set scope', scope }
             @scope = value.scope
+            #@callStack.push expression: @frame.last[@frame.last.length - 1] or @frame.expression, name: value.name
             @push value.lazy
+            #@frame.last.push value.lazy
             return false
         if length < args.length
             @push args[length]
+            #@frame.last = []
             return false
         true
 
@@ -943,8 +1077,8 @@ class Interpreter
     second: (n) -> @frame.arguments[1]
     third: (n) -> @frame.arguments[2]
 
-evaluate = (s) ->
-    new Interpreter().evaluate parser.parse s
+evaluate = (s, file, firstLine) ->
+    new Interpreter().evaluate parser.parse s, file, firstLine
 
 repl = ->
     rl = readline.createInterface
@@ -962,17 +1096,32 @@ repl = ->
             else
                 [[], line]
 
-    rl.setPrompt '> '
+    replLine = 1
+    FIXED_LINE_LENGTH = 4
+    setPrompt = (postfix = '>') ->
+        s = '' + replLine
+        while s.length < FIXED_LINE_LENGTH
+            s = '0' + s
+        rl.setPrompt s + postfix + ' '
+
+    setPrompt '>'
     rl.prompt()
 
     read = ''
+    firstLine = 1
     sigints = 0
     rl.on 'line', (line) ->
+        ++replLine
         sigints = 0
+        if line is '' and read is ''
+            setPrompt '>'
+            rl.prompt()
+            firstLine = replLine
+            return
         read += line + '\n'
         if not /^[\t ]|(^|[(\[])(class|module)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
             try
-                console.log '' + evaluate read
+                console.log evaluate(read, 'input', firstLine).toSource 3
             catch e
                 if e instanceof RuntimeError
                     console.log e.stack
@@ -981,10 +1130,11 @@ repl = ->
                 else
                     throw e
             read = ''
-            rl.setPrompt '> '
+            firstLine = replLine
+            setPrompt '>'
             rl.prompt()
         else
-            rl.setPrompt '? '
+            setPrompt ':'
             rl.prompt()
             # TODO this breaks pasting
             # if s = /(^|\n)([ \t]+).*\n$/.exec read
@@ -1003,7 +1153,9 @@ repl = ->
             sigints = 0
             rl.clearLine()
             read = ''
-        rl.setPrompt '> '
+        ++replLine
+        firstLine = replLine
+        setPrompt '>'
         rl.prompt()
 
     rl.on 'close', ->
@@ -1011,12 +1163,12 @@ repl = ->
         process.exit 0
 
 if module?
-    exports.Funject = Funject
     exports.repl = repl
     exports.evaluate = evaluate
     if not module.parent
         expressions = []
         i = 2
+        expressionNumber = 1
         argc = process.argv.length
         interactive = argc is 2
         while i < argc
@@ -1027,12 +1179,16 @@ if module?
                 when '-i'
                     interactive = true
                 when '-e'
-                    expressions.push process.argv[i++]
+                    expressions.push
+                        file: "expression#{expressionNumber++}"
+                        source: process.argv[i++]
                 else
-                    expressions.push '' + require('fs').readFileSync arg
+                    expressions.push
+                        file: path.resolve arg
+                        source: '' + fs.readFileSync arg
         for expression in expressions
             try
-                evaluate expression
+                evaluate expression.source, expression.file
             catch e
                 if e instanceof SyntaxError
                     console.error e.message
