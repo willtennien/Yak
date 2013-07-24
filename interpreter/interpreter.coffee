@@ -284,7 +284,7 @@ class Funject
         if argument.type is 'string'
             return new StringFunject argument.value
         if argument.type is 'symbol'
-            return new SymbolFunject argument.value
+            return yakSymbol argument.value
         if argument.type is 'formal parameter'
             if Object::hasOwnProperty.call bindings, argument.value
                 return bindings[argument.value]
@@ -525,6 +525,8 @@ yakClass = ({exports, instance}) ->
 
 yakBoolean = (value) -> lang[!!value]
 
+yakSymbol = (value) -> SymbolFunject.instances[value] ?= new SymbolFunject value
+
 lang = {}
 
 BaseFunject = yakObject null,
@@ -644,6 +646,8 @@ lang.Boolean = yakClass
         or: yakFunction ['boolean', 'boolean'], (x, y) -> yakBoolean x.value or y.value
 
 class SymbolFunject extends Funject
+    @instances: {}
+
     instance: lang.Symbol.$instance
     type: 'symbol'
     isSymbol: true
@@ -723,7 +727,7 @@ globalScope = new class extends Scope
                 throw e
 
 for operator in ['^', '*', '/', '%', '+', '-', '==', '!=', '<', '>', '<=', '>=', 'is', 'isnt']
-    globalScope.set operator, new SymbolFunject operator
+    globalScope.set operator, yakSymbol operator
 
 globalScope.set 'error', new Funject
     call: ['interpreter', ['*'], (interpreter, message) ->
@@ -761,7 +765,7 @@ logical = (n) ->
 class Interpreter
     expressions:
         number: (n) -> @return new NumberFunject n.value
-        symbol: (n)-> @return new SymbolFunject n.value
+        symbol: (n)-> @return yakSymbol n.value
         string: (n) -> @return new StringFunject n.value
         boolean: (n) -> @return lang[n.value]
         nil: itself
