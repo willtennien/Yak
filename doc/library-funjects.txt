@@ -67,9 +67,9 @@ Number Methods -- need to gather
 ================================================================================================================================================================================================================================================================
 sources: Ruby, JS
 
-math.e
-math.pi
-math.random #if the user supplies no arguments, this returns a random number on the range [0, 1). If the programmer supplies a number, it returns an integer between 0 and n - 1. If the programmer supplies two numbers, it returns an integer between that number and the other minus 1. If the ranges ever don't make sense, it signals an error.
+Number.e
+Number.pi
+Number.random #if the user supplies no arguments, this returns a random number on the range [0, 1). If the programmer supplies a number, it returns an integer between 0 and n - 1. If the programmer supplies two numbers, it returns an integer between that number and the other minus 1. If the ranges ever don't make sense, it signals an error.
 +
 -
 *
