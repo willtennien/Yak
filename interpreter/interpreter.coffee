@@ -207,7 +207,7 @@ class Funject
             while i < length
                 p = @call[i++]
                 while p is 'interpreter' or p is 'own'
-                    p = f.call[i++]
+                    p = @call[i++]
                 if p[0] is '.'
                     result.push p.substr 1
         result
