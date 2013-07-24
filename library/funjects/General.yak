@@ -26,4 +26,9 @@ assert = {
     [false, @x]: error['An assertion failed: ' + @x]
 }
 
+assert== = {
+    [@x, @x]: nil
+    [@x, @y]: assert[false, 'Expected ' + @x.inspect + ' but got ' + @y.inspect]
+}
+
 unreachable := error['Unreachable code executed']
