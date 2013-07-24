@@ -1089,6 +1089,39 @@ yakClass 'List', lang.Funject,
                         type: 'value'
                         value: new ListFunject [list[i]]
                 SPECIAL_FORM]
+        filter: new Funject
+            call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
+                i = 0
+                list = x.values.slice 0
+                end = list.length
+                return new ListFunject [] if end is 0
+                result = []
+                interpreter.pop()
+                interpreter.push
+                    type: 'native'
+                    value: ->
+                        if @frame.arguments[@frame.arguments.length - 1]
+                            result.push list[i]
+                        ++i
+                        if i is end
+                            return @return new ListFunject result
+                        @push
+                            type: 'application'
+                            funject:
+                                type: 'value'
+                                value: f
+                            argument:
+                                type: 'value'
+                                value: new ListFunject [list[i]]
+                interpreter.push
+                    type: 'application'
+                    funject:
+                        type: 'value'
+                        value: f
+                    argument:
+                        type: 'value'
+                        value: new ListFunject [list[i]]
+                SPECIAL_FORM]
         each: new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
                 i = 0
