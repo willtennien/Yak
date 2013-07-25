@@ -1,7 +1,7 @@
 #primitives:  push, push!,  delete
 
 List.repeat = {
-	[@x, @y]:
+	[@x, [@y]]:
 		ret = []
 		i = 0
 		{[]: i < @x}.while-true[{
@@ -13,7 +13,7 @@ List.repeat = {
 }
 
 List.repeatedly-call = {
-	[@x, @y]:
+	[@x, [@y]]:
 		ret = []
 		i = 0
 		{[]: i < @x}.while-true[{
@@ -38,7 +38,7 @@ List.instance.copy = {
 }
 
 List.instance.pop! = {
-	[@x]: 
+	[@x]:
 		ret = @x[count[@x] - 1]
 		@x.delete[count[@x] - 1]
 		ret
