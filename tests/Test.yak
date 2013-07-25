@@ -373,7 +373,8 @@ class TestFunjectKeys < TestCase
         assert[not @self.fun.has?[.qux]]
     }
     instance.test-== = {[@self]:
-        assert[@self.fun == @self.fun2]
+        assert[@self.fun == @self.fun]
+        assert[not @self.fun == @self.fun2]
         assert[not @self.fun == @self.non-dict]
     }
     instance.test-each = {[@self]:
