@@ -43,7 +43,8 @@ Number.instance.sqrt = {
 }
 
 Number.instance.root = {
-	[@x, @y]: (@x.ln * @y).exp
+	[@x, [0]]: error['Out of range']
+	[@x, [@y]]: (@x.ln * @y).exp
 }
 
 Number.instance.sin = {
@@ -123,8 +124,8 @@ Number.instance.acos = {
 
 #|
 Number.instance.atan/ = {
-	[0, 0]: error['Out of range']
-	[@x, @y]: {
+	[0, [0]]: error['Out of range']
+	[@x, [@y]]: {
 		true: (@x / @y).atan
 		false: {
 			true: (@x / @y).atan + Number.pi
@@ -175,18 +176,26 @@ Number.instance.log10 = {
 }
 
 Number.instance.log = {
-	[@x, @y]: (@x.ln) / (@y.ln)
+	[@x, [@y]]: (@x.ln) / (@y.ln)
 }
 
 Number.instance.to-fixed = {
-	[@x, @n]:
+	[@x, [@n]]:
 		f = 10 ^ @n
 		(@x * f).round / f
 }
 
 Number.instance.times = {
-	[0, @f]: nil
+	[0, [@f]]: nil
 	[@x, @f]:
 		(@x - 1).times[@f]
 		@f[@x]
+}
+
+Number.instance.close-to = {
+    [0, [@x]]: @x.abs < 0.0001
+    [@x, [0]]: @x.abs < 0.0001
+    [@x, [@y]]:
+        tolerance = @x.abs.max[@y.abs] * 0.0001
+        (@x - @y).abs <= tolerance
 }

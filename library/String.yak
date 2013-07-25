@@ -1,20 +1,20 @@
 #assuming primitives: [<number>], [<range>], index-of, last-index-of, uppercase? lowercase?, alpha?
 
 String.instance.repeat = {
-	[@s, 0]: ''
-	[@s, @n]: @s.repeat[@n - 1] + @s
+	[@s, [0]]: ''
+	[@s, [@n]]: @s.repeat[@n - 1] + @s
 }
 
 String.instance.contains? = {
-	[@self, @x]: @self.index-of[@x] != -1
+	[@self, [@x]]: @self.index-of[@x] != -1
 }
 
 String.instance.begins-with? = {
-	[@self, @x]: @self.index-of[@x] == 0
+	[@self, [@x]]: @self.index-of[@x] == 0
 }
 
 String.instance.ends-with? = {
-	[@self, @x]: @self.last-index-of[@x] == ((count[@self]) - (count[@x]))
+	[@self, [@x]]: @self.last-index-of[@x] == ((count[@self]) - (count[@x]))
 }
 
 String.instance.capitalized? = {
