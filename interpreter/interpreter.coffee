@@ -109,7 +109,7 @@ class Funject
 
     toSource: (depth) ->
         if depth is 0
-            return @simpleToString()
+            return @basicToString()
         try
             s = new Interpreter().evaluate
                 type: 'application'
@@ -130,9 +130,7 @@ class Funject
                 throw e
 
     getSource: (depth) ->
-        if depth is 0
-            @simpleToString()
-        else if @call and @call.length isnt 0
+        if depth is 0 or @isClass or (@call and @call.length isnt 0)
             @basicToString()
         else if not @patterns or @patterns.length is 0
             '{}'
