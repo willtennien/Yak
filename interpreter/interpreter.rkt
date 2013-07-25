@@ -1,5 +1,7 @@
 #lang racket
 ;;;;begin not translating
+(require compatibility/mlist)
+
 (define-syntax try
   (syntax-rules (catch)
     ((_ body (catch catcher))
@@ -10,8 +12,7 @@
            catcher
            (exit condition))
          (lambda () body)))))))
-
-(require compatibility/mlist)
+ 
 ;;;;end not translating
 
 ;;;                Personal Library
@@ -1179,6 +1180,7 @@
 
 ;;;;    Environment
 ;;;;    env-<specifier>
+(struct env (pairs-of parent-of) #:transparent #:constructor-name env-extend #:mutable)
 
 (define create-env-pair mlist)
 
@@ -1204,28 +1206,12 @@
 
 
 (define (env-create pairs)
-  (mlist 'env
-         pairs
-         empty-env))
-
-
-(define (env-extend pairs env)
-  (mlist 'env
-         pairs
-         env))
-
+  (env-extend (env-pairs)
+              empty-env))
 
 (define (env-extend-one key-value env)
-  (mlist 'env
-         (env-pairs key-value)
-         env))
-
-
-(define env-pairs-of mcadr)
-
-
-(define env-parent-of mcaddr)
-
+  (env-create (env-pairs key-value)
+              env))
 
 (define (env-has? name env)
   (define (iter ps)
@@ -1237,7 +1223,7 @@
       [else (iter (mcdr ps))]))
   (if (env-empty? env)
       false
-      (iter (mcadr env))))
+      (iter (env-pairs-of env))))
 
 
 (define (env-get name env)
@@ -1249,22 +1235,22 @@
         (if (equal? name (env-pair-key-of (mcar ps)))
             (env-pair-value-of (mcar ps))
             (iter (mcdr ps)))))
-  (iter (mcadr env)))
+  (iter (env-pairs-of env)))
 
 
 (define (env-set! key value env) 
   (define (iter ps)
     (cond 
       [(empty? ps)
-       (set-mcadr! env
-                   (mcons (create-env-pair key value) 
-                          (mcadr env)))
+       (set-env-pairs-of! env
+                          (mcons (create-env-pair key value) 
+                                 (env-pairs-of env)))
         env]
       [(equal? key (mcaar ps))
        (set-mcadar! ps value)
        env]
       [else (iter (mcdr ps))]))
-  (iter (mcadr env)))
+  (iter (env-pairs-of env)))
 
 
 (define (env-reset! key value env)
@@ -1275,10 +1261,10 @@
            (user-error-cannot-reset-unset-variable key)
            (env-reset! key value (env-parent-of env)))]
       [(equal? key (mcaar ps))
-       (set-mcadar! ps value)
+       (set-env-pairs-of! ps value)
        env]
       [else (iter (mcdr ps))]))
-  (iter (mcadr env)))
+  (iter (env-pairs-of env)))
 
 
 (define env-merge ;env-merge does NOT copy the environments; it merely mappends their pairs.
@@ -2432,7 +2418,6 @@
 
 (define (create-primitive-class-instance-method meth self)
   (create-primitive (lambda (arg own) 
-                      ;(error "" (lookup-identifier "private" (env-create (env-pairs-for-private-of self))))
                       (invoke meth (create-lang 'List (mlist self arg)) meth (env-pairs-for-private-of self)))
                     (lambda (arg own)
                       (assert (and (lang? 'List arg)
