@@ -119,7 +119,7 @@ tokenizer = do ->
                                 indent.pop()
                                 l = last indent
                                 prev = l.length
-                            if space isnt l
+                            if c and space isnt l
                                 syntaxError 'Inconsistent indentation'
                             return tokens.shift()
                         when now > prev
