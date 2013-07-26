@@ -13,7 +13,7 @@ assert-error = {
 
 assert-near = {
     [@x, @y]:
-        assert[true, @x.close-to[@y]]
+        assert[true, @x.close-to?[@y]]
 }
 
 tests = 0
@@ -168,6 +168,116 @@ class TestNumber < TestCase
         assert-near[1, 0.sec]
         assert-near[-1, Number.pi.sec]
         assert-near[-1.1917935066878957, 10.sec]
+    }
+
+    instance.test-csc = {[@self]:
+    	assert-near[1, Number.pi.csc]
+    	assert-near[2, (Number.pi / 6).csc]
+    	assert-near[-1.8381639608896658, 10.csc]
+    }
+
+    instance.test-cot = {
+    	assert-near[0, (Number.pi / 2).cot]
+    	assert-near[0, (-1 * (Number.pi / 2)).cot]
+    	assert-near[1.54235104535692, 10.cot]
+    }
+
+    instance.test-atan = {
+    	assert-near[(Number.pi / 4), 1.atan]
+    	assert-near[0, 0.atan]
+    	assert-near[(Number.pi / 6), (Number.pi / 6).tan.atan]
+    	assert-near[1, 1.tan.atan]
+    }
+
+    instance.test-asin = {
+    	assert-error[{
+    		[]: 10.asin
+    	}]
+    	assert-error[{
+    		[]: -10.asin
+    	}]
+    	assert-near[(Number.pi / 4), (1 / 2.sqrt).asin]
+    	assert-near[0, 0.asin]
+    }
+
+    instance.test-acos = {
+  		assert-error[{
+  			[]: 10.acos
+  		}]
+  		assert-error[{
+  			[]: -10.acos
+  		}]
+  		assert-near[0, 1.acos]
+  		assert-near[Number.pi, -1.acos]
+    }
+
+    instance.test-atan/ = {
+    	assert-error[{
+    		[]: 0.atan/[0]
+    	}]
+    	assert-near[Number.pi / 4, 1.atan/[1]]
+    	assert-near[0, 0.atan/[1]]
+    	assert-near[Number.pi / 2, 1.atan/[0]]
+    	assert-near[Number.pi - (Number.pi * 2 / 8), 1.atan/[-1]]
+    }
+
+    # TODO: asec, acsc, and acot tests
+
+    instance.test-ceil = {
+    	assert==[2, 1.5.ceil]
+    	assert==[1, 1.ceil]
+    	assert==[2, 1.7.ceil]
+    	assert==[2, 1.1.ceil]
+    }
+
+    instance.test-floor = {
+    	assert==[1, 1.5.floor]
+    	assert==[1, 1.floor]
+    	assert==[1, 1.7.floor]
+    	assert==[1, 1.1.floor]
+    }
+
+    instance.test-ln = {
+    	assert-near[2.302585092994046, 10.ln]
+    	assert-near[1.6094379124341003, 5.ln]
+    	assert-error[{
+    		[]: -1.ln
+    	}]
+    }
+
+    instance.test-log10 = {
+    	assert==[2, 100.log10]
+    	assert==[3, 1000.log10]
+    	assert==[4, 10000.log10]
+    	assert-near[2.09691001301, 125.log10]
+    	assert-error[{
+    		[]: -1.log10
+    	}]
+    }
+
+    instance.test-log = {
+    	assert-error[{
+    		[]: 10.log[0]
+    	}]
+    	assert-error[{
+    		[]: -1.log[2]
+    	}]
+    	assert-near[2.8613531161, 100.log[5]]
+    }
+
+    instance.test-to-fixed = {
+    	assert==['1.000', 1.00000000000.to-fixed[3]]
+    	assert==['3.14', Number.pi.to-fixed[2]]
+    	assert==['1.0', 1.to-fixed[1]]
+    	assert==['1', 1.0.to-fixed[0]]
+    }
+
+    # TODO: times test
+
+    instance.test-close-to? = {
+    	assert[1.close-to?[1.00000000001]]
+    	assert[-1.close-to?[-1.000000000001]]
+    	assert[(1.close-to?[20]).not]
     }
 
 class TestBoolean < TestCase

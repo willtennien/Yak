@@ -192,7 +192,7 @@ Number.instance.times = {
 		@f[@x]
 }
 
-Number.instance.close-to = {
+Number.instance.close-to? = {
     [0, [@x]]: @x.abs < 0.0001
     [@x, [0]]: @x.abs < 0.0001
     [@x, [@y]]:
