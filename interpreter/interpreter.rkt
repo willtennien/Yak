@@ -16,6 +16,11 @@
 ;;;;end not translating
 
 ;;;                Personal Library
+(define (->string exp)
+  (let ((o (open-output-string)))
+    (write exp o)
+    (get-output-string o)))
+
 (define (is a)
   (lambda (b)
     (equal? a b)))
@@ -313,7 +318,7 @@
                    (syntax-rules ()
                      [(also) (stream)]
                      [(also a ...) (stream-shallow-flatten (stream a ...))]))
-                 
+                                  
                  (define (given-seq possibilities . procs)
                    (define (iter possibilities procs)
                      (if (empty? procs)
@@ -533,7 +538,8 @@
                          (parse-reset-strict-assignment str indent)
                          (parse-reset-lazy-assignment str indent)
                          (parse-module str indent)
-                         (parse-class str indent)))
+                         (parse-class str indent)
+                         (parse-conditional str indent)))
                  
                  
                  ;;;parse-beginning-with-exp
@@ -796,30 +802,35 @@
                                                     (define indentation (string-length spaces))
                                                     #|Check|# (if (indent indentation) '() (raise "parse-funject-literal: Synatx Error: you must indent the arguments of a multiline funject literal more than the normal indentation level!"))
                                                     ;;Parse each key-value pair:
-                                                    (given (parse-each (lambda (str indent)
-                                                                         (given-seq (parse-each parse-white-line str indent)
-                                                                                    (lambda (str)
-                                                                                      (parse-characters spaces str no-indent))
-                                                                                    (lambda (str)
-                                                                                      (given (parse-exp str indent)
-                                                                                             (lambda (key str)
-                                                                                               (given-seq (parse-white str no-indent)
-                                                                                                          (lambda (str)
-                                                                                                            (parse-characters ":" str no-indent))
-                                                                                                          (lambda (str)
-                                                                                                            (parse-white str no-indent))
-                                                                                                          (lambda (str)
-                                                                                                            (given (parse-sequence str (lambda (ind) (< indentation ind)))
-                                                                                                                   (lambda (value str)
-                                                                                                                     (given-seq (parse-white str no-indent)
-                                                                                                                                (lambda (str)
-                                                                                                                                  (parse-characters "\n" str no-indent))
-                                                                                                                                (lambda (str)
-                                                                                                                                  (possibility (list key value) str))))))))))))
-                                                                       str
-                                                                       indent)
+                                                    (given (parse-separated (lambda (str _)
+                                                                              (given-seq (parse-white str no-indent)
+                                                                                         (lambda (str)
+                                                                                           (parse-characters "\n" str no-indent))))
+                                                                            (lambda (str _)
+                                                                              (given-seq (parse-each parse-white-line str indent)
+                                                                                         (lambda (str)
+                                                                                           (parse-characters spaces str no-indent))
+                                                                                         (lambda (str)
+                                                                                           (given (parse-exp str indent)
+                                                                                                  (lambda (key str)
+                                                                                                    (given-seq (parse-white str no-indent)
+                                                                                                               (lambda (str)
+                                                                                                                 (parse-characters ":" str no-indent))
+                                                                                                               (lambda (str)
+                                                                                                                 (parse-white str no-indent))
+                                                                                                               (lambda (str)
+                                                                                                                 (given (parse-sequence str (lambda (ind) (< indentation ind)))
+                                                                                                                        (lambda (value str)
+                                                                                                                          (possibility (list key value) str))))))))))
+                                                                            str
+                                                                            indent)
                                                            (lambda (pairs str)
-                                                             (given-seq (parse-each parse-white-line str indent)
+                                                             (given-seq (given-seq (parse-white str no-indent)
+                                                                                   (lambda (str)
+                                                                                     (also (possibility 'doesnt-matter str)
+                                                                                           (parse-characters "\n" str no-indent))))
+                                                                        (lambda (str)
+                                                                          (parse-each parse-white-line str indent))
                                                                         (lambda (str) 
                                                                           (given (parse-all-like (is " ") str no-indent)
                                                                                  (lambda (spaces str)
@@ -1080,6 +1091,53 @@
                  (define parse-module (mcar parse-module--parse-class))
                  
                  (define parse-class (mcadr parse-module--parse-class))
+                 
+                 (define (parse-conditional str indent)
+                   (given-seq (parse-characters "if" str no-indent)
+                              (lambda (str)
+                                (parse-white str no-indent))
+                              (lambda (str)
+                                (given (parse-exp str indent)
+                                       (lambda (condition str)
+                                         (given-seq (parse-white str no-indent)
+                                                    (lambda (str)
+                                                      (given (also (given-seq (parse-characters "\n" str no-indent)
+                                                                              (lambda (_) (possibility true str)))
+                                                                   (given-seq (parse-characters "then" str no-indent)
+                                                                              (lambda (str)
+                                                                                (parse-white str no-indent))
+                                                                              (lambda (str)
+                                                                                (possibility false str))))
+                                                             (lambda (multiline str)
+                                                               (given (parse-sequence str indent)
+                                                                      (lambda (consequent str)
+                                                                        (also (given-seq (if multiline
+                                                                                             (given-seq (parse-characters "\n" str no-indent)
+                                                                                                        (lambda (str)
+                                                                                                          (given (parse-white str no-indent)
+                                                                                                                 (lambda (white str)
+                                                                                                                   (unless (indent (string-length white))
+                                                                                                                     (impossibility)
+                                                                                                                     (possibility 'doesnt-matter str))))))
+                                                                                             (parse-white str no-indent))
+                                                                                         (lambda (str)
+                                                                                           (given-seq (parse-characters "else" str no-indent)
+                                                                                                      (lambda (str)
+                                                                                                        (parse-white str no-indent))
+                                                                                                      (lambda (str)
+                                                                                                        (given (parse-sequence str indent)
+                                                                                                               (lambda (alternative str)
+                                                                                                                 (possibility (tokenize 'Conditional
+                                                                                                                                        condition
+                                                                                                                                        consequent
+                                                                                                                                        alternative)
+                                                                                                                              str)))))))
+                                                                              (possibility (tokenize 'Conditional 
+                                                                                                     condition 
+                                                                                                     consequent 
+                                                                                                     (tokenize 'Nil))
+                                                                                           str)))))))))))))
+
                                                                                        
                                                                                        
                  ;;;;begin not translating
@@ -1325,6 +1383,7 @@
 (define token-inverse-definition? (partial tagged-list? 'Token-inverse-definition))
 (define token-module? (partial tagged-list? 'Token-module))
 (define token-class? (partial tagged-list? 'Token-class))
+(define token-conditional? (partial tagged-list? 'Token-conditional))
 
 (define (token-any? exp) ;to optimize, define this simply as (equal? "Token" (substring (symbol->string (cadr exp)) 0 5))
   (or (token-number? exp)
@@ -1346,14 +1405,17 @@
       (token-reset-lazy-assignment? exp)
       (token-invocation? exp)
       (token-funject-inheritance? exp)
-      (token-inverse-definition? exp)))
+      (token-inverse-definition? exp)
+      (token-module? exp)
+      (token-class? exp)
+      (token-conditional? exp)))
 
 (define (tokenize . args)
   (apply mlist (cons (string->symbol (string-append "Token-"
                                                     (string-downcase (symbol->string (car args)))))
                      (cdr args))))
 (define (token-contents tokens f)
-  (assert (token-any? tokens)) ;to optimize, remove this line.
+  (assert (token-any? tokens) "token-contents: I can only take a token, but you passed me:" tokens) ;to optimize, remove this line.
   (apply f (mlist->list (mcdr tokens))))
 
 
@@ -1478,6 +1540,7 @@
     [(token-inverse-definition? tokens) (analyze-inverse-definition tokens)]
     [(token-module? tokens) (analyze-module tokens)]
     [(token-class? tokens) (analyze-class tokens)]
+    [(token-conditional? tokens) (analyze-conditional tokens)]
     [else (error "analyze: I fail to recognize the token " tokens)]))
 
 
@@ -1801,7 +1864,21 @@
 (define analyze-module (mcar analyze-module--analyze-class))
 (define analyze-class (mcadr analyze-module--analyze-class))
 
-
+(define (analyze-conditional tokens)
+  (token-contents tokens
+                  (lambda (condition consequent alternative)
+                    (let ((acond (analyze condition))
+                          (aconseq (analyze consequent))
+                          (aaltern (analyze alternative)))
+                      (lambda (env)
+                        (let ((econd (eval acond env)))
+                          (cond 
+                            [(equal? econd (create-lang 'Boolean true))
+                             (eval aconseq env)]
+                            [(equal? econd (create-lang 'Boolean false))
+                             (eval aaltern env)]
+                            [else
+                             (user-error-condition-not-boolean)])))))))
      
 
 ;;;;    invoke
@@ -2291,7 +2368,7 @@
        (eq? 'Primitive (mcar exp))))
 
 (define (primitive-contents prim f)
-  (assert (primitive? prim)) ;to optimize, remove this line.
+  (assert (primitive? prim) "primitive-contents: I can only take a primitive, but you passed me:" prim) ;to optimize, remove this line.
   (apply f (mlist->list (mcdr prim))))
 
 (define (create-primitive-infix-operator right-type? result-type? op op-inv)
@@ -2513,7 +2590,7 @@
 
 (define (user-error-multiple-unknowns-in-pattern-arg) (user-error "A funject pattern cannot contain multiple unknown matching variables!")) 
 
-
+(define (user-error-condition-not-boolean) (user-error "You may only pass a Boolean to the condition of an if-statement!"))
 
 
 
