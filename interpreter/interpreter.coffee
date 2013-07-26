@@ -1,10 +1,4 @@
-util = require 'util'
-readline = require 'readline'
-fs = require 'fs'
-path = require 'path'
-
 environment = global ? @
-parser = require './parser.coffee'
 
 SPECIAL_FORM = {}
 
@@ -35,8 +29,8 @@ equal = (a, b) ->
 class InterpreterError
     constructor: (@message) ->
 
-class RuntimeError
-    constructor: (@stack) ->
+class RuntimeError extends Error
+    constructor: (@message, @trace) ->
 
 class MatchError extends InterpreterError
     constructor: (funject, argument) ->
@@ -1654,9 +1648,10 @@ class Interpreter
                     @scope = entry.scope
                     @push entry.catch
                 else
-                    throw new RuntimeError stack
+                    throw new RuntimeError error.message, stack
             else
-                console.log util.inspect @stack, depth: 5
+                if require?
+                    console.log require('util').inspect @stack, depth: 5
                 throw error
         false
 
@@ -1704,10 +1699,64 @@ class Interpreter
     second: (n) -> @frame.arguments[1]
     third: (n) -> @frame.arguments[2]
 
-evaluate = (s, file, firstLine) ->
-    new Interpreter().evaluate parser.parse s, file, firstLine
+evaluateSynchronous = (source, filename, firstLine) ->
+    new Interpreter().evaluate parser.parse source, filename, firstLine
+
+MAX_ITERATIONS = 1000
+evaluate = (source, filename = '<anonymous>', firstLine = 1, callback = null) ->
+    callbacks = []
+    dataCallbacks = []
+    errorCallbacks = []
+    result = (error, data) ->
+        c error, data for c in callbacks
+        c data for c in dataCallbacks if data
+        c error for c in errorCallbacks if error
+
+    if arguments.length is 2
+        callback = filename
+        filename = '<anonymous>'
+    callbacks.push callback if callback
+
+    try
+        interpreter = new Interpreter().load parser.parse source, filename, firstLine
+        timeout = setTimeout step = ->
+            iterations = 0
+            try
+                loop
+                    if interpreter.step()
+                        result null, interpreter.value()
+                        return
+                    else if ++iterations >= MAX_ITERATIONS
+                        timeout = setTimeout step
+                        return
+            catch e
+                if e instanceof RuntimeError
+                    result e, null
+                else
+                    throw e
+    catch e
+        if e instanceof SyntaxError
+            setTimeout ->
+                result e, null
+        else
+            throw e
+    return {
+        abort: ->
+            clearTimeout timeout
+            @
+        then: (callback) ->
+            callbacks.push callback
+            @
+        done: (callback) ->
+            dataCallbacks.push callback
+            @
+        fail: (callback) ->
+            errorCallbacks.push callback
+            @
+    }
 
 repl = ->
+    readline = require 'readline'
     rl = readline.createInterface
         input: process.stdin
         output: process.stdout
@@ -1723,7 +1772,6 @@ repl = ->
             else
                 [[], line]
 
-    MAX_ITERATIONS = 1000
     FIXED_LINE_LENGTH = 4
 
     replLine = 1
@@ -1739,7 +1787,7 @@ repl = ->
     read = ''
     firstLine = 1
     sigints = 0
-    timeout = null
+    request = null
     rl.on 'line', (line) ->
         ++replLine
         sigints = 0
@@ -1750,34 +1798,15 @@ repl = ->
             return
         read += line + '\n'
         if not /^[\t ]|(^|[(\[])(class|module|try$|catch$|finally$)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
-            try
-                interpreter = new Interpreter().load parser.parse read, 'input', firstLine
-            catch e
-                if e instanceof SyntaxError
-                    console.log e.message
-                    read = ''
-                    firstLine = replLine
-                    setPrompt '>'
-                    rl.prompt()
-                    return
-                else
-                    throw e
-            timeout = setTimeout step = ->
-                iterations = 0
-                try
-                    loop
-                        if interpreter.step()
-                            console.log interpreter.value().toSource 3
-                            break
-                        else if ++iterations > MAX_ITERATIONS
-                            timeout = setTimeout step
-                            return
-                catch e
-                    if e instanceof RuntimeError
-                        console.log e.stack
-                    else
-                        throw e
-                timeout = null
+            request = evaluate read, 'input', firstLine, (e, d) ->
+                if e
+                    if e.trace
+                        console.log e.trace
+                    else if e.message
+                        console.log e.message
+                else if d
+                    console.log d.toSource 3
+                request = null
                 read = ''
                 firstLine = replLine
                 setPrompt '>'
@@ -1790,9 +1819,8 @@ repl = ->
             #     rl.write s[2]
 
     rl.on 'SIGINT', ->
-        if timeout?
-            clearTimeout timeout
-            timeout = null
+        if request?
+            request.abort()
             read = ''
         else
             rl._refreshLine() # TODO this is a bad idea
@@ -1817,8 +1845,12 @@ repl = ->
         process.exit 0
 
 if module?
-    exports.repl = repl
-    exports.evaluate = evaluate
+    fs = require 'fs'
+    path = require 'path'
+    parser = require './parser.coffee'
+
+    _exports = exports
+    _exports.repl = repl
     if not module.parent
         expressions = []
         i = 2
@@ -1842,7 +1874,7 @@ if module?
                         source: '' + fs.readFileSync arg
         for expression in expressions
             try
-                evaluate expression.source, expression.file
+                evaluateSynchronous expression.source, expression.file
             catch e
                 if e instanceof SyntaxError
                     console.error e.message
@@ -1850,3 +1882,9 @@ if module?
                     throw e
         if interactive
             repl()
+else
+    parser = Yak.parser
+    (@Yak ?= {}).interpreter = _exports = {}
+
+_exports.eval = evaluate
+_exports.evalSync = evaluateSynchronous

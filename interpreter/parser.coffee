@@ -657,10 +657,7 @@ printTree = (s) ->
 stringify = (n) ->
 
 if module?
-    exports.parse = parse
-    exports.stringify = stringify
-    exports.tokenizer = tokenizer
-    exports.parseForRacket = parseForRacket
+    _exports = exports
     if not module.parent
         expression = null
         racket = false
@@ -695,3 +692,10 @@ if module?
                 console.error e.message
             else
                 throw e
+else
+    (@Yak ?= {}).parser = _exports = {}
+
+_exports.parse = parse
+_exports.stringify = stringify
+_exports.tokenizer = tokenizer
+_exports.parseForRacket = parseForRacket
