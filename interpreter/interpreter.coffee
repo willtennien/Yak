@@ -19,7 +19,7 @@ equal = (a, b) ->
         return false
     switch a.type
         when 'list'
-            if a.values.length isnt b.values.length
+            if a.value.length isnt b.value.length
                 return false
             for x, i in a
                 if not equal x, b[i]
@@ -179,9 +179,9 @@ class Funject
             if method.patterns
                 for o in method.patterns
                     p = o.pattern
-                    if p.type is 'list' and p.values.length is 1
+                    if p.type is 'list' and p.value.length is 1
                         answer false
-                    if p.type is 'list' and p.values.length is 2
+                    if p.type is 'list' and p.value.length is 2
                         answer true
             if hasArgs?
                 return hasArgs
@@ -249,7 +249,7 @@ class Funject
         result = []
         f = @
         while f
-            for k in (if symbolic then f.symbolicKeys() else f.keys()).values
+            for k in (if symbolic then f.symbolicKeys() else f.keys()).value
                 add = true
                 for l in result
                     if equal l, k
@@ -267,9 +267,9 @@ class Funject
                         return args
                 return false
             args = []
-            if not argument.isList or pattern.length isnt argument.values.length
+            if not argument.isList or pattern.length isnt argument.value.length
                 return false
-            for x, i in argument.values
+            for x, i in argument.value
                 if a = @native pattern[i], x
                     args = args.concat a
                 else
@@ -299,9 +299,9 @@ class Funject
 
     scan: (scope, bindings, applications, pattern, argument) ->
         if pattern.type is 'list'
-            return false unless argument.isList and argument.values.length is pattern.values.length
+            return false unless argument.isList and argument.value.length is pattern.values.length
             for x, i in pattern.values
-                return false unless sub = @scan scope, bindings, applications, x, argument.values[i]
+                return false unless sub = @scan scope, bindings, applications, x, argument.value[i]
             return true
         if pattern.type is 'formal parameter'
             if Object::hasOwnProperty.call bindings, pattern.value
@@ -326,15 +326,15 @@ class Funject
         if pattern.type is 'list'
             bindings = {}
             for x, i in pattern.values
-                return false unless sub = @match interpreter, bound, x, argument.values[i]
+                return false unless sub = @match interpreter, bound, x, argument.value[i]
                 extend bindings, sub
             return bindings
         if pattern.type is 'application'
-            arg = interpreter.first().values[interpreter.frame.arg++]
+            arg = interpreter.first().value[interpreter.frame.arg++]
             if not arg.isList
                 throw new InterpreterError 'Invalid inverse'
-            return false unless arg.values.length
-            return @bind arg.values[0], pattern, {}, bound
+            return false unless arg.value.length
+            return @bind arg.value[0], pattern, {}, bound
         return {}
 
     bind: (value, pattern, bindings, bound) ->
@@ -349,7 +349,7 @@ class Funject
 
     substitute: (bindings, argument) ->
         if argument.type is 'list'
-            return new ListFunject (@substitute bindings, x for x in argument.values)
+            return new ListFunject (@substitute bindings, x for x in argument.value)
         if argument.type is 'number'
             return new NumberFunject argument.value
         if argument.type is 'string'
@@ -428,7 +428,7 @@ class Funject
                             character: p.pattern.character
                             type: 'list'
                             values:
-                                for a, i in interpreter.first().values
+                                for a, i in interpreter.first().value
                                     if not a.inverse
                                         throw new InterpreterError "#{a} has no inverse"
                                     type: 'application'
@@ -564,7 +564,7 @@ class Funject
             when 'nil' then null
             when 'unknown' then throw new InterpreterError "Cannot unbridge #{f.type}"
             when 'number', 'string', 'boolean' then f.value
-            when 'list' then Funject.unbridge v for v in f.values
+            when 'list' then Funject.unbridge v for v in f.value
             when 'funject' then ->
                 Funject.unbridge new Interpreter().evaluate
                     type: 'application'
@@ -594,7 +594,7 @@ yakClass = (name, extend, {exports, instance, _instance} = {}) ->
     result.$super = extend
     result.$subclasses = new ListFunject []
     if extend
-        extend.$subclasses.values.push result
+        extend.$subclasses.value.push result
     result.instance = (lang.Class ? result).$instance
     result.name = name
     lang[name] = result
@@ -702,7 +702,7 @@ BaseFunject = yakObject null,
                                 value: keys[i]
                         }]
             i = 0
-            keys = f.keys().values
+            keys = f.keys().value
             end = keys.length
             return lang.nil if end is 0
             interpreter.pop()
@@ -727,11 +727,11 @@ class ListFunject extends Funject
     type: 'list'
     isList: true
 
-    copy: -> new ListFunject @values
+    copy: -> new ListFunject @value
 
-    constructor: (@values) ->
-    toString: -> "[#{@values.join ', '}]"
-    toSource: (depth) -> "[#{(v.toSource depth - 1 for v in @values).join ', '}]"
+    constructor: (@value) ->
+    toString: -> "[#{@value.join ', '}]"
+    toSource: (depth) -> "[#{(v.toSource depth - 1 for v in @value).join ', '}]"
 
     call: ['.class', -> lang.List]
 
@@ -753,7 +753,7 @@ yakClass 'Funject', null,
     _instance: BaseFunject
 
 lang.Class.$super = lang.Funject
-lang.Funject.$subclasses.values.push lang.Class
+lang.Funject.$subclasses.value.push lang.Class
 
 Funject::parent = yakObject null,
     class: lang.Funject
@@ -763,6 +763,10 @@ yakClass 'Symbol', lang.Funject,
 
 yakClass 'String', lang.Funject,
     instance:
+        initialize: yakFunction ['string', ['string']], (s) ->
+            if s.value?
+                throw new InterpreterError "#{s} is immutable"
+            @value = s
         length: yakFunction ['string'], (s) ->
             new NumberFunject s.value.length
         '+': new Funject
@@ -1012,38 +1016,38 @@ yakClass 'Number', lang.Funject,
         '<=': yakFunction ['number', 'number'], (x, y) -> yakBoolean x.value <= y.value
 
 lang.Number.call.unshift(
-    '.e', -> new NumberFunject 2.718281828459045
-    '.pi', -> new NumberFunject 3.141592653589793)
+    '.e', -> new NumberFunject Math.E
+    '.pi', -> new NumberFunject Math.PI)
 
 yakClass 'List', lang.Funject,
     instance:
         head: yakFunction ['list'], (x) ->
-            if x.values.length
-                x.values[0]
+            if x.value.length
+                x.value[0]
             else
                 throw new InterpreterError 'Cannot take the head of the empty list'
         tail: yakFunction ['list'], (x) ->
-            if x.values.length > 1
-                new ListFunject x.values[1..]
+            if x.value.length > 1
+                new ListFunject x.value[1..]
             else
                 lang.nil
         'empty?': yakFunction ['list'], (x) ->
-            yakBoolean x.values.length is 0
+            yakBoolean x.value.length is 0
         length: yakFunction ['list'], (x) ->
-            new NumberFunject x.values.length
+            new NumberFunject x.value.length
         length: yakFunction ['list'], (x) ->
-            new NumberFunject x.values.length
+            new NumberFunject x.value.length
         sort: new Funject
             call: [
                 ['list', []], (x) ->
-                    return new ListFunject x.values.slice(0).sort (a, b) ->
+                    return new ListFunject x.value.slice(0).sort (a, b) ->
                         if a.type is 'funject' or a.type is 'class'
                             0
                         else
                             ('' + a).localeCompare('' + b)
                 'interpreter', ['list', ['funject']], (interpreter, x, f) ->
                     i = 0
-                    list = x.values.slice 0
+                    list = x.value.slice 0
                     end = list.length
                     return new ListFunject [] if end is 0
                     interpreter.pop()
@@ -1075,7 +1079,7 @@ yakClass 'List', lang.Funject,
         map: new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
                 i = 0
-                list = x.values.slice 0
+                list = x.value.slice 0
                 end = list.length
                 return new ListFunject [] if end is 0
                 interpreter.pop()
@@ -1105,7 +1109,7 @@ yakClass 'List', lang.Funject,
         filter: new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
                 i = 0
-                list = x.values.slice 0
+                list = x.value.slice 0
                 end = list.length
                 return new ListFunject [] if end is 0
                 result = []
@@ -1141,7 +1145,7 @@ yakClass 'List', lang.Funject,
         each: new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
                 i = 0
-                list = x.values.slice 0
+                list = x.value.slice 0
                 end = list.length
                 return lang.nil if end is 0
                 interpreter.pop()
@@ -1186,6 +1190,9 @@ yakClass 'Boolean', lang.Funject,
             yakBoolean x.value or y.value
         xor: yakFunction ['boolean', 'boolean'], (x, y) ->
             yakBoolean x.value isnt y.value
+
+yakClass 'Nil', lang.Funject
+yakClass 'Unknown', lang.Funject
 
 class SymbolFunject extends Funject
     @instances: {}
@@ -1251,14 +1258,18 @@ class BooleanFunject extends Funject
     call: ['.class', -> lang.Boolean]
 
 lang.nil = new Funject
+    instance: lang.Nil.$instance
     type: 'nil'
     isNil: true
+
     toString: -> 'nil'
     toSource: -> 'nil'
 
 lang.unknown = new Funject
+    instance: lang.Unknown.$instance
     type: 'unknown'
     isUnknown: true
+
     toString: -> 'unknown'
     toSource: -> 'unknown'
 
@@ -1481,7 +1492,7 @@ class Interpreter
             exports.parent = @frame.super
             exports.$super = @frame.super
             exports.$subclasses = new ListFunject []
-            @frame.super.$subclasses.values.push exports
+            @frame.super.$subclasses.value.push exports
             instance = exports.$instance = @frame.scope.vars.instance
             instance.parent = @frame.super.$instance
             prototype = yakObject null,
