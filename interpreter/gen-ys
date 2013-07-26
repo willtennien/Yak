@@ -1,0 +1,5 @@
+#!/usr/bin/env coffee
+
+{exec} = require('child_process')
+
+exec('cat parser.coffee interpreter.coffee ../js/ys.coffee > ys.coffee && coffee -c ys.coffee')
