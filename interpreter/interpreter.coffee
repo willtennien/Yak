@@ -1315,6 +1315,8 @@ globalScope = new class extends Scope
         catch e
             if Object::hasOwnProperty.call environment, name
                 Funject.bridge environment[name]
+            else if name is 'require' and module?
+                Funject.bridge require
             else
                 throw e
 
