@@ -737,7 +737,8 @@
                  (define (parse-parameter str indent)
                    (given-seq (parse-characters "@" str no-indent)
                               (lambda (str)
-                                (given (parse-identifier str no-indent)
+                                (given (also (possibility (tokenize 'Identifier "") str)
+                                             (parse-identifier str no-indent))
                                        (lambda (name str)
                                          (possibility (tokenize 'Parameter (string-append "@" (cadr name))) str))))))
                  
