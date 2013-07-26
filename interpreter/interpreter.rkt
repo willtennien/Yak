@@ -1265,7 +1265,7 @@
 
 
 (define (env-create pairs)
-  (env-extend (env-pairs)
+  (env-extend pairs
               empty-env))
 
 (define (env-extend-one key-value env)
@@ -2350,6 +2350,28 @@
 
 
 
+;;;;    Bridging
+
+(define (bridge thing)
+  (cond 
+    [(empty? thing)
+     (create-lang 'Nil)]
+    [(procedure? thing)
+     (create-primitive (lambda (arg own)
+                         (bridge (apply thing (unbridge arg))))
+                       (lambda (arg own)
+                         (invoke primitive-funject-inverse-god arg own)))]
+    [else (error "I know not how to bridge" thing)]))
+
+(define (unbridge lang)
+  (cond
+    [(lang? 'Nil lang)
+     empty]
+    [(lang? 'List lang)
+     (lang-contents lang
+                    (lambda (elems)
+                      (mlist->list (mmap unbridge elems))))]
+    [else (error "I know not how to unbridge" lang)]))
 
 
 
@@ -2459,7 +2481,6 @@
 
 (define create-primitive-number-div (create-primitive-unoverloaded-infix-operator 'Number 'Number / (compose / /)))
 
-
 (define (create-primitive-class-new module-env) 
   (let* ((exports (lookup-identifier "exports" module-env))
          (instance (lookup-identifier "instance" module-env)))
@@ -2537,7 +2558,9 @@
                                           (create-env-pair-strict "-" (create-lang 'Symbol "-"))
                                           (create-env-pair-strict "*" (create-lang 'Symbol "*"))
                                           (create-env-pair-strict "/" (create-lang 'Symbol "/"))
-                                          (create-env-pair-strict "is" (create-lang 'Symbol "is")))))
+                                          (create-env-pair-strict "is" (create-lang 'Symbol "is"))
+                                          (create-env-pair-strict "scheme-nil" (bridge empty))
+                                          (create-env-pair-strict "identity" (bridge identity)))))
 
 ;I placed this down here because it relies on the global enviroment.
 ;This serves as default Klass.instance.initialize.
