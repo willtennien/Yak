@@ -229,6 +229,22 @@ class Funject
                     result.push new StringFunject p.substr 1
         new ListFunject result
 
+    isObject: ->
+        if @patterns
+            for p in @patterns
+                if p.pattern.type isnt 'symbol'
+                    return false
+        if @call
+            i = 0
+            length = @call.length
+            while i < length
+                p = @call[i++]
+                while p is 'interpreter' or p is 'own'
+                    p = @call[i++]
+                if p[0] isnt '.'
+                    return false
+        true
+
     symbolicKeys: ->
         result = []
         if @patterns
@@ -564,16 +580,32 @@ class Funject
             when 'nil' then null
             when 'unknown' then throw new InterpreterError "Cannot unbridge #{f.type}"
             when 'number', 'string', 'boolean' then f.value
+            when 'symbol' then throw new InterpreterError "Cannot unbridge symbols"
             when 'list' then Funject.unbridge v for v in f.value
-            when 'funject' then ->
-                Funject.unbridge new Interpreter().evaluate
-                    type: 'application'
-                    funject:
-                        type: 'value'
-                        value: f
-                    argument:
-                        type: 'value'
-                        value: Funject.bridge [].slice.call arguments
+            when 'funject'
+                if f.isObject()
+                    interpreter = new Interpreter()
+                    o = {}
+                    for k in f.symbolicKeys().value
+                        o[k.value] = Funject.unbridge interpreter.evaluate
+                            type: 'application'
+                            funject:
+                                type: 'value'
+                                value: f
+                            argument:
+                                type: 'symbol'
+                                value: k.value
+                    o
+                else
+                    () ->
+                        Funject.unbridge new Interpreter().evaluate
+                            type: 'application'
+                            funject:
+                                type: 'value'
+                                value: f
+                            argument:
+                                type: 'value'
+                                value: Funject.bridge [].slice.call arguments
 
 yakObject = (parent, properties, Type = Funject) ->
     call = []
