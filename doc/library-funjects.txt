@@ -19,9 +19,9 @@ Number::abs[@x] # matches against a positive Number
 Free funjects
 =============
 by[.sym] # => {[f]: f.sym}; allows array.sort[by[.height]]
-
-
-
+assert[assertion, message] # throws an error if assertion does not evaluate to true, the optional message pararmeter specifies the error message of the error to throw
+assert==[i, j] # throws an error if i and j are not equal
+unreachable # throws an error if called, used for throwing an error indicating that a piece of code not intended to run was executed
 
 
 Class methods
@@ -47,6 +47,9 @@ is x # identity comparison; when one changes, the other changes
 .apply[x] # => receiver x
 .then[f] # => f[receiver]; ex: arr.lots-of-long-methods.then[{[arr]: arr[arr.length - 1]}]
 .on f # => f receiver; allows conditionals and switch-cases without additional syntax
+
+.while-true f # repeatedly invokes f[] while reciever[] evaluates to true
+.do-while-true f # invokes f[], then repeatedly invokes f[] while reciever[] evaluates to true
 
 .has?[k] # true if the receiver matches k
 .clone # a new funject which inherits from the receiver

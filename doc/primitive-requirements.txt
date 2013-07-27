@@ -1,0 +1,47 @@
+This file is a list of all primitives required by the Library functions found in the Library folder catagorized by library.
+
+Notes:
+----------------------------------------------
+- The list only includes libraries for primitives that are to be implemented in Yak (String, Array, Funject, Global)
+
+General.yak (Free Funjects)
+----------------------------------------------
+- by
+
+Funject.yak
+----------------------------------------------
+- .has?
+- .append[k, v]
+- .insert[i, k, v]
+- .number?
+- .string?
+- .boolean?
+- .symbol?
+- .unknown?
+- .nil?
+- .list?
+- .integer?
+- .float?
+- .is-member-of?[c]
+- .is-king-of?[c]
+- .to-string
+- .inspect
+- .silently
+- .each[f]
+- .keys
+- .all-keys
+- .keys-of[c]
+
+String.yak
+----------------------------------------------
+- * n
+- + s
+- [<number>]
+- [<range>]
+- .length
+- .contains?
+- .replace # Primitive for speed
+- .replace-first #Primitive for speed
+- .uppercase
+- .lowercase
+- .swapcase
