@@ -173,9 +173,9 @@ class Funject
             if method.patterns
                 for o in method.patterns
                     p = o.pattern
-                    if p.type is 'list' and p.value.length is 1
+                    if p.type is 'list' and p.values.length is 1
                         answer false
-                    if p.type is 'list' and p.value.length is 2
+                    if p.type is 'list' and p.values.length is 2
                         answer true
             if hasArgs?
                 return hasArgs
