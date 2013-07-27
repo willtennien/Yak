@@ -1,0 +1,34 @@
+
+Funject.instance.while-true = {
+	[@p, @f]: {
+		true:
+			@f[]
+			@p.while-true @f
+		false: nil
+	} @p[]
+}
+
+Funject.instance.do-while-true = {
+	[@p, @f]:
+		@f[]
+		@p.while-true @f
+}
+
+Funject.instance.on = {
+	[@self, @f]: @f @self
+}
+
+
+assert = {
+    [true]: nil
+    [false]: error['An assertion failed']
+    [true, @x]: nil
+    [false, @x]: error['An assertion failed: ' + @x]
+}
+
+assert== = {
+    [@x, @x]: nil
+    [@x, @y]: assert[false, 'Expected ' + @x.inspect + ' but got ' + @y.inspect]
+}
+
+unreachable := error['Unreachable code executed']

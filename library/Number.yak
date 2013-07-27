@@ -185,11 +185,18 @@ Number.instance.to-fixed = {
 		(@x * f).round / f
 }
 
+
+# Calls function repeatedly with arguments 0 through n-1
 Number.instance.times = {
-	[0, [@f]]: nil
-	[@x, @f]:
-		(@x - 1).times[@f]
-		@f[@x]
+	[@x, [@y]]:
+		result = []
+		i = 0
+		{[]: i < @y}.while-true {
+			[]:
+				result.push![@x[i]]
+				i |= i + 1
+		}
+		result
 }
 
 Number.instance.close-to? = {

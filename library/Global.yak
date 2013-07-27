@@ -1,0 +1,13 @@
+assert = {
+    [true]: nil
+    [false]: error['An assertion failed']
+    [true, @message]: nil
+    [false, @message]: error['An assertion failed: ' + @message]
+}
+
+assert== = {
+    [@value, @value]: nil
+    [@value, @other]: assert[false, 'Expected ' + @value.inspect + ' but got ' + @other.inspect]
+}
+
+unreachable := error['Unreachable code executed']

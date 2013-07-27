@@ -221,7 +221,32 @@ class TestNumber < TestCase
     	assert-near[Number.pi - (Number.pi * 2 / 8), 1.atan/[-1]]
     }
 
-    # TODO: asec, acsc, and acot tests
+    instance.test-asec = {
+        assert-near[0, 1.asec]
+        assert-near[1.4706289056333368, 10.asec]
+        assert-near[1.369438406004566, 5.asec]
+        assert-error[{
+            []: 0.asec
+        }]
+    }
+
+    instance.test-acsc = {
+        assert-near[(Number.pi / 2), 1.acsc]
+        assert-near[(Number.pi / 2).negate, -1.acsc]
+        assert-near[0.1001674211615598, 10.acsc]
+        assert-near[0.2013579207903308, 5.acsc]
+        assert-error[{
+            []: 0.acsc
+        }]
+    }
+
+    instance.test-acot = {
+        assert-near[(Number.pi / 2), 0.acot]
+        assert-near[(Number.pi / 4), 1.acot]
+        assert-near[(Number.pi / 4).negate, -1.acot]
+        assert-near[0.09966865249116204, 10.acot]
+        assert-near[0.19739555984988078, 5.acot]
+    }
 
     instance.test-ceil = {
     	assert==[2, 1.5.ceil]

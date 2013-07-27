@@ -1,20 +1,113 @@
 #assuming primitives: [<number>], [<range>], index-of, last-index-of, uppercase? lowercase?, alpha?
 
-String.instance.repeat = {
-	[@s, [0]]: ''
-	[@s, [@n]]: @s.repeat[@n - 1] + @s
+String.watman := 'NaN'.repeat[15] + ' Batman!'
+
+String.instance.substring = {
+	[@self, [@start]]: @self.substring[@start, @self.length]
+	[@self, [@start, @end]]:
+		start = @start
+		end = @end
+		(start < 0).on {
+			true: start |= @self.length + start
+			false: nil
+		}
+		(end < 0).on {
+			true: end |= @self.length + end
+			false: nil
+		}
+		result = ''
+		i = start
+		{[]: i < end}.while-true {
+			[]:
+				result |= result + @self[i]
+				i |= i + 1
+		}
+		result
+}
+
+String.instance.index-of = {
+	[@self, [@s]]:
+		i = 0
+		streak = 0
+		streakStart = -1
+		complete = false
+		{[]: i < @self.length and streak < @s.length}.while-true {
+			[]:
+				char = @self[i]
+				(char == @s[streak]).on {
+					true:
+						(streak == 0).on {
+							true: streakStart |= i
+							false: nil
+						}
+						streak |= streak + 1
+					false: streak |= 0
+				}
+				i |= i + 1
+		}
+		(streak == @s.length).on {
+			true: streakStart
+			false: -1
+		}
+}
+
+String.instance.last-index-of = {
+	[@self, [@s]]:
+		(@self.contains?[@s].not).on { # For speed, do a pre-check to see if the owner contains the string
+			true: -1
+			false:
+				i = @self.length - 1
+				streak = @s.length - 1
+				streakStart = -1
+				complete = false
+				{[]: i >= 0 and streak >= 0}.while-true {
+					[]:
+						char = @self[i]
+						(char == @s[streak]).on {
+							true:
+								(streak == 0).on {
+									true: streakStart |= i
+									false: nil
+								}
+								streak |= streak - 1
+							false: streak |= @s.length - 1
+						}
+						i |= i - 1
+				}
+				streakStart
+		}
 }
 
 String.instance.contains? = {
-	[@self, [@x]]: @self.index-of[@x] != -1
+	[@self, [@s]]: @self.index-of[@s] != -1
+}
+
+
+# Not working due to missing push! List primitive
+String.instance.split = {
+	[@self, [@s]]:
+		result = []
+		check = @self
+		{[]: check.contains?[@s]}.while-true {
+			[]:
+				next = check.substring[0, check.index-of[@s]]
+				result.push![next]
+				check |= check.substring[0, check.index-of[@s] + @s.length]
+		}
+		result.push![check]
+}
+
+String.instance.repeat = {
+	[@self, [0]]: ''
+	[@self, [@n]]: @self.repeat[@n - 1] + @self
 }
 
 String.instance.begins-with? = {
-	[@self, [@x]]: @self.index-of[@x] == 0
+	[@self, [@s]]: @self.index-of[@s] == 0
 }
 
 String.instance.ends-with? = {
-	[@self, [@x]]: @self.last-index-of[@x] == ((count[@self]) - (count[@x]))
+	[@self, [@s]]: @self.last-index-of[@s] == (@self.length - @s.length)
 }
 
 String.instance.capitalized? = {
@@ -23,7 +116,7 @@ String.instance.capitalized? = {
 }
 
 String.instance.quote = {
-	[@x]: '"' + (@x.replace['\\', '\\\\'].replace['"', '\\"']) + '"'
+	[@self]: '"' + (@self.replace['\\', '\\\\'].replace['"', '\\"']) + '"'
 }
 
 #|
@@ -34,13 +127,13 @@ String.instance.quote = {
 ' -> &apos;
 |#
 String.instance.escape-html = {
-	[@x]: @x.replace['&', '&amp;'].replace['<', '&lt;'].replace['>', '&gt;'].replace['"', '&quot;'].replace['\'', '&apos;']
+	[@self]: @self.replace['&', '&amp;'].replace['<', '&lt;'].replace['>', '&gt;'].replace['"', '&quot;'].replace['\'', '&apos;']
 }
 
 String.instance.unescape-html = {
-	[@x]: @x.replace['&amp;', '&'].replace['&lt;', '<'].replace['&gt;', '>'].replace['&quot;', '"'].replace['&apos;', '\'']
+	[@self]: @self.replace['&amp;', '&'].replace['&lt;', '<'].replace['&gt;', '>'].replace['&quot;', '"'].replace['&apos;', '\'']
 }
 
 String.instance.lines = {
-	[@x]: @x.split['\n']
+	[@self]: @self.split['\n']
 }
