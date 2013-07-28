@@ -614,6 +614,7 @@ yakFunction = (pattern, value) ->
 
 yakClass = (name, extend, {exports, instance, _instance} = {}) ->
     methods = _instance ? yakObject extend?.$instance, instance
+    methods.isInstance = true
     result = yakObject extend, exports ? {}, ClassFunject
     delete result.parent unless extend?
     result.$instance = methods
@@ -1429,6 +1430,8 @@ class Interpreter
             if n.left.type is 'application'
                 return unless @args n.left.funject
                 funject = @first()
+                if funject.isInstance
+                    throw new InterpreterError 'Cannot modify class definition'
                 if n.operator isnt 'lazy assignment' and @frame.arguments.length is 1
                     @push n.right
                     return
@@ -1522,6 +1525,7 @@ class Interpreter
             exports.$subclasses = new ListFunject []
             @frame.super.$subclasses.value.push exports
             instance = exports.$instance = @frame.scope.vars.instance
+            instance.isInstance = true
             instance.parent = @frame.super.$instance
             prototype = yakObject null,
                 class: exports
