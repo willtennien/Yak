@@ -1,34 +1,56 @@
 
+Funject.assoc = {
+	# @x => [[key, value], [key, value], [key, value], ...]
+	[@pairs]:
+		result = {}
+		i = 0
+		{[]: i < @pairs.length}.while-true {
+			[]:
+				result[@pairs[i][0]] = @pairs[i][1]
+				i |= i + 1
+		}
+		result
+	[@keys, @values]:
+		result = {}
+		(@keys.length == @values.length).on {
+			false: error['Key and value list lengths did not match']
+		}
+		i = 0
+		{[]: i < @keys.length}.while-true {
+			[]:
+				result[@keys[i]] = @values[i]
+				i |= i + 1
+		}
+		result
+}
+
 Funject.instance.while-true = {
-	[@p, @f]: {
+	[@self, @body]: {
 		true:
-			@f[]
-			@p.while-true @f
+			@body[]
+			@self.while-true @body
 		false: nil
-	} @p[]
+	} @self[]
 }
 
 Funject.instance.do-while-true = {
-	[@p, @f]:
-		@f[]
-		@p.while-true @f
+	[@self, @body]:
+		@body[]
+		@self.while-true @body
 }
 
 Funject.instance.on = {
-	[@self, @f]: @f @self
+	[@self, @body]: @body @self
 }
 
-
-assert = {
-    [true]: nil
-    [false]: error['An assertion failed']
-    [true, @x]: nil
-    [false, @x]: error['An assertion failed: ' + @x]
+Funject.instance.then = {
+	[@self, [@body]]: @body[@self]
 }
 
-assert== = {
-    [@x, @x]: nil
-    [@x, @y]: assert[false, 'Expected ' + @x.inspect + ' but got ' + @y.inspect]
+Funject.instance.apply = {
+	[@self, [@body]]: @self @body
 }
 
-unreachable := error['Unreachable code executed']
+Funject.instance.clone = {
+	[@self]: {} << @self
+}
