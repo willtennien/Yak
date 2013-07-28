@@ -1,5 +1,6 @@
 environment = global ? @
 
+ALLOW_CLASS_REDEFINITION = false
 SPECIAL_FORM = {}
 
 last = (thing) -> thing[thing.length - 1]
@@ -68,7 +69,7 @@ class Scope
             return @vars[name] = value
         if @parent
             return @parent.reset name, value
-        throw new InterpreterError "Can't reset undefined variable #{name}"
+        throw new InterpreterError "Cannot reset undefined variable #{name}"
 
 class Funject
     type: 'funject'
@@ -1525,7 +1526,7 @@ class Interpreter
             if n.left.type is 'application'
                 return unless @args n.left.funject
                 funject = @first()
-                if funject.isInstance
+                if funject.isInstance and not ALLOW_CLASS_REDEFINITION
                     throw new InterpreterError 'Cannot modify class definition'
                 if n.operator isnt 'lazy assignment' and @frame.arguments.length is 1
                     @push n.right
@@ -2030,7 +2031,7 @@ if module?
         i = 2
         expressionNumber = 1
         argc = process.argv.length
-        interactive = argc is 2
+        interactive = false
         while i < argc
             switch arg = process.argv[i++]
                 when '-h'
@@ -2038,6 +2039,8 @@ if module?
                     return
                 when '-i'
                     interactive = true
+                when '--allow-class-redefinition'
+                    ALLOW_CLASS_REDEFINITION = true
                 when '-e'
                     expressions.push
                         file: "expression#{expressionNumber++}"
@@ -2054,7 +2057,7 @@ if module?
                     console.error e.message
                 else
                     throw e
-        if interactive
+        if interactive or expressions.length is 0
             repl()
 else
     parser = Yak.parser
