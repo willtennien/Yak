@@ -373,8 +373,14 @@ parse = do ->
                 right: result
             }
         if start = tokens.match 'try'
+            if tokens.here().type isnt 'indent'
+                parseError tokens.here(), "Expected indent"
             body = expression tokens
             tokens.require 'catch'
+            _class = tokens.require 'identifier'
+            name = tokens.match 'identifier'
+            if tokens.here().type isnt 'indent'
+                parseError tokens.here(), "Expected indent"
             handler = expression tokens
             result = {
                 type: 'try'
@@ -382,8 +388,10 @@ parse = do ->
                 line: start.line
                 character: start.character
                 body
+                class: _class
                 catch: handler
             }
+            result.name = name if name
             if tokens.match 'finally'
                 result.finally = expression tokens
             return result

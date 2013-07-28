@@ -29,6 +29,9 @@ equal = (a, b) ->
 class InterpreterError
     constructor: (@message) ->
 
+class UserError
+    constructor: (@error) ->
+
 class RuntimeError extends Error
     constructor: (@message, @trace) ->
 
@@ -181,6 +184,16 @@ class Funject
                 return hasArgs
             if not method = method.parent
                 throw new InterpreterError "#{@} is not a method"
+
+    isKindOf: (_class) ->
+        inst = @instance
+        while inst
+            return true if inst is _class.$instance
+            inst = inst.parent
+        false
+
+    isMemberOf: (_class) ->
+        @instance is _class.$instance
 
     hasSymbol: (name) ->
         method = @
@@ -732,6 +745,9 @@ BaseFunject = yakObject null,
         if +s isnt +s
             throw new InterpreterError "Cannot convert #{x} to a number"
         new NumberFunject +s
+    'to-error': new Funject
+        call: ['interpreter', ['*'], (interpreter, s) ->
+            interpreter.createError '' + s]
     inspect: yakFunction ['*'], (x) ->
         if x.type is 'funject' or x.type is 'class'
             new StringFunject x.getSource -1
@@ -783,6 +799,8 @@ class ClassFunject extends Funject
     type: 'class'
     isClass: true
 
+    create: -> new Funject instance: @$instance
+
 class ListFunject extends Funject
     type: 'list'
     isList: true
@@ -823,10 +841,10 @@ yakClass 'Symbol', lang.Funject,
 
 yakClass 'String', lang.Funject,
     instance:
-        initialize: yakFunction ['string', ['string']], (s) ->
-            if s.value?
-                throw new InterpreterError "#{s} is immutable"
-            @value = s
+        initialize: yakFunction ['string', ['string']], (self, s) ->
+            if self.value?
+                throw new InterpreterError "#{self} is immutable"
+            self.value = s.value
         length: yakFunction ['string'], (s) ->
             new NumberFunject s.value.length
         '+': new Funject
@@ -1255,6 +1273,24 @@ yakClass 'Boolean', lang.Funject,
 yakClass 'Nil', lang.Funject
 yakClass 'Unknown', lang.Funject
 
+yakClass 'Error', lang.Funject,
+    exports:
+        new: new Funject
+            call: ['interpreter', ['*'], (interpreter, s) ->
+                interpreter.createError '' + s]
+    instance:
+        initialize: new Funject
+            call: ['interpreter', ['*', ['string']], (interpreter, e, s) ->
+                if e.value?
+                    throw new InterpreterError "#{e} is immutable"
+                e.value = s.value
+                e.stack = interpreter.stackTrace()]
+        'inspect': yakFunction ['*'], (e) ->
+            new StringFunject "#<Error: #{e.value}\n#{e.stack}>"
+        'to-string': yakFunction ['*'], (e) -> new StringFunject e.value + '\n' + e.stack
+        'to-error': yakFunction ['*'], (e) -> e
+        'message': yakFunction ['*'], (e) -> new StringFunject e.value
+
 class SymbolFunject extends Funject
     @instances: {}
 
@@ -1364,6 +1400,31 @@ globalScope.set 'error', new Funject
         interpreter.pop()
         interpreter.callStack.pop()
         throw new InterpreterError '' + message
+        SPECIAL_FORM]
+
+globalScope.set 'throw', new Funject
+    call: ['interpreter', ['*'], (interpreter, error) ->
+        exp = interpreter.frame.expression
+        interpreter.pop()
+        call =
+            type: 'application'
+            file: exp?.file
+            line: exp?.line
+            character: exp?.character
+            funject:
+                type: 'value'
+                value: error
+            argument:
+                type: 'symbol'
+                value: 'to-error'
+        interpreter.push
+            type: 'native'
+            value: ->
+                return unless @args call
+                interpreter.pop()
+                interpreter.pop()
+                interpreter.callStack.pop()
+                throw new UserError @first()
         SPECIAL_FORM]
 
 globalScope.set 'print', new Funject
@@ -1501,7 +1562,7 @@ class Interpreter
                 @push type: 'ignore arguments'
             @catchStack.push
                 index: @stack.length
-                catch: n.catch
+                expression: n
                 scope: @scope
             @push type: 'pop catch stack'
             @push n.body
@@ -1704,36 +1765,52 @@ class Interpreter
         try
             @expression()
         catch error
-            if error instanceof InterpreterError
-                stack = ''
-                calls = @callStack[0..]
-                calls.push expression: @frame.expression
-                name = null
-                for {expression: e, name: n} in calls
-                    if name
-                        if e.file
-                            stack = "\n at #{name} (#{e.file}:#{e.line}:#{e.character})" + stack
-                        else
-                            stack = "\n at #{name}" + stack
-                    else
-                        if e.file
-                            stack = "\n at #{e.file}:#{e.line}:#{e.character}" + stack
-                        else
-                            stack = "\n at <anonymous>" + stack
-                    name = n
-                stack = error.message + stack
-                if @catchStack.length
+            if error instanceof InterpreterError or error instanceof UserError
+                errorFunject = error.error ? @createError error.message
+                while @catchStack.length
                     entry = @catchStack.pop()
                     @stack = @stack[0..entry.index]
-                    @scope = entry.scope
-                    @push entry.catch
-                else
-                    throw new RuntimeError error.message, stack
+                    try
+                        type = entry.scope.get entry.expression.class.value
+                    if type and errorFunject.isKindOf type
+                        if entry.expression.name
+                            @scope = new Scope entry.scope
+                            @scope.set entry.expression.name.value, errorFunject
+                        else
+                            @scope = entry.scope
+                        @push entry.expression.catch
+                        return
+                throw new RuntimeError error.message, error.message + errorFunject.stack
             else
                 if require?
                     console.log require('util').inspect @stack, depth: 5
                 throw error
         false
+
+    stackTrace: ->
+        stack = ''
+        calls = @callStack[0..]
+        calls.push expression: @frame.expression
+        name = null
+        for {expression: e, name: n} in calls
+            if name
+                if e.file
+                    stack = "\n at #{name} (#{e.file}:#{e.line}:#{e.character})" + stack
+                else
+                    stack = "\n at #{name}" + stack
+            else
+                if e.file
+                    stack = "\n at #{e.file}:#{e.line}:#{e.character}" + stack
+                else
+                    stack = "\n at <anonymous>" + stack
+            name = n
+        stack.substr 1
+
+    createError: (message) ->
+        error = lang.Error.create()
+        error.value = message
+        error.stack = @stackTrace()
+        error
 
     value: ->
         last @stack[0].arguments
@@ -1877,7 +1954,7 @@ repl = ->
             firstLine = replLine
             return
         read += line + '\n'
-        if not /^[\t ]|(^|[(\[])(class|module|try$|catch$|finally$)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
+        if not /^[\t ]|(^|[(\[])(class|module|try|catch|finally)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
             request = evaluate read, 'input', firstLine, (e, d) ->
                 if e
                     if e.trace
