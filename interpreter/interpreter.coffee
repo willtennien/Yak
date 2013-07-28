@@ -359,7 +359,7 @@ class Funject
 
     substitute: (bindings, argument) ->
         if argument.type is 'list'
-            return new ListFunject (@substitute bindings, x for x in argument.value)
+            return new ListFunject (@substitute bindings, x for x in argument.values)
         if argument.type is 'number'
             return new NumberFunject argument.value
         if argument.type is 'string'
@@ -631,6 +631,23 @@ yakClass = (name, extend, {exports, instance, _instance} = {}) ->
         extend.$subclasses.value.push result
     result.instance = (lang.Class ? result).$instance
     result.name = name
+    cast = 'to-' + name.toLowerCase()
+    (result.call ?= []).unshift(
+        'interpreter', ['*'], (interpreter, x) -> lazy:
+            type: 'application'
+            funject:
+                type: 'value'
+                value: x
+            argument:
+                type: 'symbol'
+                value: cast)
+    result.inverse = new Funject
+        call: [['*', ['unknown']], (x) ->
+            inst = x.instance
+            while inst
+                return new ListFunject [x] if inst is methods
+                inst = inst.parent
+            return new ListFunject []]
     lang[name] = result
     result
 
@@ -706,6 +723,15 @@ BaseFunject = yakObject null,
             new StringFunject Funject::basicToString.call x
         else
             new StringFunject '' + x
+    'to-symbol': yakFunction ['*'], (x) ->
+        yakSymbol x + ''
+    'to-boolean': yakFunction ['*'], (x) ->
+        yakBoolean x isnt lang.nil and x isnt lang.unknown and x isnt lang.false
+    'to-number': yakFunction ['*'], (x) ->
+        s = x + ''
+        if +s isnt +s
+            throw new InterpreterError "Cannot convert #{x} to a number"
+        new NumberFunject +s
     inspect: yakFunction ['*'], (x) ->
         if x.type is 'funject' or x.type is 'class'
             new StringFunject x.getSource -1
@@ -1055,6 +1081,7 @@ lang.Number.call.unshift(
 
 yakClass 'List', lang.Funject,
     instance:
+        'to-list': yakFunction ['list'], (x) -> x
         head: yakFunction ['list'], (x) ->
             if x.value.length
                 x.value[0]

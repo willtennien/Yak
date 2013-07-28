@@ -1,3 +1,5 @@
+IDENTIFIER_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-+*/%^_$<>=?!'
+
 parseError = (token, message) ->
     throw new SyntaxError "#{message} at #{token.file}:#{token.line}:#{token.character}"
 
@@ -25,7 +27,7 @@ tokenizer = do ->
 
     isDigit = (c) -> -1 isnt '0123456789'.indexOf c
 
-    isIdentifier = (c) -> -1 isnt '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-+*/%^_$<>=?!'.indexOf c
+    isIdentifier = (c) -> -1 isnt IDENTIFIER_CHARS.indexOf c
 
     (raw, file = '<anonymous>', startLine = 1) ->
         token = (type, value = '') -> {
@@ -695,7 +697,5 @@ if module?
 else
     (@Yak ?= {}).parser = _exports = {}
 
-_exports.parse = parse
-_exports.stringify = stringify
-_exports.tokenizer = tokenizer
-_exports.parseForRacket = parseForRacket
+for k, v of { IDENTIFIER_CHARS, parse, stringify, tokenizer, parseForRacket }
+    _exports[k] = v
