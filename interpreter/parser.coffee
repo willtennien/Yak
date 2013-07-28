@@ -209,7 +209,7 @@ tokenizer = do ->
                     break unless isIdentifier c
                 if value is 'true' or value is 'false'
                     return token 'boolean', value is 'true'
-                if -1 isnt ['nil', 'unknown', 'class', 'module', 'try', 'catch', 'finally'].indexOf value
+                if -1 isnt ['nil', 'unknown', 'class', 'module', 'try', 'catch', 'finally', 'if', 'then', 'else'].indexOf value
                     return token value, value
                 if type is 'symbol'
                     if value.length is 1
@@ -395,6 +395,24 @@ parse = do ->
             if tokens.match 'finally'
                 result.finally = expression tokens
             return result
+        if start = tokens.match 'if'
+            condition = expression tokens, 0, false, true
+            if tokens.here().type isnt 'indent'
+                tokens.require 'then'
+            trueBody = expression tokens
+            tokens.require 'else'
+            if tokens.here().type isnt 'indent' and not tokens.here().type is 'if'
+                parseError tokens.here(), "Expected indent"
+            falseBody = expression tokens
+            return {
+                type: 'if'
+                file: start.file
+                line: start.line
+                character: start.character
+                condition
+                trueBody
+                falseBody
+            }
         e = value tokens
         if not e
             if optional
@@ -435,7 +453,7 @@ parse = do ->
                                 argument: t
 
                             ep = if p < 0 then -1 - p else p
-                            if operand = expression tokens, ep, true
+                            if operand = expression tokens, ep, true, noIndent
                                 e =
                                 if op is 'and' or op is 'or'
                                     type: op
@@ -463,7 +481,7 @@ parse = do ->
                         line: t.line
                         character: t.character
                         funject: e
-                        argument: expression tokens, 7
+                        argument: expression tokens, 7, false, noIndent
                     continue
                 if t = tokens.match 'prototypal application'
                     symbol = tokens.require 'identifier'
@@ -508,7 +526,7 @@ parse = do ->
                 line: assignment.line
                 character: assignment.character
                 left: e
-                right: expression tokens
+                right: expression tokens, 0, false, noIndent
         e
 
     value = (tokens) ->

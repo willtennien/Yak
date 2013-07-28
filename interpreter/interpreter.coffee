@@ -1555,6 +1555,21 @@ class Interpreter
                 expression: p.value
                 scope: @scope)
             @return f
+        if: (n) ->
+            return unless @args n.condition, {
+                type: 'application'
+                funject:
+                    type: 'value'
+                    value: @first()
+                argument:
+                    type: 'symbol'
+                    value: 'to-boolean'
+            }
+            condition = @second()
+            if condition isnt lang.true and condition isnt lang.false
+                throw new InterpreterError "Cannot convert #{@first()} to boolean"
+            return unless @args 0, 0, (if condition is lang.true then n.trueBody else n.falseBody)
+            @return @third()
         try: (n) ->
             @pop()
             if n.finally
@@ -1562,6 +1577,7 @@ class Interpreter
                 @push type: 'ignore arguments'
             @catchStack.push
                 index: @stack.length
+                callIndex: @callStack.length
                 expression: n
                 scope: @scope
             @push type: 'pop catch stack'
@@ -1769,10 +1785,11 @@ class Interpreter
                 errorFunject = error.error ? @createError error.message
                 while @catchStack.length
                     entry = @catchStack.pop()
-                    @stack = @stack[0..entry.index]
                     try
                         type = entry.scope.get entry.expression.class.value
                     if type and errorFunject.isKindOf type
+                        @stack = @stack[0..entry.index - 1]
+                        @callStack = @callStack[0..entry.callIndex - 1]
                         if entry.expression.name
                             @scope = new Scope entry.scope
                             @scope.set entry.expression.name.value, errorFunject
@@ -1954,7 +1971,7 @@ repl = ->
             firstLine = replLine
             return
         read += line + '\n'
-        if not /^[\t ]|(^|[(\[])(class|module|try|catch|finally)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
+        if not /^[\t ]|(^|[(\[])(class|module|try|catch|finally|if|else)\b|\[[^\]]*$|\([^)]*$|\{[^\}]*$/.test line
             request = evaluate read, 'input', firstLine, (e, d) ->
                 if e
                     if e.trace
