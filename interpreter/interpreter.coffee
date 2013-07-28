@@ -187,11 +187,11 @@ class Funject
         while method
             if method.call
                 for p in method.call
-                    if p[0] is '.' and name is p.substr 1
+                    if p is 'symbol' or p[0] is '.' and name is p.substr 1
                         return true
             if method.patterns
                 for p in method.patterns
-                    if p.pattern.type is 'symbol' and p.pattern.value is name
+                    if p.pattern.type is 'formal parameter' or p.pattern.type is 'symbol' and p.pattern.value is name
                         return true
             method = method.parent
         false
@@ -375,7 +375,7 @@ class Funject
         if argument.type is 'boolean' or argument.type is 'nil' or argument.type is 'unknown'
             return lang[argument.value]
 
-    apply: (interpreter, own, argument, instance = true) ->
+    apply: (interpreter, own, argument, _private, instance = true) ->
         if @call
             i = 0
             length = @call.length
@@ -422,9 +422,11 @@ class Funject
                                 line: n.line
                                 character: n.character
                                 type: 'reapply funject'
+                                private: _private
                                 funject: @
                                 argument
                                 own
+                                instance
                             }
                             arguments: []
                             step: 'match'
@@ -460,9 +462,11 @@ class Funject
                                 line: n.line
                                 character: n.character
                                 type: 'reapply funject'
+                                private: _private
                                 funject: @
                                 argument
                                 own
+                                instance
                             }
                             arguments: []
                             step: 'inverse'
@@ -483,6 +487,7 @@ class Funject
                     interpreter.pop()
                     scope = interpreter.scope
                     bindings.own = own
+                    bindings.private = _private if _private
                     interpreter.scope = new Scope p.scope, bindings, true
                     interpreter.push { type: 'set scope', scope }
                     interpreter.push p.expression
@@ -512,6 +517,7 @@ class Funject
                                     file: exp?.file
                                     line: exp?.line
                                     character: exp?.character
+                                    private: own.private ?= new Funject
                                     funject:
                                         type: 'value'
                                         value: method
@@ -526,6 +532,7 @@ class Funject
                             file: exp?.file
                             line: exp?.line
                             character: exp?.character
+                            private: own.private ?= new Funject
                             funject:
                                 type: 'value'
                                 value: method
@@ -546,7 +553,7 @@ class Funject
                 instance: false
             return
 
-        return @parent.apply interpreter, own, argument, instance if @parent and @parent isnt @
+        return @parent.apply interpreter, own, argument, _private, instance if @parent and @parent isnt @
 
         interpreter.callStack.pop()
 
@@ -1381,7 +1388,7 @@ class Interpreter
         'ignore arguments': -> @pop()
 
         'reapply funject': (n) ->
-            n.funject.apply @, n.own, n.argument
+            n.funject.apply @, n.own, n.argument, n.private, n.instance
 
         native: (n) ->
             n.value.call @, n
@@ -1529,7 +1536,45 @@ class Interpreter
             instance.parent = @frame.super.$instance
             prototype = yakObject null,
                 class: exports
+            externalInstance = new Funject
+                call: ['interpreter', 'symbol', (interpreter, s) ->
+                    exp = interpreter.frame.expression
+                    interpreter.pop()
+                    interpreter.push
+                        type: 'native'
+                        value: ->
+                            return unless @args {
+                                type: 'application'
+                                funject:
+                                    type: 'value'
+                                    value: instance
+                                argument:
+                                    type: 'value'
+                                    value: s
+                            }
+                            method = @first()
+                            method.name ?= 'instance.' + s.value
+                            @return new Funject
+                                call: ['interpreter', ['|', ['*'], ['*', '*']], (interpreter, x, y) ->
+                                    interpreter.pop()
+                                    interpreter.pop()
+                                    interpreter.callStack.pop()
+                                    interpreter.push
+                                        type: 'application'
+                                        file: exp?.file
+                                        line: exp?.line
+                                        character: exp?.character
+                                        funject:
+                                            type: 'value'
+                                            value: method
+                                        argument:
+                                            type: 'value'
+                                            value: new ListFunject (if y then [x, y] else [x])
+                                        private: x.private ?= new Funject
+                                    SPECIAL_FORM]
+                    SPECIAL_FORM]
             (exports.call ?= []).unshift(
+                '.instance', -> externalInstance,
                 'interpreter', '.new', (interpreter) ->
                     exp = interpreter.frame.expression
                     interpreter.pop()
@@ -1567,6 +1612,7 @@ class Interpreter
                                             file: exp?.file
                                             line: exp?.line
                                             character: exp?.character
+                                            private: result.private ?= new Funject
                                             funject:
                                                 type: 'value'
                                                 value: initialize
@@ -1584,6 +1630,7 @@ class Interpreter
                                     file: exp?.file
                                     line: exp?.line
                                     character: exp?.character
+                                    private: result.private ?= new Funject
                                     funject:
                                         type: 'value'
                                         value: initialize
@@ -1604,7 +1651,7 @@ class Interpreter
                     type: 'pop call stack'
                 arguments: []
             @callStack.push expression: n, name: funject.name
-            funject.apply @, n.own ? funject, argument, n.instance
+            funject.apply @, n.own ? funject, argument, n.private, n.instance
         or: logical
         and: logical
 
