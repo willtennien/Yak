@@ -21,6 +21,16 @@
     (write exp o)
     (get-output-string o)))
 
+(define (hash-if-match h key conseq altern)
+  (define hash-has-key? true)
+  (let ((result (hash-ref h 
+                          key 
+                          (lambda () 
+                            (set! hash-has-key? false)))))
+    (if hash-has-key?
+        (conseq key result)
+        (altern key))))
+
 (define (is a)
   (lambda (b)
     (equal? a b)))
@@ -1190,6 +1200,9 @@
 (define (mormap f xs)
   (ormap f (mlist->list xs)))
 
+(define (mandmap f xs)
+  (andmap f (mlist->list xs)))
+
 (define (mapply f mxs)
   (apply f (mlist->list mxs)))
 
@@ -1468,11 +1481,56 @@
            (eq? (mcar exp) 'List)
            (eq? (mcar exp) 'Funject))))
 
+
 (define (lang-contents exp f)
   (assert (lang-any? exp) "I tried to take the lang-contents of a non-lang: " exp) ;to optimize, remove this line.
   (apply f (mlist->list (mcdr exp))))
-         
-         
+
+(define (equal-lang? type yak racket)
+  (assert (= 2 (mlength yak)) "I cannot compare a yak funject with multiple conponents:" yak)
+  (lang-contents type
+                 (lambda (internal)
+                   (equal? internal racket))))
+
+;inverse-arg-contents
+(define (inverse-arg-contents result--arg 
+                              callback)
+  (lang-contents-typed result--arg
+                       'List
+                       user-error-cannot-find-match
+                       (lambda (elems)
+                         (assert (= 2 (mlength elems)))
+                         callback)))
+
+;inverse-arg-contents-typed
+(define (inverse-arg-contents-typed result-type 
+                                    arg-type 
+                                    result--arg
+                                    callback)
+  (lang-contents-typed result--arg
+                       'List
+                       user-error-cannot-find-match
+                       (lambda (elems)
+                         (assert (= 2 (mlength elems)))
+                         (mlist-contents elems 
+                                         (lambda (result arg)
+                                           (lang-contents-typed result
+                                                                result-type
+                                                                user-error-cannot-find-match
+                                                                (lambda (result)
+                                                                  (lang-contents-typed arg
+                                                                                       arg-type
+                                                                                       user-error-cannot-find-match
+                                                                                       (lambda (arg)
+                                                                                         (callback result arg))))))))))
+                                                                                         
+                                                                                       
+                                         
+                         
+                                 
+                         
+
+
 ;;;;    Evaluation
 ;;;;    eval(-<each>)
 
@@ -1939,7 +1997,7 @@
       (if (empty? apairs)
           (if parent
               (invoke parent arg receiver)
-              (user-error-no-matching-pattern receiver arg))
+              (user-error-cannot-find-match receiver arg))
           (let* ((pair (mcar apairs))
                  (pattern (mcar pair))
                  (consequent (mcadr pair))
@@ -2354,45 +2412,82 @@
 
 (define (bridge thing)
   (cond 
-    [(empty? thing)
+
+    ;Things of a simple type
+    [(number? thing)
+     (create-lang 'Number thing)]
+    [(string? thing)
+     (create-lang 'String thing)]
+    [(boolean? thing)
+     (create-lang 'Boolean thing)]
+    [(symbol? thing)
+     (create-lang 'Symbol thing)]
+    [(void? thing)
      (create-lang 'Nil)]
+    
+    ;Listy things
+    [(list? thing)
+     (create-lang 'List (list->mlist (map bridge thing)))]
+    [(mlist? thing)
+     (create-lang 'List (mmap bridge thing))]
+    [(vector? thing)
+     (create-lang 'List (mmap bridge (mlist->list (vector->list thing))))]
+    
+    ;Procedures
     [(procedure? thing)
      (create-primitive (lambda (arg own)
                          (bridge (apply thing (unbridge arg))))
                        (lambda (arg own)
                          (invoke primitive-funject-inverse-god arg own)))]
+    
     [else (error "I know not how to bridge" thing)]))
 
 (define (unbridge lang)
   (cond
+    
+    ;Things of a simple type
+    [(or (lang? 'Number lang)
+         (lang? 'String lang)
+         (lang? 'Boolean lang))
+     (lang-contents lang identity)]
+    [(lang? 'Symbol lang)
+     (string->symbol (lang-contents lang identity))]
     [(lang? 'Nil lang)
      empty]
+    [(lang? 'Unknown lang)
+     (user-error "You cannot bridge unknowns; Racket has no proper analog.")]
+    
+    ;Lists
     [(lang? 'List lang)
      (lang-contents lang
                     (lambda (elems)
                       (mlist->list (mmap unbridge elems))))]
+    
+    ;Funjects
+    [(or (lang? 'Funject lang)
+         (primitive? lang))
+     (lambda arg
+       (unbridge (invoke lang (bridge arg))))]
     [else (error "I know not how to unbridge" lang)]))
 
 
 
-;;;;    Primitives
+
+
+
+;;;;    Primitive struct and helpers
 
 ;Primitive funjects rely on these:
 (define lang-nil (create-lang 'Nil))
 (define lang-unknown (create-lang 'Unknown))
 (define lang-equal? equal?)
 
-(define (create-primitive funject inverse)
-  (mlist 'Primitive funject inverse))
-
-(define (primitive? exp)
-  (and (mlist? exp)
-       (not (empty? exp))
-       (eq? 'Primitive (mcar exp))))
+(struct primitive (vanilla-of inverse-of) #:mutable #:transparent #:constructor-name create-primitive)
 
 (define (primitive-contents prim f)
   (assert (primitive? prim) "primitive-contents: I can only take a primitive, but you passed me:" prim) ;to optimize, remove this line.
-  (apply f (mlist->list (mcdr prim))))
+  (apply f (list (primitive-vanilla-of prim)
+                 (primitive-inverse-of prim))))
 
 (define (create-primitive-infix-operator right-type? result-type? op op-inv)
   (define self (lambda (left)
@@ -2424,6 +2519,26 @@
                                                     (lambda (result-contents)
                                                       (create-lang 'List (mlist (create-lang right-type (op-inv result-contents left)))))))))
 
+;;;;    Primitives
+
+(define primitive-funject-god
+  (create-primitive (lambda (arg own)
+                      (cond 
+                        [(lang? 'Symbol arg)
+                         (lang-contents arg
+                                        (lambda (sym)
+                                          (cond 
+                                            [(equal? sym "is") (create-primitive-funject-is own)]
+                                            [(equal? sym "has?") primitive-funject-god-has?-match]
+                                            [else (user-error-cannot-find-match own arg)])))]
+                        [else (user-error-cannot-find-match "The primitive funject god" arg)]))
+                    (lambda (arg own)
+                      (user-error-cannot-find-match "The primitive funject god inversted" arg))))
+
+
+(define primitive-funject-inverse-god (create-primitive (primitive-inverse-of primitive-funject-god) (primitive-vanilla-of primitive-funject-god)))
+
+
 (define create-primitive-funject-is (create-primitive-infix-operator lang-any? ;to optimize, change this to sycophant
                                                                      lang-any? ;to optimize, change this to sycophant
                                                                      (lambda (a b)
@@ -2431,7 +2546,7 @@
                                                                      (lambda (result left)
                                                                        (if (equal? result (mlist 'Boolean true))
                                                                            (create-lang 'List left)
-                                                                           (user-error-no-matching-pattern (list "is of " left) (create-lang 'List result (create-lang 'Unknown)))))))
+                                                                           (user-error-cannot-find-match (list "is of " left) (create-lang 'List result (create-lang 'Unknown)))))))
 
 (define (funject-has? own arg . maybe-extra-bindings)
   (or (not (lang? 'Funject own))
@@ -2480,6 +2595,29 @@
 (define create-primitive-number-times (create-primitive-unoverloaded-infix-operator 'Number 'Number * /))
 
 (define create-primitive-number-div (create-primitive-unoverloaded-infix-operator 'Number 'Number / (compose / /)))
+
+(define primitive-put
+  (create-primitive (lambda (arg own)
+                      (unless (and (lang? 'List arg)
+                                   (lang-contents arg
+                                                  (lambda (elems)
+                                                    (mandmap (partial lang? 'String) elems))))
+                              (user-error-type "primitive-print" "list of a strings" arg)
+                        (begin (lang-contents arg
+                                              (partial mmap
+                                                       (lambda (str)
+                                                         (lang-contents str
+                                                                        display))))
+                               lang-nil)))
+                    (primitive-vanilla-of primitive-funject-inverse-god)))
+
+(define primitive-print
+  (create-primitive (lambda (arg own)
+                      ((primitive-vanilla-of primitive-put) arg own)
+                      (newline)
+                      lang-nil)
+                    (primitive-vanilla-of primitive-funject-inverse-god)))
+
 
 (define (create-primitive-class-new module-env) 
   (let* ((exports (lookup-identifier "exports" module-env))
@@ -2533,36 +2671,121 @@
                     (lambda (arg own)
                       (error "primitive-funject-never-to-be-called: why did you call my inverse?"))))
 
-(define primitive-funject-god
-  (create-primitive (lambda (arg own)
-                      (cond 
-                        [(lang? 'Symbol arg)
-                         (lang-contents arg
-                                        (lambda (sym)
-                                          (cond 
-                                            [(equal? sym "is") (create-primitive-funject-is own)]
-                                            [(equal? sym "has?") primitive-funject-god-has?-match]
-                                            [else (user-error-no-matching-pattern own arg)])))]
-                        [else (user-error-no-matching-pattern "The primitive funject god" arg)]))
-                    (lambda (arg own)
-                      (user-error-no-matching-pattern "The primitive funject god inversted" arg))))
-
-
-(define primitive-funject-inverse-god (create-primitive (mcaddr primitive-funject-god) (mcadr primitive-funject-god)))
 
 
 
-(define global-env (env-create (env-pairs (create-env-pair-strict "Yin" primitive-funject-god)
-                                          (create-env-pair-strict "Yang" primitive-funject-inverse-god)
+;;;;     Builtin classes
+
+(define create-primitive-class 
+  ((lambda ()
+     (define (create-primitive-class class-pairs 
+                                     class-inverse-pairs 
+                                     instance-pairs
+                                     instance-inverse-pairs)
+       (let* ((class-pairs  (make-hash class-pairs ))
+              (class-inverse-pairs  (make-hash class-inverse-pairs ))
+              (instance-pairs (make-hash instance-pairs))
+              (instance-inverse-pairs (make-hash instance-inverse-pairs)))
+         (create-primitive (lambda (arg own)
+                             (user-assert (lang? 'Symbol arg) user-error-cannot-find-match)
+                             (lang-contents arg
+                                            (lambda (name)
+                                              (if (equal? name "instance")
+                                                  (create-primitive (lambda (arg own)
+                                                                      (lang-contents-typed arg
+                                                                                           'Symbol 
+                                                                                           user-error-cannot-find-match 
+                                                                                           (lambda (name)                                     
+                                                                                             (match-hash-of-attrs-and-methods instance-pairs instance-inverse-pairs name))))
+                                                                    primitive-default-inverse)
+                                                  (match-hash-of-attrs-and-methods class-pairs class-inverse-pairs name)))))
+                           primitive-default-inverse)))
+     
+     create-primitive-class)))
+       
+
+; number
+(define primitive-number-class
+  (define class-itself 
+    (create-primitive-class (lambda (arg own)
+                              (cond
+                                [(eq-lang? 'Symbol arg "e") 
+                                 (create-lang 'Number 2.71828182845904523536028747135266249775724709369995)]
+                                [(eq-lang? 'Symbol arg "pi") 
+                                 (create-lang 'Number 3.14159265358979323846264338327950288419716939937510)]
+                                [else
+                                 (lambda (other)
+                                   (invoke other (create-lang 'Symbol "to-number")))]))
+                            (lambda (result--arg own)
+                              (inverse-arg-contents result--arg
+                                                    (lambda (result arg)
+                                                      [(eq-lang? 'Number result 2.71828182845904523536028747135266249775724709369995)
+                                                       (create-lang 'List (mlist (create-lang 'Symbol "e")))]
+                                                      [(eq-lang? 'Number result 3.14159265358979323846264338327950288419716939937510)
+                                                       (create-lang 'List (mlist (create-lang 'Symbol "pi")))]
+                                                      [(equal? result (invoke class-itself (create-lang 'Symbol "instance")))
+                                                       (create-lang 'List (mlist (create-lang 'Symbol "instance")))]
+                                                      [else
+                                                       (user-error-cannot-find-match)])))
+                            (lambda (arg own)
+                              (cond
+                                [(eq-lang? 'Symbol arg "negated")
+                                 (create-primitive (lambda (self own)
+                                                     (create-lang 'Number (lang-contents self -)))
+                                                   (lambda (result--unknown own)
+                                                     (lang-contents-typed result--unknown
+                                                                          'List
+                                                                          user-error-cannot-find-match
+                                                                          (lambda (elems)
+                                                                            (assert (and (= 2 
+                                                                                            (length elems))
+                                                                                         (lang? 'Number 
+                                                                                                (mcar elems))
+                                                                                         (lang? 'Unknown 
+                                                                                                (mcadr elems)))
+                                                                                    user-error-cannot-find-match)
+                                                                            (create-lang 'List (mlist (create-lang 'Number (lang-contents result -))))))))]
+                                [(eq-lang? 'Symbol arg "-")
+                                 (create-primitive (lambda (own self--other)
+                                                     (user-assert (and (lang? 'Number self)
+                                                                       (lang? 'Number other))
+                                                                  "Number.instance.-: you can only subtract numbers!")
+                                                     (lang-contents self
+                                                                    (lambda (a)
+                                                                      (lang-contents other
+                                                                                     (lambda (b)
+                                                                                       (create-lang (- a b)))))))
+                                                   primitive-default-inverse))))
+                                 
+
+
+
+
+
+;;;private
+(define (env-pairs-for-private-of funject)
+  (env-pairs (create-env-pair-strict "private" (private-of funject))))
+(define privates (env-create (env-pairs)))
+(define (private-of funject) (env-get funject privates))
+
+
+(define global-env (env-create (env-pairs (create-env-pair-strict "Funject" primitive-funject-god)
+                                          (create-env-pair-strict "Number" primitive-number-class)
+                                          (create-env-pair-strict "String" primitive-string-class)
+                                          (create-env-pair-strict "Boolean" primitive-boolean-class)
+                                          (create-env-pair-strict "Symbol" primitive-symbol-class)
+                                          (create-env-pair-strict "Nil" primitive-nil-class)
+                                          (create-env-pair-strict "Unknown" primitive-unknown-class)
+                                          (create-env-pair-strict "List" primitive-list-class)
                                           (create-env-pair-strict "+" (create-lang 'Symbol "+"))
                                           (create-env-pair-strict "-" (create-lang 'Symbol "-"))
                                           (create-env-pair-strict "*" (create-lang 'Symbol "*"))
                                           (create-env-pair-strict "/" (create-lang 'Symbol "/"))
                                           (create-env-pair-strict "is" (create-lang 'Symbol "is"))
-                                          (create-env-pair-strict "scheme-nil" (bridge empty))
+                                          (create-env-pair-strict "print" primitive-print)
                                           (create-env-pair-strict "identity" (bridge identity)))))
 
-;I placed this down here because it relies on the global enviroment.
+;I placed these down here because they rely on the global enviroment.
 ;This serves as default Klass.instance.initialize.
 (define default-class-initialize 
   (create-lang 'Funject
@@ -2586,11 +2809,6 @@
                                    primitive-funject-god
                                    primitive-funject-inverse-god))
 
-(define (env-pairs-for-private-of funject)
-  (env-pairs (create-env-pair-strict "private" (private-of funject))))
-(define privates (env-create (env-pairs)))
-(define (private-of funject) (env-get funject privates))
-
 
 ;;;;    user-error
 
@@ -2600,7 +2818,7 @@
 (define (user-error-cannot-find-variable var)
   (user-error "I cannot find the variable " var "!"))
 
-(define (user-error-no-matching-pattern receiver arg) (user-error "I find no pattern matching " arg " in " receiver))
+(define (user-error-cannot-find-match receiver arg) (user-error "I find no pattern matching " arg " in " receiver))
 
 (define (user-error-cannot-reset-unset-variable var) (user-error "You tried to reset the variable " var ", but you haven't even assigned it yet!"))
 
@@ -2616,7 +2834,19 @@
 
 (define (user-error-condition-not-boolean) (user-error "You may only pass a Boolean to the condition of an if-statement!"))
 
+(define (user-error-type actor expected actual) (user-error (string-append actor
+                                                                           ": I expected a "
+                                                                           expected
+                                                                           " but you passed me this: "
+                                                                           (->string actual))))
 
+(define (user-assert condition result)
+  (cond 
+    [condition 'ok]
+    [(string? result) (user-error result)]
+    [(procedure? result) (result)]
+    [else (error "user-assert: use me this way: (user-assert boolean? (or procedure? string?))")]))
+  
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Behold:
@@ -2677,3 +2907,44 @@
 (define i interpret-verbose)
 (define j (compose deep-mlist->list i))
 ;;;;end not translating
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Executable interface
+
+(let ((argv (current-command-line-arguments)))
+  (unless (= 0 (vector-length argv))
+          (vector-map (lambda (path)
+                        (interpret (file->string path)))
+                      argv)
+          (interpret (port->string (current-input-port)))))
+
