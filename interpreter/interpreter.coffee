@@ -670,7 +670,7 @@ BaseFunject = yakObject null,
         i = i.value
         if i < 0
             i = if x.patterns then x.patterns.length + i else i
-        if i % 1 isnt 0 or i < 0 or (x.patterns and i >= x.patterns.length)
+        if i % 1 isnt 0 or i < 0 or (x.patterns and i > x.patterns.length)
             throw new InterpreterError "Cannot insert at #{i}"
         (x.patterns ?= []).splice i, 0,
             pattern:
