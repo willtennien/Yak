@@ -812,7 +812,14 @@ class ListFunject extends Funject
     toString: -> "[#{@value.join ', '}]"
     toSource: (depth) -> "[#{(v.toSource depth - 1 for v in @value).join ', '}]"
 
-    call: ['.class', -> lang.List]
+    call: [
+        'own', ['number'], (self, n) ->
+            i = if n.value < 0 then self.value.length + n.value else n.value
+            if i < 0 or i >= self.value.length
+                lang.nil
+            else
+                self.value[i]
+        '.class', -> lang.List]
 
 yakClass 'Class', null,
     instance:
