@@ -220,7 +220,19 @@ String.instance.swap-case = {
 
 String.instance.capitalize = {
     ['']: ''
-    [@self]: @self[0].uppercase + @self.substring[1]
+    [@self]:
+        list = @self.split[' ']
+        result = ''
+        i = 0
+        {[]: i < list.length}.while-true {
+            []:
+                if i != 0
+                    result |= result + ' ' + list[i][0].uppercase + list[i].substring[1]
+                else
+                    result |= result + list[i][0].uppercase + list[i].substring[1]
+                i |= i + 1
+        }
+        result
 }
 
 String.instance.quote = {
