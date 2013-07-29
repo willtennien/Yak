@@ -1435,6 +1435,26 @@ globalScope.set 'by', yakFunction ['symbol'], (s) ->
             type: 'value'
             value: s
 
+globalScope.set 'import', new Funject
+    call: ['interpreter', ['string'], (interpreter, file) ->
+        try
+            file = require('fs').readFileSync(file.value).toString()
+        catch
+            throw new InterpreterError "Cannot import #{file}"
+        tree = parser.parse file
+        interpreter.pop()
+        scope = interpreter.scope
+        interpreter.push
+            type: 'native'
+            value: ->
+                exp = @scope.vars.exports
+                @scope = scope
+                @return exp
+        interpreter.scope = new Scope null,
+            exports: new Funject
+        interpreter.push tree
+        SPECIAL_FORM]
+
 globalScope.set 'error', new Funject
     call: ['interpreter', ['*'], (interpreter, message) ->
         interpreter.pop()
