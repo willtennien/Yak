@@ -739,6 +739,11 @@ BaseFunject = yakObject null,
             new StringFunject x.getSource -1
         else
             new StringFunject x.toSource()
+    'has?': yakFunction ['*', ['*']], (f, key) ->
+        for k in f.keys().value
+            if equal k, key
+                return lang.true
+        lang.false
     keys: yakFunction ['*'], (f) -> f.keys()
     'keys-of': yakFunction ['*', ['class']], (f, c) -> f.keysOf c
     'all-keys': yakFunction ['*'], (f) -> f.allKeys()
