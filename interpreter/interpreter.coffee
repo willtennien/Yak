@@ -658,6 +658,14 @@ lang = {}
 
 BaseFunject = yakObject null,
     initialize: yakFunction ['*'], (x) -> lang.nil
+    'append!': yakFunction ['*', ['*', '*']], (x, k, v) ->
+        (x.patterns ?= []).push
+            pattern:
+                type: 'identifier'
+                value: 'k'
+            scope: new Scope null, { k }
+            value: v
+        lang.nil
     clone: yakFunction ['*'], (x) -> new Funject parent: x
     name: yakFunction ['*'], (x) ->
         if x.name then new StringFunject x.name else lang.nil
