@@ -666,6 +666,19 @@ BaseFunject = yakObject null,
             scope: new Scope null, { k }
             value: v
         lang.nil
+    'insert!': yakFunction ['*', ['number', '*', '*']], (x, i, k, v) ->
+        i = i.value
+        if i < 0
+            i = if x.patterns then x.patterns.length + i else i
+        if i % 1 isnt 0 or i < 0 or (x.patterns and i >= x.patterns.length)
+            throw new InterpreterError "Cannot insert at #{i}"
+        (x.patterns ?= []).splice i, 0,
+            pattern:
+                type: 'identifier'
+                value: 'k'
+            scope: new Scope null, { k }
+            value: v
+        lang.nil
     clone: yakFunction ['*'], (x) -> new Funject parent: x
     name: yakFunction ['*'], (x) ->
         if x.name then new StringFunject x.name else lang.nil
