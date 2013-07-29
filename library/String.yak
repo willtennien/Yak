@@ -218,7 +218,7 @@ String.instance.swap-case = {
         result
 }
 
-String.instance.capitalize = {
+String.instance.title-case = {
     ['']: ''
     [@self]:
         list = @self.split[' ']
@@ -233,6 +233,16 @@ String.instance.capitalize = {
                 i |= i + 1
         }
         result
+}
+
+String.instance.capitalize = {
+    ['']: ''
+    [@self]: @self[0].uppercase + @self.substring[1].lowercase
+}
+
+String.instance.cap-first = {
+    ['']: ''
+    [@self]: @self[0].uppercase + @self.substring[1]
 }
 
 String.instance.quote = {
