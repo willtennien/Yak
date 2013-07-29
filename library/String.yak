@@ -157,7 +157,7 @@ String.instance.lowercase? = {
     [@self]: @self.matches-set[String.lowercase-set]
 }
 
-String.instance.alpha? - {
+String.instance.alpha? = {
     [@self]: @self.uppercase? or @self.lowercase?
 }
 
