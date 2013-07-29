@@ -1630,9 +1630,8 @@ class Interpreter
                     super: @frame.super
                     instance: new Funject
                         parent: @frame.super.$instance
-                        name: "#{@frame.name}.instance"
-                        expression: n
                 }, true
+                n.body.isProxy = true
                 if p
                     @args 0, n.body
                 else
@@ -1645,6 +1644,8 @@ class Interpreter
             @frame.super.$subclasses.value.push exports
             instance = exports.$instance = @frame.scope.vars.instance
             instance.isInstance = true
+            instance.name = "#{@frame.name}.instance"
+            instance.expression = n
             instance.parent = @frame.super.$instance
             prototype = yakObject null,
                 class: exports
