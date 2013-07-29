@@ -740,6 +740,7 @@ BaseFunject = yakObject null,
         else
             new StringFunject x.toSource()
     keys: yakFunction ['*'], (f) -> f.keys()
+    'keys-of': yakFunction ['*', ['class']], (f, c) -> f.keysOf c
     'all-keys': yakFunction ['*'], (f) -> f.allKeys()
     each: new Funject
         call: ['interpreter', ['funject', ['funject']], (interpreter, f, iterator) ->
