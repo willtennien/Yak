@@ -163,7 +163,6 @@ String.instance.alpha? - {
 
 String.instance.alphanumeric? = {
     [@self]: @self.matches-set[String.alphanumeric-set]
-
 }
 
 String.instance.uppercase = {
