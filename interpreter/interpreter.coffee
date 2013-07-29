@@ -1113,11 +1113,6 @@ yakClass 'List', lang.Funject,
                 x.value[0]
             else
                 throw new InterpreterError 'Cannot take the head of the empty list'
-        tail: yakFunction ['list'], (x) ->
-            if x.value.length > 1
-                new ListFunject x.value[1..]
-            else
-                lang.nil
         'empty?': yakFunction ['list'], (x) ->
             yakBoolean x.value.length is 0
         length: yakFunction ['list'], (x) ->
