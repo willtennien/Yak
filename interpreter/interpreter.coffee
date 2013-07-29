@@ -1410,6 +1410,16 @@ globalScope = new class extends Scope
 for operator in ['^', '*', '/', '%', '+', '-', '==', '!=', '<', '>', '<=', '>=', 'is', 'isnt']
     globalScope.set operator, yakSymbol operator
 
+globalScope.set 'by', yakFunction ['symbol'], (s) ->
+    yakFunction ['*'], (x) -> lazy:
+        type: 'application'
+        funject:
+            type: 'value'
+            value: x
+        argument:
+            type: 'value'
+            value: s
+
 globalScope.set 'error', new Funject
     call: ['interpreter', ['*'], (interpreter, message) ->
         interpreter.pop()
