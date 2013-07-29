@@ -1114,6 +1114,12 @@ yakClass 'List', lang.Funject,
             new NumberFunject x.value.length
         length: yakFunction ['list'], (x) ->
             new NumberFunject x.value.length
+        'delete-at!': yakFunction ['list', ['number']], (x, i) ->
+            if i < 0
+                i += x.value.length
+            if i >= 0 and i < x.value.length
+                x.value.splice i, 1
+            x
         sort: new Funject
             call: [
                 ['list', []], (x) ->
