@@ -157,13 +157,12 @@ String.instance.lowercase? = {
     [@self]: @self.matches-set[String.lowercase-set]
 }
 
-String.instance.alpha? - {
+String.instance.alpha? = {
     [@self]: @self.uppercase? or @self.lowercase?
 }
 
 String.instance.alphanumeric? = {
     [@self]: @self.matches-set[String.alphanumeric-set]
-
 }
 
 String.instance.uppercase = {
@@ -219,7 +218,29 @@ String.instance.swap-case = {
         result
 }
 
+String.instance.title-case = {
+    ['']: ''
+    [@self]:
+        list = @self.split[' ']
+        result = ''
+        i = 0
+        {[]: i < list.length}.while-true {
+            []:
+                if i != 0
+                    result |= result + ' ' + list[i][0].uppercase + list[i].substring[1]
+                else
+                    result |= result + list[i][0].uppercase + list[i].substring[1]
+                i |= i + 1
+        }
+        result
+}
+
 String.instance.capitalize = {
+    ['']: ''
+    [@self]: @self[0].uppercase + @self.substring[1].lowercase
+}
+
+String.instance.cap-first = {
     ['']: ''
     [@self]: @self[0].uppercase + @self.substring[1]
 }
