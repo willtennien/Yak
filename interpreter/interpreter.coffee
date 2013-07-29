@@ -1108,11 +1108,6 @@ lang.Number.call.unshift(
 yakClass 'List', lang.Funject,
     instance:
         'to-list': yakFunction ['list'], (x) -> x
-        head: yakFunction ['list'], (x) ->
-            if x.value.length
-                x.value[0]
-            else
-                throw new InterpreterError 'Cannot take the head of the empty list'
         'empty?': yakFunction ['list'], (x) ->
             yakBoolean x.value.length is 0
         length: yakFunction ['list'], (x) ->
