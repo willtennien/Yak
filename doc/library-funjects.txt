@@ -22,7 +22,7 @@ by[.sym] # => {[f]: f.sym}; allows array.sort[by[.height]]
 assert[assertion, message] # throws an error if assertion does not evaluate to true, the optional message pararmeter specifies the error message of the error to throw
 assert==[i, j] # throws an error if i and j are not equal
 unreachable # throws an error if called, used for throwing an error indicating that a piece of code not intended to run was executed
-
+import[module] # Should import the specified module
 
 Class methods
 =============
@@ -194,9 +194,12 @@ String methods
 .last-index-of[s]
 
 .split[s] # (JS)
+.substring[start, end]
 
 .replace[search-for, replace-with] # replaces all occurrences of the string search-for with the string replace-with in the receiver
 .replace-first[search-for, replace-with] # replaces the first occurrence of the string search-for with the string replace-with in the receiver
+
+.repeat[n] # Returns a string containing the reciever repeated n times
 
 .uppercase
 .lowercase

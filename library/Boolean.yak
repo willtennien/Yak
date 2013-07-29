@@ -1,19 +1,19 @@
 Boolean.instance.not = {
-	[true]: false
-	[false]: true
+    [true]: false
+    [false]: true
 }
 
 Boolean.instance.and = {
-	[true, [@x]]: @x
-	[false, [@x]]: false
+    [true, [@x]]: @x
+    [false, [@x]]: false
 }
 
 Boolean.instance.or = {
-	[true, [@x]]: true
-	[false, [@x]]: @x
+    [true, [@x]]: true
+    [false, [@x]]: @x
 }
 
 Boolean.instance.xor = {
-	[@x, [@x]]: false
-	[@x, [@y]]: true
+    [@x, [@x]]: false
+    [@x, [@y]]: true
 }

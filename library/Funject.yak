@@ -1,56 +1,56 @@
 
 Funject.assoc = {
-	# @x => [[key, value], [key, value], [key, value], ...]
-	[@pairs]:
-		result = {}
-		i = 0
-		{[]: i < @pairs.length}.while-true {
-			[]:
-				result[@pairs[i][0]] = @pairs[i][1]
-				i |= i + 1
-		}
-		result
-	[@keys, @values]:
-		result = {}
-		(@keys.length == @values.length).on {
-			false: error['Key and value list lengths did not match']
-		}
-		i = 0
-		{[]: i < @keys.length}.while-true {
-			[]:
-				result[@keys[i]] = @values[i]
-				i |= i + 1
-		}
-		result
+    # @x => [[key, value], [key, value], [key, value], ...]
+    [@pairs]:
+        result = {}
+        i = 0
+        {[]: i < @pairs.length}.while-true {
+            []:
+                result[@pairs[i][0]] = @pairs[i][1]
+                i |= i + 1
+        }
+        result
+    [@keys, @values]:
+        result = {}
+        (@keys.length == @values.length).on {
+            false: error['Key and value list lengths did not match']
+        }
+        i = 0
+        {[]: i < @keys.length}.while-true {
+            []:
+                result[@keys[i]] = @values[i]
+                i |= i + 1
+        }
+        result
 }
 
 Funject.instance.while-true = {
-	[@self, @body]: {
-		true:
-			@body[]
-			@self.while-true @body
-		false: nil
-	} @self[]
+    [@self, @body]: {
+        true:
+            @body[]
+            @self.while-true @body
+        false: nil
+    } @self[]
 }
 
 Funject.instance.do-while-true = {
-	[@self, @body]:
-		@body[]
-		@self.while-true @body
+    [@self, @body]:
+        @body[]
+        @self.while-true @body
 }
 
 Funject.instance.on = {
-	[@self, @body]: @body @self
+    [@self, @body]: @body @self
 }
 
 Funject.instance.then = {
-	[@self, [@body]]: @body[@self]
+    [@self, [@body]]: @body[@self]
 }
 
 Funject.instance.apply = {
-	[@self, [@body]]: @self @body
+    [@self, [@body]]: @self @body
 }
 
 Funject.instance.clone = {
-	[@self]: {} << @self
+    [@self]: {} << @self
 }

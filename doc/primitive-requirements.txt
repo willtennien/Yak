@@ -4,11 +4,12 @@ Notes:
 ----------------------------------------------
 - The list only includes libraries for primitives that are to be implemented in Yak (String, Array, Funject, Global)
 
-General.yak (Free Funjects)
+Free Funjects
 ----------------------------------------------
 - by
+- import
 
-Funject.yak
+Funjects
 ----------------------------------------------
 - .has?
 - .append[k, v]
@@ -32,7 +33,7 @@ Funject.yak
 - .all-keys
 - .keys-of[c]
 
-String.yak
+Strings
 ----------------------------------------------
 - * n
 - + s
@@ -45,3 +46,10 @@ String.yak
 - .uppercase
 - .lowercase
 - .swapcase
+
+
+Lists
+----------------------------------------------
+- somelist[index] # Should be list[index] => list sub index, currently it throws an error (at least in the CS interpreter) [HIGH PRIORITY]
+- insert-at[index] [HIGH PRIORITY]
+- delete[index] [HIGH PRIORITY]

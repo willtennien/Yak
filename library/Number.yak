@@ -3,200 +3,200 @@ Number.pi = 3.141592653589793
 Number.epsilon = 1.0e-12
 
 Number.instance.abs = {
-	[@x]: {
-		true: 0 - @x
-		false: @x
-	} (@x < 0)
+    [@x]: {
+        true: 0 - @x
+        false: @x
+    } (@x < 0)
 }
 
 Number.instance.negate = {
-	[@x]: 0 - @x
+    [@x]: 0 - @x
 }
 
 Number.instance.factorial = {
-	[0]: 1
-	[@n]: @n * ((@n - 1).factorial)
+    [0]: 1
+    [@n]: @n * ((@n - 1).factorial)
 }
 
 Number.instance.reciprocal = {
-	[@x]: 1 / @x
+    [@x]: 1 / @x
 }
 
 Number.instance.radians-to-degrees = {
-	[@x]: (@x * 180) / Number.pi
+    [@x]: (@x * 180) / Number.pi
 }
 
 Number.instance.degrees-to-radians = {
-	[@x]: (@x * Number.pi) / 180
+    [@x]: (@x * Number.pi) / 180
 }
 
 Number.instance.sqrt = {
-	[@x]:
-		last-guess = nil
-		guess = @x / 3
-		{[]: (guess - last-guess).abs > Number.epsilon}.do-while-true {
-			[]:
-				last-guess |= guess
-				guess |= (guess + (@x / guess)) / 2
-		}
-		guess
+    [@x]:
+        last-guess = nil
+        guess = @x / 3
+        {[]: (guess - last-guess).abs > Number.epsilon}.do-while-true {
+            []:
+                last-guess |= guess
+                guess |= (guess + (@x / guess)) / 2
+        }
+        guess
 }
 
 Number.instance.root = {
-	[@x, [0]]: error['Out of range']
-	[@x, [@y]]: (@x.ln * @y).exp
+    [@x, [0]]: error['Out of range']
+    [@x, [@y]]: (@x.ln * @y).exp
 }
 
 Number.instance.sin = {
-	[@x]:
-		constrained = @x % (Number.pi / 2)
-		subtract = false
-		count = 1
-		last-guess = nil
-		guess = 0
-		{[]: (guess - last-guess).abs > Number.epsilon}.do-while-true {
-			[]:
-				last-guess |= guess
-				{
-					true: guess |= guess - ((constrained ^ count) / (count.factorial))
-					false: guess |= guess + ((constrained ^ count) / (count.factorial))
-				} subtract
-				count |= count + 2
-				subtract |= subtract.not
-		}
-		guess
+    [@x]:
+        constrained = @x % (Number.pi / 2)
+        subtract = false
+        count = 1
+        last-guess = nil
+        guess = 0
+        {[]: (guess - last-guess).abs > Number.epsilon}.do-while-true {
+            []:
+                last-guess |= guess
+                {
+                    true: guess |= guess - ((constrained ^ count) / (count.factorial))
+                    false: guess |= guess + ((constrained ^ count) / (count.factorial))
+                } subtract
+                count |= count + 2
+                subtract |= subtract.not
+        }
+        guess
 }
 
 Number.instance.cos = {
-	[@x]: (@x + (Number.pi / 2)).sin
+    [@x]: (@x + (Number.pi / 2)).sin
 }
 
 Number.instance.tan = {
-	[@x]: (@x.sin) / (@x.cos)
+    [@x]: (@x.sin) / (@x.cos)
 }
 
 Number.instance.sec = {
-	[@x]: 1 / (@x.cos)
+    [@x]: 1 / (@x.cos)
 }
 
 Number.instance.csc = {
-	[@x]: 1 / (@x.sin)
+    [@x]: 1 / (@x.sin)
 }
 
 Number.instance.cot = {
-	[@x]: (@x.cos) / (@x.sin)
+    [@x]: (@x.cos) / (@x.sin)
 }
 
 Number.instance.atan = {
-	[@x]:
-		{
-			true: 0 - ((0 - @x).atan)
-			false:
-				# make an initial guess
-				theta = (@x * (Number.pi / 2)) / (@x + 1)
-				eps = (Number.pi / 2) * Number.epsilon
-				step = theta
-				{[]: (step * step) > eps}.while-true[{
-					[]:
-						sin-theta = theta.sin
-						cos-theta = theta.cos
-						step = (sin-theta * cos-theta) - (@x * cos-theta * cos-theta)
-						theta = theta - step
-				}]
-				theta
-		} (@x < 0)
+    [@x]:
+        {
+            true: 0 - ((0 - @x).atan)
+            false:
+                # make an initial guess
+                theta = (@x * (Number.pi / 2)) / (@x + 1)
+                eps = (Number.pi / 2) * Number.epsilon
+                step = theta
+                {[]: (step * step) > eps}.while-true[{
+                    []:
+                        sin-theta = theta.sin
+                        cos-theta = theta.cos
+                        step = (sin-theta * cos-theta) - (@x * cos-theta * cos-theta)
+                        theta = theta - step
+                }]
+                theta
+        } (@x < 0)
 }
 
 Number.instance.asin = {
-	[@x]:
-		{
-			true: error['Out of range']
-		} @x < -1.0 or @x > 1.0
-		{
-			true: (Number.pi / 2) * @x
-			false: (@x / (1.0 - (@x * @x)).sqrt).atan
-		} ((@x == -1.0) or (@x == 1.0))
+    [@x]:
+        {
+            true: error['Out of range']
+        } @x < -1.0 or @x > 1.0
+        {
+            true: (Number.pi / 2) * @x
+            false: (@x / (1.0 - (@x * @x)).sqrt).atan
+        } ((@x == -1.0) or (@x == 1.0))
 }
 
 Number.instance.acos = {
-	[@x]: (Number.pi / 2) - (@x.asin)
+    [@x]: (Number.pi / 2) - (@x.asin)
 }
 
 #|
 Number.instance.atan/ = {
-	[0, [0]]: error['Out of range']
-	[@x, [@y]]: {
-		true: (@x / @y).atan
-		false: {
-			true: (@x / @y).atan + Number.pi
-			false: {
-				{
-					true: Number.pi / 2
-					false: {
-						true: 0 - (Number.pi / 2)
-						false: unreachable
-					} ((@x == 0) and (@y < 0))
-				} ((@x == 0) and (@y > 0))
-			} ((@x < 0) and (@y < 0))
-		} ((@x < 0) and (@y >= 0))
-	} (@x > 0)
+    [0, [0]]: error['Out of range']
+    [@x, [@y]]: {
+        true: (@x / @y).atan
+        false: {
+            true: (@x / @y).atan + Number.pi
+            false: {
+                {
+                    true: Number.pi / 2
+                    false: {
+                        true: 0 - (Number.pi / 2)
+                        false: unreachable
+                    } ((@x == 0) and (@y < 0))
+                } ((@x == 0) and (@y > 0))
+            } ((@x < 0) and (@y < 0))
+        } ((@x < 0) and (@y >= 0))
+    } (@x > 0)
 }
 |#
 
 Number.instance.asec = {
-	[@x]: 1 / (@x.acos)
+    [@x]: 1 / (@x.acos)
 }
 
 Number.instance.acsc = {
-	[@x]: 1 / (@x.asin)
+    [@x]: 1 / (@x.asin)
 }
 
 Number.instance.acot = {
-	[@x]: 1 / (@x.atan)
+    [@x]: 1 / (@x.atan)
 }
 
 #Numbee.round is primitive, and should be part of the interpreter
 
 Number.instance.ceil = {
-	[@x]:
-		{
-			true: @x
-			false: (@x + 0.5).round
-		} ((@x % 1) == 0)
+    [@x]:
+        {
+            true: @x
+            false: (@x + 0.5).round
+        } ((@x % 1) == 0)
 }
 
 Number.instance.floor = {
-	[@x]: (@x - 0.5).round
+    [@x]: (@x - 0.5).round
 }
 
 #exp and ln will be implemented at the primitive level
 
 Number.instance.log10 = {
-	[@x]: (@x.ln) / (10.ln)
+    [@x]: (@x.ln) / (10.ln)
 }
 
 Number.instance.log = {
-	[@x, [@y]]: (@x.ln) / (@y.ln)
+    [@x, [@y]]: (@x.ln) / (@y.ln)
 }
 
 Number.instance.to-fixed = {
-	[@x, [@n]]:
-		f = 10 ^ @n
-		(@x * f).round / f
+    [@x, [@n]]:
+        f = 10 ^ @n
+        (@x * f).round / f
 }
 
 
 # Calls function repeatedly with arguments 0 through n-1
 Number.instance.times = {
-	[@x, [@y]]:
-		result = []
-		i = 0
-		{[]: i < @y}.while-true {
-			[]:
-				result.push![@x[i]]
-				i |= i + 1
-		}
-		result
+    [@x, [@y]]:
+        result = []
+        i = 0
+        {[]: i < @y}.while-true {
+            []:
+                result.push![@x[i]]
+                i |= i + 1
+        }
+        result
 }
 
 Number.instance.close-to? = {
