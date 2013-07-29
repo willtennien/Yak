@@ -211,19 +211,20 @@ class Funject
         false
 
     keys: ->
-        pattern = (p) =>
+        pattern = (p, scope) =>
             switch p.type
                 when 'list'
-                    new ListFunject (pattern v for v in p.values)
+                    new ListFunject (pattern v, scope for v in p.values)
                 when 'symbol' then yakSymbol p.value
                 when 'string' then new StringFunject p.value
                 when 'number' then new NumberFunject p.value
                 when 'nil', 'unknown' then lang[p.value]
+                when 'identifier' then scope.get p.value
                 else throw new InterpreterError "#{@} has non-constant keys"
         result = []
         if @patterns
             for p in @patterns
-                result.push pattern p.pattern
+                result.push pattern p.pattern, p.scope
         if @call
             i = 0
             length = @call.length
@@ -237,43 +238,17 @@ class Funject
                     result.push new StringFunject p.substr 1
         new ListFunject result
 
-    isObject: ->
-        if @patterns
-            for p in @patterns
-                if p.pattern.type isnt 'symbol'
-                    return false
-        if @call
-            i = 0
-            length = @call.length
-            while i < length
-                p = @call[i++]
-                while p is 'interpreter' or p is 'own'
-                    p = @call[i++]
-                if p[0] isnt '.'
-                    return false
-        true
-
-    symbolicKeys: ->
+    keysOf: (c) ->
         result = []
-        if @patterns
-            for p in @patterns when p.pattern.type is 'symbol'
-                result.push yakSymbol p.pattern.value
-        if @call
-            i = 0
-            length = @call.length
-            while i < length
-                p = @call[i++]
-                while p is 'interpreter' or p is 'own'
-                    p = @call[i++]
-                if p[0] is '.'
-                    result.push yakSymbol p.substr 1
+        for k in @keys().value when k.isMemberOf c
+            result.push k
         new ListFunject result
 
-    allKeys: (symbolic = false) ->
+    allKeys: ->
         result = []
         f = @
         while f
-            for k in (if symbolic then f.symbolicKeys() else f.keys()).value
+            for k in f.keys().value
                 add = true
                 for l in result
                     if equal l, k
@@ -282,6 +257,12 @@ class Funject
                     result.push k
             f = f.parent
         new ListFunject result
+
+    isObject: ->
+        for k in @keys()
+            if not k.isMemberOf lang.Symbol
+                return false
+        true
 
     native: (pattern, argument) ->
         if pattern instanceof Array
@@ -601,7 +582,7 @@ class Funject
                 if f.isObject()
                     interpreter = new Interpreter()
                     o = {}
-                    for k in f.symbolicKeys().value
+                    for k in f.keysOf(lang.Symbol).value
                         o[k.value] = Funject.unbridge interpreter.evaluate
                             type: 'application'
                             funject:
@@ -830,7 +811,7 @@ yakClass 'Class', null,
         superclass: yakFunction ['class'], (f) -> f.$super ? lang.nil
         subclasses: yakFunction ['class'], (f) -> f.$subclasses.copy()
         instance: yakFunction ['class'], (f) -> f.$instance
-        methods: yakFunction ['class'], (f) -> f.$instance.symbolicKeys()
+        methods: yakFunction ['class'], (f) -> f.$instance.keysOf(lang.Symbol)
         'all-methods': yakFunction ['class'], (f) -> f.$instance.allKeys true
 
 ClassFunject::parent = yakObject null,
