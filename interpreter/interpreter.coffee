@@ -1140,10 +1140,12 @@ yakClass 'List', lang.Funject,
             x.value.splice i, 1
             x
         'insert!': yakFunction ['list', ['number', '*']], (x, i, e) ->
+            i = i.value
             if i < 0
                 i += x.value.length
-            if i >= 0 and i < x.value.length
-                x.value.splice i, 0, e
+            if i < 0 and i > x.value.length
+                throw new InterpreterError "Cannot insert at #{i} of #{x}"
+            x.value.splice i, 0, e
             x
         sort: new Funject
             call: [
