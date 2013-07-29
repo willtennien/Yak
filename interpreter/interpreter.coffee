@@ -871,6 +871,8 @@ yakClass 'String', lang.Funject,
                         else
                             new ListFunject [new StringFunject s.value.slice x.value.length]]
         '*': yakFunction ['string', 'number'], (s, n) -> s.repeat n
+        'contains?': yakFunction ['string', ['string']], (self, s) ->
+            yakBoolean -1 isnt self.value.indexOf s.value
 
 integerIdentityInverse = new Funject
     call: [
