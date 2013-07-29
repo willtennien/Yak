@@ -732,6 +732,8 @@ BaseFunject = yakObject null,
         yakBoolean x.isNumber and x.isInteger()
     'float?': yakFunction ['*'], (x) ->
         yakBoolean x.isNumber and x.isFloat()
+    'is-member-of?': yakFunction ['*', ['class']], (x, c) ->
+        yakBoolean x.isMemberOf c
     'to-string': yakFunction ['*'], (x) ->
         if x.type is 'funject' or x.type is 'class'
             new StringFunject Funject::basicToString.call x
