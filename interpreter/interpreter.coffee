@@ -205,7 +205,7 @@ class Funject
                         return true
             if method.patterns
                 for p in method.patterns
-                    if p.pattern.type is 'formal parameter' or p.pattern.type is 'symbol' and p.pattern.value is name
+                    if p.pattern.type is 'formal parameter' or p.pattern.type is 'symbol' and p.pattern.value is name or p.pattern.type is 'identifier' and p.scope.get(p.pattern.value).isMemberOf lang.Symbol
                         return true
             method = method.parent
         false
