@@ -400,10 +400,10 @@ parse = do ->
             if tokens.here().type isnt 'indent'
                 tokens.require 'then'
             trueBody = expression tokens
-            tokens.require 'else'
-            if tokens.here().type isnt 'indent' and not tokens.here().type is 'if'
-                parseError tokens.here(), "Expected indent"
-            falseBody = expression tokens
+            if tokens.match 'else'
+                if tokens.here().type isnt 'indent' and not tokens.here().type is 'if'
+                    parseError tokens.here(), "Expected indent"
+                falseBody = expression tokens
             return {
                 type: 'if'
                 file: start.file

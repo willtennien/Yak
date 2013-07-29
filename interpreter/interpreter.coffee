@@ -1606,7 +1606,7 @@ class Interpreter
             condition = @second()
             if condition isnt lang.true and condition isnt lang.false
                 throw new InterpreterError "Cannot convert #{@first()} to boolean"
-            return unless @args 0, 0, (if condition is lang.true then n.trueBody else n.falseBody)
+            return unless @args 0, 0, (if condition is lang.true then n.trueBody else n.falseBody ? type: 'nil')
             @return @third()
         try: (n) ->
             @pop()
