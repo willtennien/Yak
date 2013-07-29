@@ -31,525 +31,548 @@ run-all-tests :=
     }
 
 class TestCase
-    instance.set-up = {[@self]: nil}
-    instance.tear-down = {[@self]: nil}
-    instance.run = {[@self]:
-        @self.class.methods.sort[].each[{[@method]:
-            @method.on {
-                .set-up: nil
-                .tear-down: nil
-                @:
-                    tests |= tests + 1
-                    @self.run-named[@method].on {
-                        true: nil
-                        false: failures |= failures + 1
-                    }
-            }
-        }]
-    }
-    instance.run-named = {[@self, [@name]]:
-        try
-            @self.set-up
-            @self @name
-            @self.tear-down
-            print['  ' + @self.class.name + '::' + @name.to-string]
-            true
-        catch Error e
-            print['! ' + @self.class.name + '::' + @name.to-string + ' (failed)']
-            print[e]
-            false
+    instance = {
+        .set-up: {[@self]: nil}
+        .tear-down: {[@self]: nil}
+        .run: {[@self]:
+            @self.class.methods.sort[].each[{[@method]:
+                @method.on {
+                    .set-up: nil
+                    .tear-down: nil
+                    @:
+                        tests |= tests + 1
+                        @self.run-named[@method].on {
+                            true: nil
+                            false: failures |= failures + 1
+                        }
+                }
+            }]
+        }
+        .run-named: {[@self, [@name]]:
+            try
+                @self.set-up
+                @self @name
+                @self.tear-down
+                print['  ' + @self.class.name + '::' + @name.to-string]
+                true
+            catch Error e
+                print['! ' + @self.class.name + '::' + @name.to-string + ' (failed: ' + e.message + ')']
+                false
+        }
     }
 
 class TestNumber < TestCase
-    instance.test-== = {[@self]:
-        assert==[true, 10 == 10]
-        assert==[false, 2 == 10]
-        assert==[false, 5 == '5']
-    }
+    instance = {
+        .test-==: {[@self]:
+            assert==[true, 10 == 10]
+            assert==[false, 2 == 10]
+            assert==[false, 5 == '5']
+        }
 
-    instance.test-+ = {[@self]:
-        assert==[10, 10 + 0]
-        assert==[15, 10 + 5]
+        .test-+: {[@self]:
+            assert==[10, 10 + 0]
+            assert==[15, 10 + 5]
 
-        assert==[{Number::+[@x, 3]: @x} 10, 7]
-        assert==[{Number::+[4, @x]: @x} 10, 6]
-    }
+            assert==[{Number::+[@x, 3]: @x} 10, 7]
+            assert==[{Number::+[4, @x]: @x} 10, 6]
+        }
 
-    instance.test-- = {[@self]:
-        assert==[1, 1 - 0]
-        assert==[5, 10 - 5]
+        .test--: {[@self]:
+            assert==[1, 1 - 0]
+            assert==[5, 10 - 5]
 
-        assert==[{Number::-[@x, 3]: @x} 10, 13]
-        assert==[{Number::-[4, @x]: @x} 10, -6]
-    }
+            assert==[{Number::-[@x, 3]: @x} 10, 13]
+            assert==[{Number::-[4, @x]: @x} 10, -6]
+        }
 
-    instance.test-abs = {[@self]:
-        assert==[10, -10.abs]
-        assert==[10, 10.abs]
-        assert==[0, 0.abs]
+        .test-abs: {[@self]:
+            assert==[10, -10.abs]
+            assert==[10, 10.abs]
+            assert==[0, 0.abs]
 
-        assert==[4, {Number::abs[@x]: @x} 4]
-    }
+            assert==[4, {Number::abs[@x]: @x} 4]
+        }
 
-    instance.test-negate = {[@self]:
-        assert==[-10, 10.negate]
-        assert==[10, -10.negate]
+        .test-negate: {[@self]:
+            assert==[-10, 10.negate]
+            assert==[10, -10.negate]
 
-        assert==[-4, {Number::negate[@x]: @x} 4]
-    }
+            assert==[-4, {Number::negate[@x]: @x} 4]
+        }
 
-    instance.test-factorial = {[@self]:
-        assert==[1, 0.factorial]
-        assert==[1, 1.factorial]
-        assert==[120, 5.factorial]
-    }
+        .test-factorial: {[@self]:
+            assert==[1, 0.factorial]
+            assert==[1, 1.factorial]
+            assert==[120, 5.factorial]
+        }
 
-    instance.test-reciprocal = {[@self]:
-        assert==[.1, 10.reciprocal]
-        assert==[5, .2.reciprocal]
+        .test-reciprocal: {[@self]:
+            assert==[.1, 10.reciprocal]
+            assert==[5, .2.reciprocal]
 
-        assert==[.2, {Number::reciprocal[@x]: @x} 5]
-        assert==[10, {Number::reciprocal[@x]: @x} .1]
-    }
+            assert==[.2, {Number::reciprocal[@x]: @x} 5]
+            assert==[10, {Number::reciprocal[@x]: @x} .1]
+        }
 
-    instance.test-radians-to-degrees = {[@self]:
-        assert==[0, 0.radians-to-degrees]
-        assert==[180, Number.pi.radians-to-degrees]
-    }
+        .test-radians-to-degrees: {[@self]:
+            assert==[0, 0.radians-to-degrees]
+            assert==[180, Number.pi.radians-to-degrees]
+        }
 
-    instance.test-degrees-to-radians = {[@self]:
-        assert==[0, 0.radians-to-degrees]
-        assert==[Number.pi, 180.degrees-to-radians]
-    }
+        .test-degrees-to-radians: {[@self]:
+            assert==[0, 0.radians-to-degrees]
+            assert==[Number.pi, 180.degrees-to-radians]
+        }
 
-    instance.test-sqrt = {[@self]:
-        assert==[0, 0.sqrt]
-        assert==[5, 25.sqrt]
+        .test-sqrt: {[@self]:
+            assert==[0, 0.sqrt]
+            assert==[5, 25.sqrt]
 
-        assert-error[{
-            []: -1.sqrt
-        }]
-    }
+            assert-error[{
+                []: -1.sqrt
+            }]
+        }
 
-    instance.test-root = {[@self]:
-        assert==[2, 16.root[4]]
-        assert==[5, 5.root[1]]
-        assert-error[{[]:
-            5.root[0]
-        }]
-    }
+        .test-root: {[@self]:
+            assert==[2, 16.root[4]]
+            assert==[5, 5.root[1]]
+            assert-error[{[]:
+                5.root[0]
+            }]
+        }
 
-    instance.test-sin = {[@self]:
-        assert-near[0, Number.pi.sin]
-        assert-near[0, 0.sin]
-        assert-near[1, (Number.pi / 2).sin]
-        assert-near[-1, (3 * Number.pi / 2).sin]
-        assert-near[0.5, (Number.pi / 6).sin]
-    }
+        .test-sin: {[@self]:
+            assert-near[0, Number.pi.sin]
+            assert-near[0, 0.sin]
+            assert-near[1, (Number.pi / 2).sin]
+            assert-near[-1, (3 * Number.pi / 2).sin]
+            assert-near[0.5, (Number.pi / 6).sin]
+        }
 
-    instance.test-cos = {[@self]:
-        assert-near[1, 0.cos]
-        assert-near[0, (Number.pi / 2).cos]
-        assert-near[-1, Number.pi.cos]
-        assert-near[0, (3 * Number.pi / 2).cos]
-        assert-near[0.5, (Number.pi / 6).cos]
-    }
+        .test-cos: {[@self]:
+            assert-near[1, 0.cos]
+            assert-near[0, (Number.pi / 2).cos]
+            assert-near[-1, Number.pi.cos]
+            assert-near[0, (3 * Number.pi / 2).cos]
+            assert-near[0.5, (Number.pi / 6).cos]
+        }
 
-    instance.test-tan = {[@self]:
-        assert-near[1, (Number.pi / 4).tan]
-        assert-near[0, (Number.pi / 2).tan]
-        assert-near[0.6483608274590866, 10.tan]
-    }
+        .test-tan: {[@self]:
+            assert-near[1, (Number.pi / 4).tan]
+            assert-near[0, (Number.pi / 2).tan]
+            assert-near[0.6483608274590866, 10.tan]
+        }
 
-    instance.test-sec = {[@self]:
-        assert-near[1, 0.sec]
-        assert-near[-1, Number.pi.sec]
-        assert-near[-1.1917935066878957, 10.sec]
-    }
+        .test-sec: {[@self]:
+            assert-near[1, 0.sec]
+            assert-near[-1, Number.pi.sec]
+            assert-near[-1.1917935066878957, 10.sec]
+        }
 
-    instance.test-csc = {[@self]:
-        assert-near[1, Number.pi.csc]
-        assert-near[2, (Number.pi / 6).csc]
-        assert-near[-1.8381639608896658, 10.csc]
-    }
+        .test-csc: {[@self]:
+            assert-near[1, Number.pi.csc]
+            assert-near[2, (Number.pi / 6).csc]
+            assert-near[-1.8381639608896658, 10.csc]
+        }
 
-    instance.test-cot = {[@self]:
-        assert-near[0, (Number.pi / 2).cot]
-        assert-near[0, (-1 * (Number.pi / 2)).cot]
-        assert-near[1.54235104535692, 10.cot]
-    }
+        .test-cot: {[@self]:
+            assert-near[0, (Number.pi / 2).cot]
+            assert-near[0, (-1 * (Number.pi / 2)).cot]
+            assert-near[1.54235104535692, 10.cot]
+        }
 
-    instance.test-atan = {[@self]:
-        assert-near[(Number.pi / 4), 1.atan]
-        assert-near[0, 0.atan]
-        assert-near[(Number.pi / 6), (Number.pi / 6).tan.atan]
-        assert-near[1, 1.tan.atan]
-    }
+        .test-atan: {[@self]:
+            assert-near[(Number.pi / 4), 1.atan]
+            assert-near[0, 0.atan]
+            assert-near[(Number.pi / 6), (Number.pi / 6).tan.atan]
+            assert-near[1, 1.tan.atan]
+        }
 
-    instance.test-asin = {[@self]:
-        assert-error[{
-            []: 10.asin
-        }]
-        assert-error[{
-            []: -10.asin
-        }]
-        assert-near[(Number.pi / 4), (1 / 2.sqrt).asin]
-        assert-near[0, 0.asin]
-    }
+        .test-asin: {[@self]:
+            assert-error[{
+                []: 10.asin
+            }]
+            assert-error[{
+                []: -10.asin
+            }]
+            assert-near[(Number.pi / 4), (1 / 2.sqrt).asin]
+            assert-near[0, 0.asin]
+        }
 
-    instance.test-acos = {[@self]:
-        assert-error[{
-            []: 10.acos
-        }]
-        assert-error[{
-            []: -10.acos
-        }]
-        assert-near[0, 1.acos]
-        assert-near[Number.pi, -1.acos]
-    }
+        .test-acos: {[@self]:
+            assert-error[{
+                []: 10.acos
+            }]
+            assert-error[{
+                []: -10.acos
+            }]
+            assert-near[0, 1.acos]
+            assert-near[Number.pi, -1.acos]
+        }
 
-    instance.test-atan/ = {[@self]:
-        assert-error[{
-            []: 0.atan/[0]
-        }]
-        assert-near[Number.pi / 4, 1.atan/[1]]
-        assert-near[0, 0.atan/[1]]
-        assert-near[Number.pi / 2, 1.atan/[0]]
-        assert-near[Number.pi - (Number.pi * 2 / 8), 1.atan/[-1]]
-    }
+        .test-atan/: {[@self]:
+            assert-error[{
+                []: 0.atan/[0]
+            }]
+            assert-near[Number.pi / 4, 1.atan/[1]]
+            assert-near[0, 0.atan/[1]]
+            assert-near[Number.pi / 2, 1.atan/[0]]
+            assert-near[Number.pi - (Number.pi * 2 / 8), 1.atan/[-1]]
+        }
 
-    instance.test-asec = {[@self]:
-        assert-near[0, 1.asec]
-        assert-near[1.4706289056333368, 10.asec]
-        assert-near[1.369438406004566, 5.asec]
-        assert-error[{
-            []: 0.asec
-        }]
-    }
+        .test-asec: {[@self]:
+            assert-near[0, 1.asec]
+            assert-near[1.4706289056333368, 10.asec]
+            assert-near[1.369438406004566, 5.asec]
+            assert-error[{
+                []: 0.asec
+            }]
+        }
 
-    instance.test-acsc = {[@self]:
-        assert-near[(Number.pi / 2), 1.acsc]
-        assert-near[(Number.pi / 2).negate, -1.acsc]
-        assert-near[0.1001674211615598, 10.acsc]
-        assert-near[0.2013579207903308, 5.acsc]
-        assert-error[{
-            []: 0.acsc
-        }]
-    }
+        .test-acsc: {[@self]:
+            assert-near[(Number.pi / 2), 1.acsc]
+            assert-near[(Number.pi / 2).negate, -1.acsc]
+            assert-near[0.1001674211615598, 10.acsc]
+            assert-near[0.2013579207903308, 5.acsc]
+            assert-error[{
+                []: 0.acsc
+            }]
+        }
 
-    instance.test-acot = {[@self]:
-        assert-near[(Number.pi / 2), 0.acot]
-        assert-near[(Number.pi / 4), 1.acot]
-        assert-near[(Number.pi / 4).negate, -1.acot]
-        assert-near[0.09966865249116204, 10.acot]
-        assert-near[0.19739555984988078, 5.acot]
-    }
+        .test-acot: {[@self]:
+            assert-near[(Number.pi / 2), 0.acot]
+            assert-near[(Number.pi / 4), 1.acot]
+            assert-near[(Number.pi / 4).negate, -1.acot]
+            assert-near[0.09966865249116204, 10.acot]
+            assert-near[0.19739555984988078, 5.acot]
+        }
 
-    instance.test-ceil = {[@self]:
-        assert==[2, 1.5.ceil]
-        assert==[1, 1.ceil]
-        assert==[2, 1.7.ceil]
-        assert==[2, 1.1.ceil]
-    }
+        .test-ceil: {[@self]:
+            assert==[2, 1.5.ceil]
+            assert==[1, 1.ceil]
+            assert==[2, 1.7.ceil]
+            assert==[2, 1.1.ceil]
+        }
 
-    instance.test-floor = {[@self]:
-        assert==[1, 1.5.floor]
-        assert==[1, 1.floor]
-        assert==[1, 1.7.floor]
-        assert==[1, 1.1.floor]
-    }
+        .test-floor: {[@self]:
+            assert==[1, 1.5.floor]
+            assert==[1, 1.floor]
+            assert==[1, 1.7.floor]
+            assert==[1, 1.1.floor]
+        }
 
-    instance.test-ln = {[@self]:
-        assert-near[2.302585092994046, 10.ln]
-        assert-near[1.6094379124341003, 5.ln]
-        assert-error[{
-            []: -1.ln
-        }]
-    }
+        .test-ln: {[@self]:
+            assert-near[2.302585092994046, 10.ln]
+            assert-near[1.6094379124341003, 5.ln]
+            assert-error[{
+                []: -1.ln
+            }]
+        }
 
-    instance.test-log10 = {[@self]:
-        assert==[2, 100.log10]
-        assert==[3, 1000.log10]
-        assert==[4, 10000.log10]
-        assert-near[2.09691001301, 125.log10]
-        assert-error[{
-            []: -1.log10
-        }]
-    }
+        .test-log10: {[@self]:
+            assert-near[2, 100.log10]
+            assert-near[3, 1000.log10]
+            assert-near[4, 10000.log10]
+            assert-near[2.09691001301, 125.log10]
+            assert-error[{
+                []: -1.log10
+            }]
+        }
 
-    instance.test-log = {[@self]:
-        assert-error[{
-            []: 10.log[0]
-        }]
-        assert-error[{
-            []: -1.log[2]
-        }]
-        assert-near[2.8613531161, 100.log[5]]
-    }
+        .test-log: {[@self]:
+            assert-error[{
+                []: 10.log[0]
+            }]
+            assert-error[{
+                []: -1.log[2]
+            }]
+            assert-near[2.8613531161, 100.log[5]]
+        }
 
-    instance.test-to-fixed = {[@self]:
-        assert==['1.000', 1.00000000000.to-fixed[3]]
-        assert==['3.14', Number.pi.to-fixed[2]]
-        assert==['1.0', 1.to-fixed[1]]
-        assert==['1', 1.0.to-fixed[0]]
-    }
+        .test-to-fixed: {[@self]:
+            assert==['1.000', 1.00000000000.to-fixed[3]]
+            assert==['3.14', Number.pi.to-fixed[2]]
+            assert==['1.0', 1.to-fixed[1]]
+            assert==['1', 1.0.to-fixed[0]]
+        }
 
-    # TODO: times test
+        # TODO: times test
 
-    instance.test-close-to? = {[@self]:
-        assert[1.close-to?[1.00000000001]]
-        assert[-1.close-to?[-1.000000000001]]
-        assert[(1.close-to?[20]).not]
+        .test-close-to?: {[@self]:
+            assert[1.close-to?[1.00000000001]]
+            assert[-1.close-to?[-1.000000000001]]
+            assert[(1.close-to?[20]).not]
+        }
     }
 
 class TestBoolean < TestCase
-    instance.test-and = {[@self]:
-        assert==[true, (true and true)]
-        assert==[false, (true and false)]
-        assert==[false, (false and true)]
-        assert==[false, (false and false)]
+    instance = {
+        .test-and: {[@self]:
+            assert==[true, (true and true)]
+            assert==[false, (true and false)]
+            assert==[false, (false and true)]
+            assert==[false, (false and false)]
 
-        # short-circuiting
-        false and fail
-        pass
-    }
+            # short-circuiting
+            false and fail
+            pass
+        }
 
-    instance.test-or = {[@self]:
-        assert==[true, (true or true)]
-        assert==[true, (true or false)]
-        assert==[true, (false or true)]
-        assert==[false, (false or false)]
+        .test-or: {[@self]:
+            assert==[true, (true or true)]
+            assert==[true, (true or false)]
+            assert==[true, (false or true)]
+            assert==[false, (false or false)]
 
-        # short-circuiting
-        true or fail
-        pass
-    }
+            # short-circuiting
+            true or fail
+            pass
+        }
 
-    instance.test-xor = {[@self]:
-        assert==[false, (true.xor true)]
-        assert==[true, (true.xor false)]
-        assert==[true, (false.xor true)]
-        assert==[false, (false.xor false)]
-    }
+        .test-xor: {[@self]:
+            assert==[false, (true.xor true)]
+            assert==[true, (true.xor false)]
+            assert==[true, (false.xor true)]
+            assert==[false, (false.xor false)]
+        }
 
-    instance.test-not = {[@self]:
-        assert==[true, not false]
-        assert==[false, not true]
+        .test-not: {[@self]:
+            assert==[true, not false]
+            assert==[false, not true]
 
-        assert==[true, {Boolean::not[@flag]:@flag} false]
+            assert==[true, {Boolean::not[@flag]:@flag} false]
+        }
     }
 
 class TestTypePredicates < TestCase
-    instance.test-number? = {[@self]:
-        assert==[true, 10.number?]
-        assert==[true, .92.number?]
-        assert==[false, '5'.number?]
-        assert==[false, '.1'.number?]
-        assert==[false, 'foo'.number?]
-        assert==[false, .foo.number?]
-        assert==[false, true.number?]
-        assert==[false, false.number?]
-        assert==[false, unknown.number?]
-        assert==[false, nil.number?]
-        assert==[false, [].number?]
-        assert==[false, [10].number?]
-        assert==[false, [1.5].number?]
-        assert==[false, {}.number?]
-    }
-    instance.test-string? = {[@self]:
-        assert==[false, 10.string?]
-        assert==[false, .92.string?]
-        assert==[true, '5'.string?]
-        assert==[true, '.1'.string?]
-        assert==[true, 'foo'.string?]
-        assert==[false, .foo.string?]
-        assert==[false, true.string?]
-        assert==[false, false.string?]
-        assert==[false, unknown.string?]
-        assert==[false, nil.string?]
-        assert==[false, [].string?]
-        assert==[false, [10].string?]
-        assert==[false, [1.5].string?]
-        assert==[false, {}.string?]
-    }
-    instance.test-boolean? = {[@self]:
-        assert==[false, 10.boolean?]
-        assert==[false, .92.boolean?]
-        assert==[false, '5'.boolean?]
-        assert==[false, '.1'.boolean?]
-        assert==[false, 'foo'.boolean?]
-        assert==[false, .foo.boolean?]
-        assert==[true, true.boolean?]
-        assert==[true, false.boolean?]
-        assert==[false, unknown.boolean?]
-        assert==[false, nil.boolean?]
-        assert==[false, [].boolean?]
-        assert==[false, [10].boolean?]
-        assert==[false, [1.5].boolean?]
-        assert==[false, {}.boolean?]
-    }
-    instance.test-symbol? = {[@self]:
-        assert==[false, 10.symbol?]
-        assert==[false, .92.symbol?]
-        assert==[false, '5'.symbol?]
-        assert==[false, '.1'.symbol?]
-        assert==[false, 'foo'.symbol?]
-        assert==[true, .foo.symbol?]
-        assert==[false, true.symbol?]
-        assert==[false, false.symbol?]
-        assert==[false, unknown.symbol?]
-        assert==[false, nil.symbol?]
-        assert==[false, [].symbol?]
-        assert==[false, [10].symbol?]
-        assert==[false, [1.5].symbol?]
-        assert==[false, {}.symbol?]
-    }
-    instance.test-unknown? = {[@self]:
-        assert==[false, 10.unknown?]
-        assert==[false, .92.unknown?]
-        assert==[false, '5'.unknown?]
-        assert==[false, '.1'.unknown?]
-        assert==[false, 'foo'.unknown?]
-        assert==[false, .foo.unknown?]
-        assert==[false, true.unknown?]
-        assert==[false, false.unknown?]
-        assert==[true, unknown.unknown?]
-        assert==[false, nil.unknown?]
-        assert==[false, [].unknown?]
-        assert==[false, [10].unknown?]
-        assert==[false, [1.5].unknown?]
-        assert==[false, {}.unknown?]
-    }
-    instance.test-nil? = {[@self]:
-        assert==[false, 10.nil?]
-        assert==[false, .92.nil?]
-        assert==[false, '5'.nil?]
-        assert==[false, '.1'.nil?]
-        assert==[false, 'foo'.nil?]
-        assert==[false, .foo.nil?]
-        assert==[false, true.nil?]
-        assert==[false, false.nil?]
-        assert==[false, unknown.nil?]
-        assert==[true, nil.nil?]
-        assert==[false, [].nil?]
-        assert==[false, [10].nil?]
-        assert==[false, [1.5].nil?]
-        assert==[false, {}.nil?]
-    }
-    instance.test-list? = {[@self]:
-        assert==[false, 10.list?]
-        assert==[false, .92.list?]
-        assert==[false, '5'.list?]
-        assert==[false, '.1'.list?]
-        assert==[false, 'foo'.list?]
-        assert==[false, .foo.list?]
-        assert==[false, true.list?]
-        assert==[false, false.list?]
-        assert==[false, unknown.list?]
-        assert==[false, nil.list?]
-        assert==[true, [].list?]
-        assert==[true, [10].list?]
-        assert==[true, [1.5].list?]
-        assert==[false, {}.list?]
-    }
-    instance.test-integer? = {[@self]:
-        assert==[true, 10.integer?]
-        assert==[false, .92.integer?]
-        assert==[false, '5'.integer?]
-        assert==[false, '.1'.integer?]
-        assert==[false, 'foo'.integer?]
-        assert==[false, .foo.integer?]
-        assert==[false, true.integer?]
-        assert==[false, false.integer?]
-        assert==[false, unknown.integer?]
-        assert==[false, nil.integer?]
-        assert==[false, [].integer?]
-        assert==[false, [10].integer?]
-        assert==[false, [1.5].integer?]
-        assert==[false, {}.integer?]
-    }
-    instance.test-float? = {[@self]:
-        assert==[false, 10.float?]
-        assert==[true, .92.float?]
-        assert==[false, '5'.float?]
-        assert==[false, '.1'.float?]
-        assert==[false, 'foo'.float?]
-        assert==[false, .foo.float?]
-        assert==[false, true.float?]
-        assert==[false, false.float?]
-        assert==[false, unknown.float?]
-        assert==[false, nil.float?]
-        assert==[false, [].float?]
-        assert==[false, [10].float?]
-        assert==[false, [1.5].float?]
-        assert==[false, {}.float?]
+    instance = {
+        .test-number?: {[@self]:
+            assert==[true, 10.number?]
+            assert==[true, .92.number?]
+            assert==[false, '5'.number?]
+            assert==[false, '.1'.number?]
+            assert==[false, 'foo'.number?]
+            assert==[false, .foo.number?]
+            assert==[false, true.number?]
+            assert==[false, false.number?]
+            assert==[false, unknown.number?]
+            assert==[false, nil.number?]
+            assert==[false, [].number?]
+            assert==[false, [10].number?]
+            assert==[false, [1.5].number?]
+            assert==[false, {}.number?]
+        }
+
+        .test-string?: {[@self]:
+            assert==[false, 10.string?]
+            assert==[false, .92.string?]
+            assert==[true, '5'.string?]
+            assert==[true, '.1'.string?]
+            assert==[true, 'foo'.string?]
+            assert==[false, .foo.string?]
+            assert==[false, true.string?]
+            assert==[false, false.string?]
+            assert==[false, unknown.string?]
+            assert==[false, nil.string?]
+            assert==[false, [].string?]
+            assert==[false, [10].string?]
+            assert==[false, [1.5].string?]
+            assert==[false, {}.string?]
+        }
+
+        .test-boolean?: {[@self]:
+            assert==[false, 10.boolean?]
+            assert==[false, .92.boolean?]
+            assert==[false, '5'.boolean?]
+            assert==[false, '.1'.boolean?]
+            assert==[false, 'foo'.boolean?]
+            assert==[false, .foo.boolean?]
+            assert==[true, true.boolean?]
+            assert==[true, false.boolean?]
+            assert==[false, unknown.boolean?]
+            assert==[false, nil.boolean?]
+            assert==[false, [].boolean?]
+            assert==[false, [10].boolean?]
+            assert==[false, [1.5].boolean?]
+            assert==[false, {}.boolean?]
+        }
+
+        .test-symbol?: {[@self]:
+            assert==[false, 10.symbol?]
+            assert==[false, .92.symbol?]
+            assert==[false, '5'.symbol?]
+            assert==[false, '.1'.symbol?]
+            assert==[false, 'foo'.symbol?]
+            assert==[true, .foo.symbol?]
+            assert==[false, true.symbol?]
+            assert==[false, false.symbol?]
+            assert==[false, unknown.symbol?]
+            assert==[false, nil.symbol?]
+            assert==[false, [].symbol?]
+            assert==[false, [10].symbol?]
+            assert==[false, [1.5].symbol?]
+            assert==[false, {}.symbol?]
+        }
+
+        .test-unknown?: {[@self]:
+            assert==[false, 10.unknown?]
+            assert==[false, .92.unknown?]
+            assert==[false, '5'.unknown?]
+            assert==[false, '.1'.unknown?]
+            assert==[false, 'foo'.unknown?]
+            assert==[false, .foo.unknown?]
+            assert==[false, true.unknown?]
+            assert==[false, false.unknown?]
+            assert==[true, unknown.unknown?]
+            assert==[false, nil.unknown?]
+            assert==[false, [].unknown?]
+            assert==[false, [10].unknown?]
+            assert==[false, [1.5].unknown?]
+            assert==[false, {}.unknown?]
+        }
+
+        .test-nil?: {[@self]:
+            assert==[false, 10.nil?]
+            assert==[false, .92.nil?]
+            assert==[false, '5'.nil?]
+            assert==[false, '.1'.nil?]
+            assert==[false, 'foo'.nil?]
+            assert==[false, .foo.nil?]
+            assert==[false, true.nil?]
+            assert==[false, false.nil?]
+            assert==[false, unknown.nil?]
+            assert==[true, nil.nil?]
+            assert==[false, [].nil?]
+            assert==[false, [10].nil?]
+            assert==[false, [1.5].nil?]
+            assert==[false, {}.nil?]
+        }
+
+        .test-list?: {[@self]:
+            assert==[false, 10.list?]
+            assert==[false, .92.list?]
+            assert==[false, '5'.list?]
+            assert==[false, '.1'.list?]
+            assert==[false, 'foo'.list?]
+            assert==[false, .foo.list?]
+            assert==[false, true.list?]
+            assert==[false, false.list?]
+            assert==[false, unknown.list?]
+            assert==[false, nil.list?]
+            assert==[true, [].list?]
+            assert==[true, [10].list?]
+            assert==[true, [1.5].list?]
+            assert==[false, {}.list?]
+        }
+
+        .test-integer?: {[@self]:
+            assert==[true, 10.integer?]
+            assert==[false, .92.integer?]
+            assert==[false, '5'.integer?]
+            assert==[false, '.1'.integer?]
+            assert==[false, 'foo'.integer?]
+            assert==[false, .foo.integer?]
+            assert==[false, true.integer?]
+            assert==[false, false.integer?]
+            assert==[false, unknown.integer?]
+            assert==[false, nil.integer?]
+            assert==[false, [].integer?]
+            assert==[false, [10].integer?]
+            assert==[false, [1.5].integer?]
+            assert==[false, {}.integer?]
+        }
+
+        .test-float?: {[@self]:
+            assert==[false, 10.float?]
+            assert==[true, .92.float?]
+            assert==[false, '5'.float?]
+            assert==[false, '.1'.float?]
+            assert==[false, 'foo'.float?]
+            assert==[false, .foo.float?]
+            assert==[false, true.float?]
+            assert==[false, false.float?]
+            assert==[false, unknown.float?]
+            assert==[false, nil.float?]
+            assert==[false, [].float?]
+            assert==[false, [10].float?]
+            assert==[false, [1.5].float?]
+            assert==[false, {}.float?]
+        }
     }
 
 class TestFunjectKeys < TestCase
-    instance.set-up = {[@self]:
-        a-funject := {
-            .foo: 1
-            .bar: 2
-            .baz: 'qux'
+    instance = {
+        .set-up: {[@self]:
+            a-funject := {
+                .foo: 1
+                .bar: 2
+                .baz: 'qux'
+            }
+            @self.fun = a-funject
+            @self.fun2 = a-funject
+            @self.non-dict = {
+                .foo: 1
+                [@bar]: 2
+            }
         }
-        @self.fun = a-funject
-        @self.fun2 = a-funject
-        @self.non-dict = {
-            .foo: 1
-            [@bar]: 2
+
+        .test-has?: {[@self]:
+            assert[@self.fun.has?[.foo]]
+            assert[@self.fun.has?[.baz]]
+            assert[not @self.fun.has?[.qux]]
         }
-    }
-    instance.test-has? = {[@self]:
-        assert[@self.fun.has?[.foo]]
-        assert[@self.fun.has?[.baz]]
-        assert[not @self.fun.has?[.qux]]
-    }
-    instance.test-== = {[@self]:
-        assert[@self.fun == @self.fun]
-        assert[not @self.fun == @self.fun2]
-        assert[not @self.fun == @self.non-dict]
-    }
-    instance.test-each = {[@self]:
-        key-count = 0
-        @self.fun.each[{
-            [@key, @value]: key-count |= key-count + 1
-        }]
-        assert==[3, key-count]
 
-        assert-error[{[]:
-            @self.non-dict.each[{[@key, @value]: nil}]
-        }]
-    }
-    instance.test-keys = {[@self]:
-        assert==[[.bar, .baz, .foo], @self.fun.keys.sort[]]
+        .test-==: {[@self]:
+            assert[@self.fun == @self.fun]
+            assert[not @self.fun == @self.fun2]
+            assert[not @self.fun == @self.non-dict]
+        }
 
-        assert-error[{[]:
-            @self.non-dict.keys
-        }]
+        .test-each: {[@self]:
+            key-count = 0
+            @self.fun.each[{
+                [@key, @value]: key-count |= key-count + 1
+            }]
+            assert==[3, key-count]
+
+            assert-error[{[]:
+                @self.non-dict.each[{[@key, @value]: nil}]
+            }]
+        }
+
+        .test-keys: {[@self]:
+            assert==[[.bar, .baz, .foo], @self.fun.keys.sort[]]
+
+            assert-error[{[]:
+                @self.non-dict.keys
+            }]
+        }
     }
 
 class TestWhile < TestCase
-    instance.test-while-true = {[@self]:
-        i = 0
-        {[]: i < 10}.while-true {
-            []: i |= i + 1
-        }
-        assert==[10, i]
+    instance = {
+        .test-while-true: {[@self]:
+            i = 0
+            {[]: i < 10}.while-true {
+                []: i |= i + 1
+            }
+            assert==[10, i]
 
-        {[]: false}.while-true {[]: fail}
-        pass
-    }
-
-    instance.test-do-while-true = {[@self]:
-        i = 0
-        {[]: i < 10}.do-while-true {
-            []: i |= i + 1
+            {[]: false}.while-true {[]: fail}
+            pass
         }
-        assert==[10, i]
 
-        ran = false
-        {[]: false}.do-while-true {
-            []: ran |= true
+        .test-do-while-true: {[@self]:
+            i = 0
+            {[]: i < 10}.do-while-true {
+                []: i |= i + 1
+            }
+            assert==[10, i]
+
+            ran = false
+            {[]: false}.do-while-true {
+                []: ran |= true
+            }
+            assert[ran]
         }
-        assert[ran]
     }
