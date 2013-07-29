@@ -1135,8 +1135,9 @@ yakClass 'List', lang.Funject,
         'delete-at!': yakFunction ['list', ['number']], (x, i) ->
             if i < 0
                 i += x.value.length
-            if i >= 0 and i < x.value.length
-                x.value.splice i, 1
+            if i < 0 and i >= x.value.length
+                throw new InterpreterError "Cannot delete at #{i} of #{x}"
+            x.value.splice i, 1
             x
         'insert!': yakFunction ['list', ['number', '*']], (x, i, e) ->
             if i < 0
