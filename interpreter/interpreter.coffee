@@ -1190,7 +1190,7 @@ yakClass 'List', lang.Funject,
                 i = 0
                 list = x.value.slice 0
                 end = list.length
-                return new ListFunject [] if end is 0
+                return x if end is 0
                 interpreter.pop()
                 interpreter.push
                     type: 'native'
