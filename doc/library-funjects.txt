@@ -53,6 +53,7 @@ is x # identity comparison; when one changes, the other changes
 
 .has?[k] # true if the receiver matches k
 .clone # a new funject which inherits from the receiver
+.copy # creates a copy of the funject
 
 .append![k, v] # sets k equal to v at the bottom of the funject
 .insert![i, k, v] # sets k equal to v before the ith pair
