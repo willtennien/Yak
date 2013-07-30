@@ -1250,26 +1250,19 @@ yakClass 'List', lang.Funject,
                 interpreter.push
                     type: 'native'
                     value: ->
-                        @frame.arguments.pop()
-                        ++i
-                        if i is end
-                            return @return lang.nil
-                        @push
-                            type: 'application'
-                            funject:
-                                type: 'value'
-                                value: f
-                            argument:
-                                type: 'value'
-                                value: new ListFunject [list[i]]
-                interpreter.push
-                    type: 'application'
-                    funject:
-                        type: 'value'
-                        value: f
-                    argument:
-                        type: 'value'
-                        value: new ListFunject [list[i]]
+                        loop
+                            return unless @arg i, {
+                                type: 'application'
+                                funject:
+                                    type: 'value'
+                                    value: f
+                                argument:
+                                    type: 'value'
+                                    value: new ListFunject [list[i]]
+                            }
+                            ++i
+                            if i is end
+                                return @return lang.nil
                 SPECIAL_FORM]
 
 ListFunject::instance = lang.List.$instance
