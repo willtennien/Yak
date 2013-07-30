@@ -35,7 +35,7 @@ class TestCase
         .set-up: {[@self]: nil}
         .tear-down: {[@self]: nil}
         .run: {[@self]:
-            @self.class.methods.sort[].each[{[@method]:
+            @self.class.methods.sort![].each[{[@method]:
                 @method.on {
                     .set-up: nil
                     .tear-down: nil
@@ -541,7 +541,7 @@ class TestFunjectKeys < TestCase
         }
 
         .test-keys: {[@self]:
-            assert==[[.bar, .baz, .foo], @self.fun.keys.sort[]]
+            assert==[[.bar, .baz, .foo], @self.fun.keys.sort![]]
 
             assert-error[{[]:
                 @self.non-dict.keys

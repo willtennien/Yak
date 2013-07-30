@@ -1146,14 +1146,12 @@ yakClass 'List', lang.Funject,
                 throw new InterpreterError "Cannot insert at #{i} of #{x}"
             x.value.splice i, 0, e
             x
-        sort: new Funject
+        'sort!': new Funject
             call: [
                 ['list', []], (x) ->
-                    return new ListFunject x.value.slice(0).sort (a, b) ->
-                        if a.type is 'funject' or a.type is 'class'
-                            0
-                        else
-                            ('' + a).localeCompare('' + b)
+                    x.value.sort (a, b) ->
+                        ('' + a).localeCompare('' + b)
+                    x
                 'interpreter', ['list', ['funject']], (interpreter, x, f) ->
                     i = 0
                     list = x.value.slice 0
@@ -1166,8 +1164,10 @@ yakClass 'List', lang.Funject,
                             ++i
                             if i is end
                                 xs = @frame.arguments
-                                return @return new ListFunject list.slice(0).sort (a, b) ->
+                                list.sort (a, b) ->
                                     xs[list.indexOf a] - xs[list.indexOf b]
+                                x.value = list
+                                return @return x
                             @push
                                 type: 'application'
                                 funject:
