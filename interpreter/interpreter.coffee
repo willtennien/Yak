@@ -1210,41 +1210,35 @@ yakClass 'List', lang.Funject,
                                 x.value = @frame.arguments
                                 return @return x
                 SPECIAL_FORM]
-        filter: new Funject
+        'filter!': new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
                 i = 0
                 list = x.value.slice 0
                 end = list.length
-                return new ListFunject [] if end is 0
+                return x if end is 0
                 result = []
                 interpreter.pop()
                 interpreter.push
                     type: 'native'
                     value: ->
-                        include = @frame.arguments[@frame.arguments.length - 1]
-                        if not include.isBoolean
-                            throw new InterpreterError "Cannot filter on #{include}"
-                        if include.value
-                            result.push list[i]
-                        ++i
-                        if i is end
-                            return @return new ListFunject result
-                        @push
-                            type: 'application'
-                            funject:
-                                type: 'value'
-                                value: f
-                            argument:
-                                type: 'value'
-                                value: new ListFunject [list[i]]
-                interpreter.push
-                    type: 'application'
-                    funject:
-                        type: 'value'
-                        value: f
-                    argument:
-                        type: 'value'
-                        value: new ListFunject [list[i]]
+                        loop
+                            return unless @arg i, {
+                                type: 'application'
+                                funject:
+                                    type: 'value'
+                                    value: f
+                                argument:
+                                    type: 'value'
+                                    value: new ListFunject [list[i]]
+                            }
+                            include = @frame.arguments[@frame.arguments.length - 1]
+                            if not include.isBoolean
+                                throw new InterpreterError "Cannot filter on #{include}"
+                            if include.value
+                                result.push list[i]
+                            ++i
+                            if i is end
+                                return @return new ListFunject result
                 SPECIAL_FORM]
         each: new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
