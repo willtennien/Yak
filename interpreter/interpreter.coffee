@@ -1195,25 +1195,19 @@ yakClass 'List', lang.Funject,
                 interpreter.push
                     type: 'native'
                     value: ->
-                        ++i
-                        if i is end
-                            return @return new ListFunject @frame.arguments
-                        @push
-                            type: 'application'
-                            funject:
-                                type: 'value'
-                                value: f
-                            argument:
-                                type: 'value'
-                                value: new ListFunject [list[i]]
-                interpreter.push
-                    type: 'application'
-                    funject:
-                        type: 'value'
-                        value: f
-                    argument:
-                        type: 'value'
-                        value: new ListFunject [list[i]]
+                        loop
+                            return unless @arg i, {
+                                type: 'application'
+                                funject:
+                                    type: 'value'
+                                    value: f
+                                argument:
+                                    type: 'value'
+                                    value: new ListFunject [list[i]]
+                            }
+                            ++i
+                            if i is end
+                                return @return new ListFunject @frame.arguments
                 SPECIAL_FORM]
         filter: new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
@@ -1893,21 +1887,28 @@ class Interpreter
     value: ->
         last @stack[0].arguments
 
-    args: (args...) ->
-        length = @frame.arguments.length
-        if length and (value = @frame.arguments[length - 1]).lazy
+    arg: (i, value) ->
+        if i > @frame.arguments.length
+            throw new TypeError "Invalid arg(..) offset #{i}"
+        if i == @frame.arguments.length
+            @push value
+            return false
+        if (a = @frame.arguments[i]).lazy
             @frame.arguments.pop()
             scope = @scope
-            #@stack.splice @stack.length - 1, 0, { arguments: [], expression: type: 'pop call stack' }
             @push { type: 'set scope', scope }
-            @scope = value.scope
-            #@callStack.push expression: @frame.last[@frame.last.length - 1] or @frame.expression, name: value.name
-            @push value.lazy
-            #@frame.last.push value.lazy
+            @scope = a.scope
+            @push a.lazy
+            return false
+        true
+
+    args: (args...) ->
+        length = @frame.arguments.length
+        if length and @frame.arguments[length - 1].lazy
+            @arg length - 1, args[length - 1]
             return false
         if length < args.length
             @push args[length]
-            #@frame.last = []
             return false
         true
 
