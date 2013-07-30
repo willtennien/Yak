@@ -828,9 +828,8 @@ class ListFunject extends Funject
         'own', ['number'], (self, n) ->
             i = if n.value < 0 then self.value.length + n.value else n.value
             if i < 0 or i >= self.value.length
-                lang.nil
-            else
-                self.value[i]
+                throw new InterpreterError "Cannot access #{self} at #{n}"
+            self.value[i]
         '.class', -> lang.List]
 
 yakClass 'Class', null,
@@ -1434,6 +1433,26 @@ globalScope.set 'by', yakFunction ['symbol'], (s) ->
         argument:
             type: 'value'
             value: s
+
+globalScope.set 'import', new Funject
+    call: ['interpreter', ['string'], (interpreter, file) ->
+        try
+            file = require('fs').readFileSync(file.value).toString()
+        catch
+            throw new InterpreterError "Cannot import #{file}"
+        tree = parser.parse file
+        interpreter.pop()
+        scope = interpreter.scope
+        interpreter.push
+            type: 'native'
+            value: ->
+                exp = @scope.vars.exports
+                @scope = scope
+                @return exp
+        interpreter.scope = new Scope null,
+            exports: new Funject
+        interpreter.push tree
+        SPECIAL_FORM]
 
 globalScope.set 'error', new Funject
     call: ['interpreter', ['*'], (interpreter, message) ->
