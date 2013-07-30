@@ -1185,7 +1185,7 @@ yakClass 'List', lang.Funject,
                             type: 'value'
                             value: new ListFunject [list[i]]
                     SPECIAL_FORM]
-        map: new Funject
+        'map!': new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
                 i = 0
                 list = x.value.slice 0
@@ -1207,7 +1207,8 @@ yakClass 'List', lang.Funject,
                             }
                             ++i
                             if i is end
-                                return @return new ListFunject @frame.arguments
+                                x.value = @frame.arguments
+                                return @return x
                 SPECIAL_FORM]
         filter: new Funject
             call: ['interpreter', ['list', ['funject']], (interpreter, x, f) ->
