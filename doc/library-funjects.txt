@@ -20,7 +20,8 @@ Free funjects
 =============
 by[.sym] # => {[f]: f.sym}; allows array.sort[by[.height]]
 assert[assertion, message] # throws an error if assertion does not evaluate to true, the optional message pararmeter specifies the error message of the error to throw
-assert==[i, j] # throws an error if i and j are not equal
+(assert==[i, j] or
+ assert==[i, j, message] # throws an error if i and j are not equal (optionally throws a custom error))
 unreachable # throws an error if called, used for throwing an error indicating that a piece of code not intended to run was executed
 import[module] # Should import the specified module
 
@@ -76,6 +77,7 @@ is x # identity comparison; when one changes, the other changes
 .inspect # a debugger-friendly string representation
 
 .silently # a funject which matches the same arguments as the receiver and returns nil where an error would normally occur
+
 
 Low priority
 ------------
@@ -206,6 +208,7 @@ String methods
 .lowercase
 .swapcase # (Ruby)
 .capitalize
+.titlecase
 
 Lower priority
 --------------
@@ -252,8 +255,6 @@ Array methods
 # sources: JavaScript, Underscore, Python, Ruby, Haskell
 
 Array.zip[a, ...] # takes any number of arrays and zips them all (Scheme)
-Array.zip-with[f, a, ...] # applies f[a[i], ...] for each element in the given arrays and returns an array of the results
-Array.cross[a, ...] # returns an array of all possible arrays of a single value drawn from each array given, in the order given
 
 * n # an array of n instances of the receiver concatenated together
 + # concatenation
@@ -317,19 +318,27 @@ Array.cross[a, ...] # returns an array of all possible arrays of a single value 
 .remove-all![X] # removes all occurrences of x
 .compact! # removes any elements which are nil
 
-.transpose # (Ruby); signals an error if any element is not an array
 .shuffle! # (Underscore)
 .reverse! # (JS)
 
-.flatten! # (Underscore)
-.shallow-flatten! # (Undescore)
+
+
+medium priority
+---------------
+Array.zip-with[f, a, ...] # applies f[a[i], ...] for each element in the given arrays and returns an array of the results
+Array.cross[a, ...] # returns an array of all possible arrays of a single value drawn from each array given, in the order given
 
 .max[] # the greatest element; signals an error if any element is non-numeric
 .min[] # the least element; signals an error if any element is non-numeric
 .max[f] # the element with the greatest f[e]
 .min[f] # the element with the least f[e]
 
+.flatten! # (Underscore)
+.shallow-flatten! # (Undescore)
+
+.transpose # (Ruby); signals an error if any element is not an array
 .group[f={[x]: x}] # a funject whose keys are the things returned by f and whose values are arrays of the arguments that produced them (Underscore)
+
 
 
 lower priority
