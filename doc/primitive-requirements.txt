@@ -23,8 +23,8 @@ Funjects
 - .list?
 - .integer?
 - .float?
-- .is-member-of?[c]
-- .is-king-of?[c]
+- .member-of?[c]
+- .kind-of?[c]
 - .to-string
 - .inspect
 - .silently
