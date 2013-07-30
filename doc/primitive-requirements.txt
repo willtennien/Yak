@@ -53,3 +53,5 @@ Lists
 - somelist[index] # Should be list[index] => list sub index, currently it throws an error (at least in the CS interpreter) [HIGH PRIORITY]
 - insert-at[index] [HIGH PRIORITY]
 - delete[index] [HIGH PRIORITY]
+- .sort!
+- .sort![x]

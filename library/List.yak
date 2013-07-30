@@ -1,4 +1,99 @@
 # Needs list random access ASAP
+
+List.instance.youve-got-that-wrong! := List.instance.naegi!
+
+List.instance.naegi! := List.instance.reject!
+
+List.instance.* = {
+    [@self, @n]:
+        list = []
+        @n.times[{[@i]: list.concat![@self]}]
+        list
+}
+
+List.instance.+ = {
+    [@self, @l]:
+        @l.length.times[{[@i]: @self.push![@l[@i]]}]
+        @self
+}
+
+List.instance.empty? = {
+    [@self]: @self.length == 0
+}
+
+List.instance.clear! = {
+    [@self]:
+        {[]: @self.length > 0}.while-true {
+            @self.delete-at![0]
+        }
+}
+
+List.instance.set! = {
+    [@self, [@l]]:
+        @self.clear!
+        @l.length.times[{[@i]: @self.push![@l[@i]]}]
+}
+
+List.instance.contains? = {
+    [@self, [@f]]: @self.index-of[@f] == -1
+}
+
+List.instance.pop! = {
+    [@self]:
+        result = @self[@self.length - 1]
+        @self.delete-at![@self.length - 1]
+        result
+}
+
+List.instance.push! = {
+    [@self, [@f]]: @self.insert![@self.length, @f]
+}
+
+List.instance.shift! = {
+    [@self, [@f]]:
+        result = @self[0]
+        @self.delete-at![0]
+        result
+}
+
+List.instance.unshift! = {
+    [@self, [@f]]: @self.insert![0, @f]
+}
+
+List.instance.pop = {
+    [@self]: @self[@self.length - 1]
+}
+
+List.instance.index-of = {
+    [@self, [@f]]:
+        found = false
+        i = 0
+        {[]: i < @self.length and found.not}.while-true {
+            []:
+                found |= @self[i] == @f
+                i |= i + 1
+        }
+        if found.not
+            -1
+        else
+            i - 1
+}
+
+List.instance.last-index-of = {
+    [@self, [@f]]:
+        found = false
+        i = @self.length - 1
+        {[]: i >= 0 and found.not}.while-true {
+            []:
+                found |= @self[i] == @f
+                i |= i - 1
+        }
+        if found.not
+            -1
+        else
+            i + 1
+}
+
 List.instance.join = {
     [@self, [@s]]:
         result = ''
@@ -9,4 +104,36 @@ List.instance.join = {
                 i |= i + 1
         }
         @self[0] + result
+}
+
+List.instance.pluck! = {
+    [@self, [@key]]: @self.map![by[@key]]
+}
+
+List.instance.invoke! = {
+    [@self, [@f]]: @self.map![{[@e]: (@e @f)[]}]
+}
+
+List.instance.filter! = {
+    [@self, [@f]]:
+        i = @self.length - 1
+        {[]: i >= 0}.while-true {
+            []:
+                if f[@self[i]].not
+                    @self.delete-at![i]
+                i |= i - 1
+        }
+        @self
+}
+
+List.instance.reject! = {
+    [@self, [@f]]:
+        i = @self.length - 1
+        {[]: i >= 0}.while-true {
+            []:
+                if f[@self[i]]
+                    @self.delete-at![i]
+                i |= i - 1
+        }
+        @self
 }

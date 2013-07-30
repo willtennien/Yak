@@ -186,17 +186,15 @@ Number.instance.to-fixed = {
 }
 
 
-# Calls function repeatedly with arguments 0 through n-1
+# Calls function repeatedly with arguments 0 through @y-1
 Number.instance.times = {
     [@x, [@y]]:
-        result = []
         i = 0
-        {[]: i < @y}.while-true {
+        {[]: i < @x}.while-true {
             []:
-                result.push![@x[i]]
+                @y[i]
                 i |= i + 1
         }
-        result
 }
 
 Number.instance.close-to? = {

@@ -11,3 +11,23 @@ assert== = {
 }
 
 unreachable := error['Unreachable code executed']
+
+argumentFlag = false
+
+vim :=
+    response = 'programmers use emacs, try using "emacs" instead.'
+    if argumentFlag
+        response |= response + 'No, REAL '
+    else
+        response |= response + 'Real '
+        argumentFlag |= true
+    print[response]
+
+emacs :=
+    response = 'programmers use vim, try using "vim" instead.'
+    if argumentFlag
+        response |= response + 'No, REAL '
+    else
+        response |= response + 'Real '
+        argumentFlag |= true
+    print[response]
