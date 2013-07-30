@@ -1,0 +1,164 @@
+body {
+    margin: 0 24px;
+    background: #ddd;
+    font: 16px/1.5 Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    position: relative;
+}
+header {
+    position: relative;
+    top: 0;
+    z-index: 1;
+}
+header .container {
+    background: rgb(118, 170, 214);
+    padding-top: 48px;
+}
+header h1 {
+    font: 156px/1 Georgia, serif;
+    color: #000;
+    margin: 0;
+    text-align: center;
+}
+header p {
+    font: 16px/1.5 Georgia, serif;
+    text-align: center;
+    margin: 0 0 48px;
+    color: #000;
+}
+header .interpreter {
+    display: none;
+    overflow: auto;
+    font: 11px/13px Menlo, Monaco, Consolas, Courier New, monospace;
+    background: rgba(0, 0, 0, .8);
+    box-shadow: inset 0 2px 8px #000;
+    color: #fff;
+    height: 20em;
+    padding: 12px 12px 12px 24px;
+}
+.interpreter > div {
+    white-space: pre;
+    min-height: 13px;
+    position: relative;
+}
+.interpreter .help {
+    color: #666;
+}
+.interpreter .output {
+    color: #aaa;
+}
+.interpreter .error {
+    color: #c88;
+}
+.interpreter .prompt {
+    color: #fff;
+}
+.interpreter .prompt::before {
+    content: '>';
+    position: absolute;
+    top: 0;
+    left: -12px;
+}
+.interpreter .prompt .measure {
+    visibility: hidden;
+    z-index: -1;
+    position: absolute;
+    white-space: pre;
+}
+.interpreter .prompt textarea {
+    position: relative;
+    background: 0;
+    border: 0;
+    outline: 0;
+    margin: 0 -12px 0 -24px;
+    padding: 0 12px 0 24px;
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    resize: none;
+    vertical-align: top;
+}
+header nav {
+    clear: both;
+    position: relative;
+    margin: 0 -12px;
+    padding: 0 124px;
+    text-align: center;
+    background: rgb(82, 136, 182);
+    box-shadow: 0 11px 3px -10px rgba(0, 0, 0, .3);
+}
+header nav::before {
+    content: '';
+    width: 0;
+    height: 0;
+    display: block;
+    border-top: rgb(47, 98, 141) 8px solid;
+    border-left: transparent 12px solid;
+    position: absolute;
+    top: 100%;
+    left: 0;
+}
+header nav::after {
+    content: '';
+    width: 0;
+    height: 0;
+    display: block;
+    border-top: rgb(47, 98, 141) 8px solid;
+    border-right: transparent 12px solid;
+    position: absolute;
+    top: 100%;
+    right: 0;
+}
+header a, header button {
+    color: #fff;
+    text-shadow: 0 1px #000;
+    line-height: 48px;
+    display: inline-block;
+    width: 100px;
+    text-align: center;
+    text-decoration: none;
+}
+header a.active {
+    box-shadow: inset 0 -4px rgb(47, 98, 141);
+}
+header a:hover,
+header button:hover {
+    /*background: rgb(51, 110, 160);*/
+    background: rgb(60, 114, 160);
+}
+header a:active,
+header button:active {
+    background: rgb(47, 98, 141);
+}
+header button {
+    display: none;
+    border: 0;
+    padding: 0;
+    float: left;
+    margin: 0 0 0 -112px;
+    font: inherit;
+    background: transparent;
+    height: 48px;
+    cursor: pointer;
+}
+article {
+    min-height: 1000px;
+    background: #fff;
+    overflow: hidden;
+    padding: 0 48px 48px;
+}
+article h1,
+article h2 {
+    font: 3em/1 Georgia, serif;
+    margin: 48px 0 0;
+}
+article h2 {
+    font-size: 2em;
+}
+.bookmark {
+    position: relative;
+    top: -144px;
+}

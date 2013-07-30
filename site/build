@@ -1,0 +1,3 @@
+#!/bin/sh
+site=$(dirname "$0")
+coffee -cp "$site/../interpreter/parser.coffee" "$site/../interpreter/interpreter.coffee" "$site/main.coffee" | uglifyjs -m >site/yak.js

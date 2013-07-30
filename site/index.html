@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset=utf-8>
+<title>Yak</title>
+<link rel=stylesheet href=style.css>
+<div class=header-fill></div>
+<header>
+    <div class=container>
+        <h1>Yak</h1>
+        <p>The first language of the funject paradigm.</p>
+        <section class=interpreter>
+<div class=prompt><div class=measure></div><textarea>factorial = {
+    [0]: 1
+    [@n]: @n * (factorial[@n - 1])
+}
+factorial[5]</textarea></div>
+<div class=help>Use Shift+Enter to add a line</div>
+        </section>
+        <nav>
+            <button class=try-yak>Try Yak</button>
+            <a href=#>Welcome</a><a href=#install>Install</a><a href=#learn>Learn</a><a href=#docs>Docs</a>
+        </nav>
+    </div>
+</header>
+<div class=container>
+    <article>
+
+
+
+    </article>
+</div>
+<script src=yak.js></script>
