@@ -1,6 +1,5 @@
 environment = global ? @
 
-ALLOW_CLASS_REDEFINITION = false
 SPECIAL_FORM = {}
 
 last = (thing) -> thing[thing.length - 1]
@@ -1567,7 +1566,7 @@ class Interpreter
             if n.left.type is 'application'
                 return unless @args n.left.funject
                 funject = @first()
-                if funject.isInstance and not ALLOW_CLASS_REDEFINITION
+                if funject.isInstance and not _exports.ALLOW_CLASS_REDEFINITION
                     throw new InterpreterError 'Cannot modify class definition'
                 if n.operator isnt 'lazy assignment' and @frame.arguments.length is 1
                     @push n.right
@@ -2089,7 +2088,7 @@ if module?
                 when '-i'
                     interactive = true
                 when '--allow-class-redefinition'
-                    ALLOW_CLASS_REDEFINITION = true
+                    _exports.ALLOW_CLASS_REDEFINITION = true
                 when '-e'
                     expressions.push
                         file: "expression#{expressionNumber++}"
@@ -2112,5 +2111,6 @@ else
     parser = Yak.parser
     (@Yak ?= {}).interpreter = _exports = {}
 
+_exports.ALLOW_CLASS_REDEFINITION = false
 _exports.eval = evaluate
 _exports.evalSync = evaluateSynchronous
