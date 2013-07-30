@@ -1,9 +1,5 @@
 # Needs list random access ASAP
 
-List.instance.youve-got-that-wrong! := List.instance.naegi!
-
-List.instance.naegi! := List.instance.reject!
-
 List.instance.* = {
     [@self, @n]:
         list = []
@@ -24,7 +20,7 @@ List.instance.empty? = {
 List.instance.clear! = {
     [@self]:
         {[]: @self.length > 0}.while-true {
-            @self.delete-at![0]
+            []: @self.delete-at![0]
         }
 }
 
