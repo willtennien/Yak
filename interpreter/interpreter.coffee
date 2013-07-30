@@ -828,9 +828,8 @@ class ListFunject extends Funject
         'own', ['number'], (self, n) ->
             i = if n.value < 0 then self.value.length + n.value else n.value
             if i < 0 or i >= self.value.length
-                lang.nil
-            else
-                self.value[i]
+                throw new InterpreterError "Cannot access #{self} at #{n}"
+            self.value[i]
         '.class', -> lang.List]
 
 yakClass 'Class', null,
