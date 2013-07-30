@@ -1840,7 +1840,7 @@ class Interpreter
                             @scope = entry.scope
                         @push entry.expression.catch
                         return
-                throw new RuntimeError error.message, error.message + errorFunject.stack
+                throw new RuntimeError errorFunject.value, errorFunject.value + '\n' + errorFunject.stack
             else
                 if require?
                     console.log require('util').inspect @stack, depth: 5
