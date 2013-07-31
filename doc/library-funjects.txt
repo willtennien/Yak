@@ -22,7 +22,7 @@ by[.sym] # => {[f]: f.sym}; allows array.sort[by[.height]]
 assert[assertion, message] # throws an error if assertion does not evaluate to true, the optional message pararmeter specifies the error message of the error to throw
 (assert==[i, j] or
  assert==[i, j, message] # throws an error if i and j are not equal (optionally throws a custom error))
-unreachable # throws an error if called, used for throwing an error indicating that a piece of code not intended to run was executed
+unreachable # throws an error if referenced, used for throwing an error indicating that a piece of code not intended to run was executed
 import[module] # Should import the specified module
 
 Class methods
@@ -165,18 +165,6 @@ Low priority
 
 
 
-
-Boolean methods
-===============
-.and # short-circuiting; also an infix operator
-.or # short-circuiting; also an infix operator
-.xor
-.not # also a prefix operator
-
-
-
-
-
 String methods
 ==============
 # sources: JS, Python, Ruby, Underscore, Haskell
@@ -250,11 +238,19 @@ Lower priority
 
 
 
+Boolean methods
+===============
+.and # short-circuiting; also an infix operator
+.or # short-circuiting; also an infix operator
+.xor
+.not # also a prefix operator
+
+
+
+
 Array methods
 =============
 # sources: JavaScript, Underscore, Python, Ruby, Haskell
-
-Array.zip[a, ...] # takes any number of arrays and zips them all (Scheme)
 
 * n # an array of n instances of the receiver concatenated together
 + # concatenation
@@ -325,8 +321,9 @@ Array.zip[a, ...] # takes any number of arrays and zips them all (Scheme)
 
 medium priority
 ---------------
-Array.zip-with[f, a, ...] # applies f[a[i], ...] for each element in the given arrays and returns an array of the results
-Array.cross[a, ...] # returns an array of all possible arrays of a single value drawn from each array given, in the order given
+.zip[a, ...] # takes any number of arrays and zips them all (Scheme)
+.zip-with[f, a, ...] # applies f[a[i], ...] for each element in the given arrays and returns an array of the results
+.cross[a, ...] # returns an array of all possible arrays of a single value drawn from each array given, in the order given
 
 .max[] # the greatest element; signals an error if any element is non-numeric
 .min[] # the least element; signals an error if any element is non-numeric
