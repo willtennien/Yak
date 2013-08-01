@@ -38,6 +38,8 @@
     (write exp o)
     (get-output-string o)))
 
+(define ->boolean (compose not not))
+
 (define (hash-if-match h key conseq altern)
   (define hash-has-key? true)
   (let ((result (hash-ref h 
@@ -1583,20 +1585,20 @@
                                     callback)
   (lang-contents-typed result--arg
                        'List
-                       user-error-cannot-find-match
+                       (partial
                        (lambda (elems)
                          (assert (= 2 (mlength elems)))
                          (mlist-contents elems 
                                          (lambda (result arg)
                                            (lang-contents-typed result
                                                                 result-type
-                                                                user-error-cannot-find-match
+                                                                (partial default-primitive-parent arg)
                                                                 (lambda (result)
                                                                   (lang-contents-typed arg
                                                                                        arg-type
-                                                                                       user-error-cannot-find-match
+                                                                                       (partial default-primitive-parent arg)
                                                                                        (lambda (arg)
-                                                                                         (callback result arg))))))))))
+                                                                                         (callback result arg)))))))))))
                                                                                          
                                                                                        
                                          
@@ -1925,7 +1927,7 @@
          (cond 
            [(= 2 (mlength tokens))
             (callback (lambda (env) 
-                        primitive-funject-god)
+                        primitive-funject-class)
                       (if (token-sequence? (mcadr tokens))
                           (analyze-sequence-without-own-scope (mcadr tokens))
                           (analyze (mcadr tokens))))]
@@ -1985,7 +1987,7 @@
            (eval aseq module-env)
            (let ((exports (general-with-new-parent! (lookup-identifier "exports" module-env) parent))
                  (instance (general-with-new-parent! (lookup-identifier "instance" module-env) parent)))
-             (if (funject-has? instance (create-lang 'Symbol "initialize"))
+             (if (funject-has?-match instance (create-lang 'Symbol "initialize"))
                  'ok
                  (push-funject-pair! instance (bind-funject-pair (create-funject-pair (create-lang 'Symbol "initialize")
                                                                                       (mlist 'Evaled 
@@ -2001,9 +2003,9 @@
              (push-funject-pair! exports (bind-funject-pair (create-funject-pair (create-lang 'Symbol "new")
                                                                                  (mlist 'Evaled (create-primitive-class-new module-env)))
                                                             module-env))
-             exports))))
+             (create-lang 'Class exports parent)))))
              
-                  
+         
      (mlist (analyze-header after-analyze-module)
             (analyze-header after-analyze-class)))))
 
@@ -2053,6 +2055,10 @@
      (invoke-unknown receiver arg own)]
     [(lang? 'List receiver)
      (invoke-list receiver arg own)]
+    [(lang? 'Future receiver)
+     (invoke-future receiver arg own)]
+    [(lang? 'Class receiver)
+     (invoke-class receiver arg own)] 
     [(and (lang? 'Funject receiver)
           (lang? 'Symbol arg) 
           (equal? "has?" (mcadr arg))) 
@@ -2061,7 +2067,7 @@
      (invoke-funject receiver arg own extra-bindings)]
     [else 
      (error "invoke: I know not how to invoke " receiver "!")]))
-                
+     
 (define (invoke-funject-itself-with-bindings receiver arg extra-bindings)
   (invoke-funject receiver arg receiver extra-bindings))
 (define (invoke-funject receiver arg own . maybe-extra-bindings)
@@ -2078,7 +2084,7 @@
       (if (empty? apairs)
           (if parent
               (invoke parent arg receiver)
-              (user-error-cannot-find-match receiver arg))
+              (error "Every lang Funject should have a parent, but the following one didn't!" receiver))
           (let* ((pair (mcar apairs))
                  (pattern (mcar pair))
                  (consequent (mcadr pair))
@@ -2094,6 +2100,15 @@
                    (error "In the consequent of a pattern, I find neither 'Evaled nor 'Unevaled, but " consequent)])
                 (iter (mcdr apairs))))))
     (iter apairs)))
+
+(define (invoke-class klass arg own)
+  (lang-contents klass
+                 (lambda (exports super)
+                   (if (has?-match exports arg own)
+                       (invoke exports arg own)
+                       (if (has?-match super arg own)
+                           (invoke super arg own)
+                           (invoke primitive-class-class-instance arg own))))))
 
 (define (invoke-inverse receiver arg . maybe-own-and-extra-bindings)
   (define own (if (empty? maybe-own-and-extra-bindings)
@@ -2121,12 +2136,32 @@
      (invoke-inverse-list receiver arg own)]
     [(lang? 'Funject receiver)
      (invoke-inverse-funject receiver arg own extra-bindings)]
+    [(lang? 'Class receiver)
+     (invoke-inverse-class receiver arg own)]
+    [(lang? 'Future receiver)
+     (invoke-inverse-future receiver arg own)]
     [else 
      (error "invoke: I know not how to invoke " receiver "!")]))
 
 (define (invoke-inverse-funject funject receiver arg own extra-bindings) 
   (invoke-funject (funject-inverse-of funject) receiver arg own extra-bindings))
 
+(define (invoke-inverse-class klass arg own)
+  (lang-contents klass
+                 (lambda (exports super)
+                   (try
+                    (invoke-inverse exports arg own)
+                    (catch 
+                        (lambda (ex)
+                          (if (and (lang-error? ex)
+                                   (equal? 'cannot-find-match (lang-error-contents ex)))
+                              (try (invoke-inverse super arg own)
+                                   (catch 
+                                       (lambda (ex)
+                                         (if (lang-error-cannot-find-match? ex)
+                                             (invoke-inverse primitive-class-class-instance arg own)
+                                             (raise ex)))))
+                              (raise ex))))))))
 
 ;(set-)list-<prop>(-of)
 (define (list-id-of l)
@@ -2551,8 +2586,7 @@
     [(procedure? thing)
      (create-primitive (lambda (arg own)
                          (bridge (apply thing (unbridge arg))))
-                       (lambda (arg own)
-                         (invoke primitive-funject-inverse-god arg own)))]
+                       default-primitive-inverse)]
     
     [else (error "I know not how to bridge" thing)]))
 
@@ -2590,6 +2624,17 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 ;;;;    Primitive struct and helpers
 
 ;Primitive funjects rely on these:
@@ -2598,6 +2643,24 @@
 (define lang-equal? equal?)
 
 (struct primitive (vanilla-of inverse-of) #:mutable #:transparent #:constructor-name create-primitive)
+
+#|(define (create-primitive itself inverse)
+  (create-primitive-bare (lambda (arg own)
+                           (try 
+                            (itself arg own)
+                            (catch
+                                (lambda (ex)
+                                  (if (lang-error-cannot-find-match? ex)
+                                      (default-primitive-parent arg own)
+                                      (raise ex))))))
+                         (lambda (arg own)
+                           (try 
+                            (inverse arg own)
+                            (catch 
+                                (lambda (ex)
+                                  (if (lang-error-cannot-find-match? ex)
+                                      (default-primitive-inverse arg own)
+                                      (raise ex))))))))|#
 
 (define (primitive-contents prim f)
   (assert (primitive? prim) "primitive-contents: I can only take a primitive, but you passed me:" prim) ;to optimize, remove this line.
@@ -2615,8 +2678,7 @@
                                    (lambda (result--arg own)
                                      (lang-list-contents result--arg
                                                          (lambda (k) 
-                                                           (user-error-cannot-find-match result--arg 
-                                                                                         own))
+                                                           (default-primitive-parent result--arg own))
                                                          (lambda (result arg)
                                                            (unless (and (result-type? result)
                                                                         (lang? 'Unknown arg))
@@ -2640,28 +2702,363 @@
 (define (invoke-inverse-primitive receiver arg own) 
   ((primitive-inverse-of receiver) arg own))
 
+
+  
+  
+  
+
+
+
+
+
+
+
+
+
+  
+  
+;;;;     Builtin classes
+
+;;helpers
+
+(define (create-primitive-class class-itself class-inverse instance instance-inverse . maybe-super)
+  (let ((class-itself (create-primitive class-itself
+                                        class-inverse))
+        (instance (create-primitive instance
+                                    instance-inverse)))
+     (create-primitive (lambda (arg own)
+                         (if (equal-lang? 'Symbol arg "instance")
+                             instance
+                             (invoke class-itself arg own)))
+                       (lambda (arg own)
+                         (if (lang-equal? arg instance)
+                             (create-lang 'List (mlist (create-lang 'Symbol "instance")))
+                             ((primitive-inverse-of class-itself) arg own))))))
+
+(define (try-symbols methods
+                     arg
+                     own
+                     on-failure)
+  (lang-contents-typed arg
+                       'Symbol
+                       on-failure
+                       (lambda (name)
+                         (hash-if-match methods 
+                                        name
+                                        (lambda (name method)
+                                          method)
+                                        (lambda (k) (on-failure))))))
+
+(define (try-symbols-inverse methods
+                             arg
+                             own
+                             on-failure)
+  (lang-list-contents arg
+                      (lambda (result maybe-unknown)
+                        (unless (lang? 'Unknown maybe-unknown)
+                                (on-failure)
+                                (hash-if-val-match methods 
+                                                   result
+                                                   (lambda (name v)
+                                                     (let ((possible-answer (create-lang 'Symbol name)))
+                                                       (unless (equal? result (invoke own possible-answer))
+                                                         (on-failure)
+                                                         (create-lang-list-mlist possible-answer))))
+                                                   (lambda (k) 
+                                                     (on-failure)))))))
+
+(define (get-class-instance klass)
+  (invoke klass (create-lang 'Symbol "instance")))
+
+(define (delegate-to-class-class-instance arg own)
+  (let ((instance (get-class-instance primitive-class-class)))
+    (invoke instance 
+            (create-lang-list-mlist own arg)
+            instance)))
+
+(define (delegate-to-class-class-instance-inverse arg own)
+  (let ((instance (get-class-instance (primitive-class-class))))
+    (invoke-inverse instance 
+                    (create-lang-list-mlist own arg)
+                    instance)))
+
+;class
+
+(define primitive-class-class
+  (create-primitive-class delegate-to-class-class-instance
+                          delegate-to-class-class-instance-inverse
+                          (lambda (arg own)
+                            (display 1)
+                            (try-symbols primitive-class-instance
+                                         arg
+                                         own
+                                         (lambda ()
+                                           (invoke primitive-funject-class-instance arg own))))
+                          (lambda (arg own)
+                            (try-symbols-inverse primitive-class-instance
+                                                 arg
+                                                 own
+                                                 (lambda ()
+                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
+(define primitive-class-class-instance (get-class-instance primitive-class-class))
+
+; funject
+(define primitive-funject-class
+  (create-primitive-class delegate-to-class-class-instance
+                          delegate-to-class-class-instance-inverse
+                          (lambda (arg own)
+                            (display 2)
+                            (try-symbols primitive-funject-instance
+                                         arg
+                                         own
+                                         (lambda ()
+                                           (user-error-cannot-find-match arg own))))
+                          (lambda (arg own)
+                            (try-symbols-inverse primitive-funject-instance
+                                                 arg 
+                                                 own
+                                                 (lambda ()
+                                                   (user-error-cannot-find-match arg own))))))
+(define primitive-funject-class-instance (get-class-instance primitive-funject-class))
+
+
+
+; number
+(define primitive-number-class 
+  (create-primitive-class (lambda (arg own)
+                            (cond
+                              [(equal-lang? 'Symbol arg "e") 
+                               (create-lang 'Number 2.71828182845904523536028747135266249775724709369995)]
+                              [(equal-lang? 'Symbol arg "pi") 
+                               (create-lang 'Number 3.14159265358979323846264338327950288419716939937510)]
+                              [(lang? 'List arg)
+                               (lang-contents arg
+                                              (lambda (elems)
+                                                (unless (= 1 (mlength elems))
+                                                        (delegate-to-class-class-instance arg own)
+                                                        (invoke (mcar elems) (create-lang 'Symbol "to-number")))))]
+                              [else
+                               (delegate-to-class-class-instance arg own)]))
+                          (lambda (result--arg own)
+                            (lang-list-contents result--arg
+                                                (lambda ()
+                                                  (delegate-to-class-class-instance-inverse result--arg own))
+                                                (lambda (result arg)
+                                                  (cond
+                                                    [(equal-lang? 'Number result 2.71828182845904523536028747135266249775724709369995)
+                                                     (create-lang 'List (mlist (create-lang 'Symbol "e")))]
+                                                    [(equal-lang? 'Number result 3.14159265358979323846264338327950288419716939937510)
+                                                     (create-lang 'List (mlist (create-lang 'Symbol "pi")))]
+                                                    [(equal? result (invoke primitive-number-class (create-lang 'Symbol "instance")))
+                                                     (create-lang 'List (mlist (create-lang 'Symbol "instance")))]
+                                                    [else
+                                                     (delegate-to-class-class-instance-inverse result--arg own)]))))
+                          (lambda (arg own)
+                            (try-symbols primitive-number-instance
+                                         arg 
+                                         own
+                                         (lambda ()
+                                           (invoke primitive-funject-class-instance arg own))))
+                          (lambda (arg own)
+                            (cond
+                              (try-symbols-inverse primitive-number-instance
+                                                   arg 
+                                                   own
+                                                   (lambda ()
+                                                     (invoke-inverse primitive-funject-class-instance arg own)))))))
+(define primitive-number-class-instance (get-class-instance primitive-number-class))
+
+;string
+(define primitive-string-class
+  (create-primitive-class delegate-to-class-class-instance
+                          delegate-to-class-class-instance-inverse
+                          (lambda (arg own)
+                            (try-symbols primitive-string-instance
+                                         arg
+                                         own
+                                         (lambda ()
+                                           (invoke primitive-funject-class-instance arg own))))
+                          (lambda (arg own)
+                            (try-symbols-inverse primitive-string-instance
+                                                 arg 
+                                                 own
+                                                 (lambda ()
+                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
+(define primitive-string-class-instance (get-class-instance primitive-string-class))
+
+
+;boolean
+(define primitive-boolean-class
+  (create-primitive-class delegate-to-class-class-instance
+                          delegate-to-class-class-instance-inverse
+                          (lambda (arg own)
+                            (try-symbols primitive-boolean-instance
+                                         arg
+                                         own
+                                         (lambda ()
+                                           (invoke primitive-funject-class-instance arg own))))
+                          (lambda (arg own)
+                            (try-symbols-inverse primitive-boolean-instance
+                                                 arg
+                                                 own
+                                                 (lambda ()
+                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
+(define primitive-boolean-class-instance (get-class-instance primitive-boolean-class))
+
+
+;symbol
+(define primitive-symbol-class
+  (create-primitive-class delegate-to-class-class-instance
+                          delegate-to-class-class-instance-inverse
+                          (lambda (arg own)
+                            (try-symbols primitive-symbol-instance
+                                         arg
+                                         own
+                                         (lambda ()
+                                           (invoke primitive-funject-class-instance arg own))))
+                          (lambda (arg own)
+                            (try-symbols-inverse primitive-symbol-instance
+                                                 arg
+                                                 own
+                                                 (lambda ()
+                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
+(define primitive-symbol-class-instance (get-class-instance primitive-symbol-class))
+
+
+;nil
+(define primitive-nil-class
+  (create-primitive-class delegate-to-class-class-instance
+                          delegate-to-class-class-instance-inverse
+                          (lambda (arg own)
+                            (try-symbols primitive-nil-instance
+                                         arg
+                                         own
+                                         (lambda ()
+                                           (invoke primitive-funject-class-instance arg own))))
+                          (lambda (arg own)
+                            (try-symbols-inverse primitive-nil-instance
+                                                 arg
+                                                 own
+                                                 (lambda ()
+                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
+(define primitive-nil-class-instance (get-class-instance primitive-nil-class))
+
+
+;unknown
+(define primitive-unknown-class
+  (create-primitive-class delegate-to-class-class-instance
+                          delegate-to-class-class-instance-inverse
+                          (lambda (arg own)
+                            (try-symbols primitive-unknown-instance
+                                         arg
+                                         own
+                                         (lambda ()
+                                           (invoke primitive-funject-class-instance arg own))))
+                          (lambda (arg own)
+                            (try-symbols-inverse primitive-unknown-instance
+                                                 arg 
+                                                 own
+                                                 (lambda ()
+                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
+(define primitive-unknown-class-instance (get-class-instance primitive-unknown-class))
+
+
+;list
+(define primitive-list-class
+  (create-primitive-class delegate-to-class-class-instance
+                          delegate-to-class-class-instance-inverse
+                          (lambda (arg own)
+                            (try-symbols primitive-list-instance
+                                         arg
+                                         own
+                                         (lambda ()
+                                           (invoke primitive-funject-class-instance arg own))))
+                          (lambda (arg own)
+                            (try-symbols-inverse primitive-list-instance
+                                                 arg
+                                                 own
+                                                 (lambda ()
+                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
+(define primitive-list-class-instance (get-class-instance primitive-list-class))
+
+
+;future
+(define primitive-future-class
+  (create-primitive-class delegate-to-class-class-instance
+                          delegate-to-class-class-instance-inverse
+                          (lambda (arg own)
+                            (try-symbols primitive-future-instance
+                                         arg
+                                         own
+                                         (lambda ()
+                                           (invoke primitive-funject-class-instance arg own))))
+                          (lambda (arg own)
+                            (try-symbols-inverse primitive-future-instance
+                                                 arg 
+                                                 own
+                                                 (lambda ()
+                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
+(define primitive-future-class-instance (get-class-instance primitive-future-class))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ;;;;    Primitives
 
-(define primitive-funject-god
-  (create-primitive (lambda (arg own)
-                      (cond 
-                        [(lang? 'Symbol arg)
-                         (lang-contents arg
-                                        (lambda (sym)
-                                          (cond 
-                                            [(equal? sym "is") (create-primitive-funject-is own)]
-                                            [(equal? sym "has?") primitive-funject-god-has?-match]
-                                            [else (user-error-cannot-find-match own arg)])))]
-                        [else (user-error-cannot-find-match "The primitive funject god" arg)]))
-                    (lambda (arg own)
-                      (user-error-cannot-find-match "The primitive funject god inversted" arg))))
+;class helpers (for primitive-funject-god)
+(define (create-delegate-instance-method-to-class class-itself)
+  (let* ((instance-prototype (invoke class-itself (create-lang 'Symbol "instance"))))
+    (lambda (method-name self)
+      (let* ((method (invoke instance-prototype method-name)))
+        (if (has?-match method (create-lang-list-mlist self))
+         (invoke method (create-lang-list-mlist self))
+         (create-primitive (lambda (arg own)
+                             (invoke method (create-lang-list-mlist self arg)))
+                           (lambda (inverse-arg own)
+                             (lang-list-contents inverse-arg
+                                                 user-error-cannot-find-match
+                                                 (lambda (result arg)
+                                                   (invoke-inverse method (create-lang 'List (mlist result (create-lang 'List (mlist self arg))))))))))))))
 
+(define (create-delegate-instance-method-inverse-to-class class-itself) ;Yak does not currently support (most) inverses of instances.
+    (lambda (arg own) ; I need to wrap user-error-cannot-find-match to resolve a cyclic dependency.
+      (user-error-cannot-find-match arg own)))
+
+(define primitive-funject-god
+  (let ((delegate (create-delegate-instance-method-to-class primitive-funject-class))
+        (delegate-inverse (create-delegate-instance-method-inverse-to-class primitive-funject-class)))
+    (create-primitive (lambda (arg own)
+                        (cond 
+                          [(lang? 'Symbol arg)
+                           (lang-contents arg
+                                          (lambda (sym)
+                                            (cond 
+                                              [(equal? sym "is") 
+                                               (create-primitive-funject-is own)]
+                                              [else 
+                                               (delegate arg own)])))]
+                          [else 
+                           (delegate arg own)]))
+                      delegate-inverse)))
 
 (define primitive-funject-inverse-god (create-primitive (primitive-inverse-of primitive-funject-god) (primitive-vanilla-of primitive-funject-god)))
 
-(define primitive-default-parent (primitive-vanilla-of primitive-funject-god))
+(define default-primitive-parent (primitive-vanilla-of primitive-funject-god))
 
-(define primitive-default-inverse (primitive-vanilla-of primitive-funject-inverse-god))
+(define default-primitive-inverse (primitive-vanilla-of primitive-funject-inverse-god))
 
 (define create-primitive-funject-is (create-primitive-infix-operator lang-any? ;to optimize, change this to sycophant
                                                                      lang-any? ;to optimize, change this to sycophant
@@ -2670,9 +3067,50 @@
                                                                      (lambda (result left)
                                                                        (if (equal? result (mlist 'Boolean true))
                                                                            (create-lang 'List left)
-                                                                           (user-error-cannot-find-match (list "is of " left) (create-lang 'List result (create-lang 'Unknown)))))))
+                                                                           (default-primitive-parent (create-lang-list-mlist result 
+                                                                                                                             (create-lang 'Unknown)))))))
 
-(define (funject-has? own arg . maybe-extra-bindings)
+(define (has?-match self arg . maybe-extra-bindings)
+  (or false ;insert non-symbol args here
+      (and (lang? 'Symbol arg)
+           (lang-contents arg
+                          (lambda (name)
+                            (or (->boolean (member name '("is" "==" "clone" "number?" "string?" "boolean?" "symbol?" "unknown?" "nil?" "list?" "integer?" "float?" "to-string" "inspect" "silently" "apply" "then" "on" "while-true" "do-while-true" "has?" "append" "insert" "is-member-of?" "is-kind-of?")))
+                                (and (lang? 'Class self)
+                                     (or (->boolean (member name '("superclass" "subclasses" "all-subclasses" "subclass?" "superclass?" "methods" "all-methods" "instance")))
+                                         (lang-contents self
+                                                        (lambda (exports super)
+                                                          (if (equal? self primitive-funject-class) (error "I might end up in an infinite loop of class inheritance!") 'ok)
+                                                          (or (has?-match exports arg)
+                                                              (has?-match super arg))))))
+                                (and (lang? 'Number self)
+                                     (->boolean (member name '("+" "-" "*" "/" "%" "^" "negated" "sqrt" "ln" "log" "sin" "cos" "tan" "sec" "csc" "cot" "asin" "acos" "atan" "atan/" "abs " "ceil" "floor" "round" "times"))))
+                                (and (lang? 'String self)
+                                     (->boolean (member name '("*" "+" "length" "contains?" "begins-with?" "ends-with?" "index-of" "last-index-of" "split" "substring" "replace" "replace-first" "repeat" "uppercase" "lowercase" "swapcase" "capitalize" "titlecase"))))
+                                (and (lang? 'Boolean self)
+                                     (->boolean (member name '("and" "or" "xor" "not"))))
+                                (and (lang? 'Nil self)
+                                     (->boolean (member name '("nil?"))))
+                                (and (lang? 'Unknown self)
+                                     (->boolean (member name '("unknown?"))))
+                                (and (lang? 'Symbol self)
+                                     (->boolean (member name '("to-string"))))
+                                (and (lang? 'List self)
+                                     (->boolean (member name '("*" "+" "length" "count" "empty?" "contains?" "delete-at!" "delete-at" "insert!" "insert" "pop!" "pop" "push!" "push" "shift!" "shift" "unshift!" "unshift" "index-of" "last-index-of" "join" "sort!" "sort" "sort!" "sort" "map!" "map" "pluck!" "pluck" "invoke!" "invoke" "filter!" "filter" "reject!" "reject" "reduce" "reduce-right" "every" "any" "first" "first" "last" "last" "take!" "take" "take-while!" "take-while" "drop!" "drop" "drop-while!" "drop-while" "union!" "union" "intersection!" "intersection" "unique!" "unique" "difference!" "difference" "remove!" "remove" "remove-all!" "remove-all" "compact!" "compact" "shuffle!" "shuffle" "reverse!" "reverse"))))
+                                (and (lang? 'Future self)
+                                     (->boolean (member name '("touch"))))
+                                (and (lang? 'Funject self)
+                                     (funject-has?-match self arg self))
+                                (and (primitive? self) ;I ensure that self is primitive; if I try to invoke self, the interpreter may loop between "has?" and invoke.
+                                     (try
+                                      (begin (invoke self arg) true)
+                                      (catch (lambda (ex)
+                                               (if (lang-error-cannot-find-match? ex)
+                                                   false
+                                                   (raise ex))))))))))))
+(define (lang-has?-match own arg . maybe-extra-bindings)
+  (invoke (invoke own (create-lang 'Symbol "has?")) (create-lang-list-mlist arg)))
+(define (funject-has?-match own arg . maybe-extra-bindings)
   (or (not (lang? 'Funject own))
       (mcadr (apply invoke (append (list (create-primitive-has?-match own) arg)
                                    maybe-extra-bindings)))))
@@ -2726,25 +3164,25 @@
                                                          (lang-contents str
                                                                         display))))
                                lang-nil)))
-                    (primitive-vanilla-of primitive-funject-inverse-god)))
+                    default-primitive-inverse))
 
 (define primitive-print
   (create-primitive (lambda (arg own)
                       ((primitive-vanilla-of primitive-put) arg own)
                       (newline)
                       lang-nil)
-                    (primitive-vanilla-of primitive-funject-inverse-god)))
+                    default-primitive-inverse))
 
 (define primitive-by
   (create-primitive (lambda (arg own)
                       (create-primitive (lambda (funject-list own)
                                           (lang-contents-typed funject-list
                                                                'List
-                                                               user-error-cannot-find-match
+                                                               (default-primitive-parent funject-list own)
                                                                (lambda (elems)
                                                                  (invoke (mcar elems) arg))))
-                                        primitive-default-inverse))
-                    primitive-default-inverse))
+                                        default-primitive-inverse))
+                    default-primitive-inverse))
 
 (define primitive-futures (make-hash))
 (define primitive-future
@@ -2765,7 +3203,7 @@
 (define primitive-touch
   (create-primitive (lambda (arg own)
                       (touch (unbridge arg)))
-                    primitive-default-inverse))
+                    default-primitive-inverse))
 
 (define create-primitive-number-+ (create-primitive-unoverloaded-infix-operator 'Number 'Number + -))
 
@@ -2811,7 +3249,7 @@
                                                          (bind-funject-pair (create-funject-pair (tokenize 'Parameter "@else")
                                                                                                  (mlist 'Unevaled (lambda (env)
                                                                                                                     (let ((meth (invoke instance (lookup-identifier "@else" env))))
-                                                                                                                      (if (funject-has? meth (create-lang 'List (mlist self)))
+                                                                                                                      (if (funject-has?-match meth (create-lang 'List (mlist self)))
                                                                                                                           (invoke meth (create-lang 'List (mlist self)) meth (env-pairs-for-private-of self))
                                                                                                                           (create-primitive-class-instance-method meth self))))))
                                                                             module-env))
@@ -2830,8 +3268,7 @@
                                                              (create-lang 'List (mlist self constructor-arg))
                                                              (env-pairs-for-private-of self))
                         self)
-                      (lambda (arg own)
-                        (invoke primitive-funject-inverse-god arg own)))))
+                      default-primitive-inverse)))
 
 (define (create-primitive-class-instance-method meth self)
   (create-primitive (lambda (arg own) 
@@ -2856,12 +3293,18 @@
 
 
 
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
+
+
+
+
+;;;;    Builtin Class & Instance Primitives
+
 ;;;;    Class Primitives
 
 (define (placeholder) (error "You called a placeholder!"))
@@ -2879,12 +3322,6 @@
                       (error (string-append "You called the inverse of the placeholder called \""
                                             (->string name)
                                             "\"!")))))
-                      
-
-(define primitive-class-method-subclass? primitive-placeholder)
-(define primitive-class-method-superclass? primitive-placeholder)
-
-;;;;    Builtin Class & Instance Primitives
 
 ;; Class 
 
@@ -2930,7 +3367,18 @@
 (hash-set! primitive-funject-instance "on" (primitive-placeholder-named "on"))
 (hash-set! primitive-funject-instance "while-true" (primitive-placeholder-named "while-true"))
 (hash-set! primitive-funject-instance "do-while-true" (primitive-placeholder-named "do-while-true"))
-(hash-set! primitive-funject-instance "has?" (primitive-placeholder-named "has?"))
+
+(hash-set! primitive-funject-instance "has?" (create-primitive (lambda (arg own)
+                                                                 (lang-list-n-contents arg
+                                                                                       2
+                                                                                       (lambda (self arg)
+                                                                                         (lang-list-n-contents arg
+                                                                                                               1
+                                                                                                               (partial default-primitive-parent self arg)
+                                                                                                               (lambda (sym)
+                                                                                                                 (create-lang 'Boolean (has?-match self sym)))))))
+                                                               default-primitive-inverse))
+
 (hash-set! primitive-funject-instance "append" (primitive-placeholder-named "append"))
 (hash-set! primitive-funject-instance "insert" (primitive-placeholder-named "insert"))
 (hash-set! primitive-funject-instance "is-member-of?" (primitive-placeholder-named "is-member-of?"))
@@ -2963,9 +3411,9 @@
                                                   (lambda (result elems)
                                                     (lang-contents-typed result
                                                                          'Number
-                                                                         user-error-cannot-find-match
+                                                                         (partial default-primitive-parent result--arg own)
                                                                          (lambda (result)
-                                                                           (user-assert (= 2 (mlength elems)) (user-error-cannot-find-match))
+                                                                           (user-assert (= 2 (mlength elems)) (default-primitive-parent result--arg own))
                                                                            (mlist-contents elems
                                                                                            (lambda (a b)
                                                                                              (define (assume-known known)
@@ -2976,7 +3424,7 @@
                                                                                                [(lang? 'Unknown b)
                                                                                                 (assume-known b)]
                                                                                                [else
-                                                                                                (user-error-cannot-find-match)]))))))))))
+                                                                                                (default-primitive-parent result--arg own)]))))))))))
 
   
 (hash-set! primitive-number-instance "-" (primitive-placeholder-named "Number::-"))
@@ -3054,7 +3502,7 @@
 (hash-set! primitive-nil-instance "nil?" (create-primitive (lambda (arg own)
                                                              (lang-list-n-contents arg
                                                                                    1
-                                                                                   user-error-cannot-find-match
+                                                                                   (partial default-primitive-parent arg own)
                                                                                    (lambda (possibly-nil)
                                                                                      (cond
                                                                                        [(lang? 'Nil possibly-nil)
@@ -3068,10 +3516,10 @@
                                                                                          (lambda (result elems)
                                                                                            (unless (and (= 1 (mlength elems))
                                                                                                         (lang? 'Unknown (mcar elems)))
-                                                                                             (user-error-cannot-find-match)
+                                                                                             (default-primitive-parent result--arg own)
                                                                                              (if result
                                                                                                  (create-lang-list-mlist (create-lang 'Nil))
-                                                                                                 (user-error-cannot-find-match))))))))
+                                                                                                 (default-primitive-parent result--arg own))))))))
 
 
 ;;Unknown
@@ -3094,10 +3542,10 @@
                                                                                                  (lambda (result elems)
                                                                                                    (unless (and (= 1 (mlength elems))
                                                                                                                 (lang? 'Unknown (mcar elems)))
-                                                                                                     (user-error-cannot-find-match)
+                                                                                                     (default-primitive-parent result--arg own)
                                                                                                      (if result
                                                                                                          (create-lang-list-mlist (create-lang 'Unknown))
-                                                                                                         (user-error-cannot-find-match))))))))
+                                                                                                         (default-primitive-parent result--arg own))))))))
 
 
 ;;Symbol
@@ -3110,26 +3558,26 @@
 (hash-set! primitive-symbol-instance "to-string" (create-primitive (lambda (arg own)
                                                                      (lang-list-n-contents arg
                                                                                            1
-                                                                                           user-error-cannot-find-match
+                                                                                           (partial default-primitive-parent arg own)
                                                                                            (lambda (lang-sym)
                                                                                              (lang-contents-typed lang-sym
                                                                                                                   'Symbol
-                                                                                                                  (lambda () (user-error-cannot-find-match arg own))
+                                                                                                                  (lambda () ((partial default-primitive-parent arg own) arg own))
                                                                                                                   (partial create-lang 'String)))))
                                                                    (lambda (arg own)
                                                                      (lang-list-n-contents arg
                                                                                            2
-                                                                                           user-error-cannot-find-match
+                                                                                           (partial default-primitive-parent arg own)
                                                                                            (lambda (result arg)
                                                                                              (lang-list-n-contents arg
                                                                                                                    1
-                                                                                                                   user-error-cannot-find-match
+                                                                                                                   (partial default-primitive-parent arg own)
                                                                                                                    (lambda (maybe-unknown)
                                                                                                                      (unless (lang? 'Unknown maybe-unknown)
-                                                                                                                             (user-error-cannot-find-match own arg)
+                                                                                                                             (partial default-primitive-parent arg own)
                                                                                                                              (lang-contents-typed result
                                                                                                                                                   'String
-                                                                                                                                                  user-error-cannot-find-match
+                                                                                                                                                  (partial default-primitive-parent arg own)
                                                                                                                                                   (lambda (internal)
                                                                                                                                                     (create-lang-list-mlist (create-lang 'Symbol internal))))))))))))
            
@@ -3211,278 +3659,32 @@
 (hash-set! primitive-list-instance "reverse" (primitive-placeholder-named "list-reverse"))
 
 
+;;Future
+
+;class (none)
+
+(define primitive-future-instance (make-hash))
+(hash-set! primitive-future-instance "touch" (create-primitive (lambda (arg own)
+                                                                 (lang-list-n-contents arg
+                                                                                       1
+                                                                                       (partial default-primitive-parent arg own)
+                                                                                       (lambda (fut)
+                                                                                         (invoke primitive-touch fut))))
+                                                               default-primitive-inverse))
 
 
 
 
-  
-  
-  
-  
-  
-  
-;;;;     Builtin classes
-
-;;helpers
-
-(define (create-primitive-class class-itself class-inverse instance instance-inverse)
-  (let ((class-itself (create-primitive class-itself
-                                        class-inverse))
-        (instance (create-primitive instance
-                                    instance-inverse)))
-     (create-primitive (lambda (arg own)
-                         (if (equal-lang? 'Symbol arg "instance")
-                             instance
-                             (invoke class-itself arg own)))
-                       (lambda (arg own)
-                         (if (lang-equal? arg instance)
-                             (create-lang 'List (mlist (create-lang 'Symbol "instance")))
-                             ((primitive-inverse-of class-itself) arg own))))))
-
-(define (try-symbols methods
-                     arg
-                     own
-                     on-failure)
-  (lang-contents-typed arg
-                       'Symbol
-                       on-failure
-                       (lambda (name)
-                         (hash-if-match methods 
-                                        name
-                                        (lambda (name method)
-                                          method)
-                                        (lambda (k) (on-failure))))))
-
-(define (try-symbols-inverse methods
-                             arg
-                             own
-                             on-failure)
-  (lang-list-contents arg
-                      (lambda (result maybe-unknown)
-                        (unless (lang? 'Unknown maybe-unknown)
-                                (on-failure)
-                                (hash-if-val-match methods 
-                                                   result
-                                                   (lambda (name v)
-                                                     (let ((possible-answer (create-lang 'Symbol name)))
-                                                       (unless (equal? result (invoke own possible-answer))
-                                                         (on-failure)
-                                                         (create-lang-list-mlist possible-answer))))
-                                                   (lambda (k) 
-                                                     (on-failure)))))))
-
-(define (get-class-instance klass)
-  (invoke klass (create-lang 'Symbol "instance")))
 
 
-;class
-
-(define primitive-class-class
-  (create-primitive-class (lambda (arg own)
-                            (invoke primitive-funject-class-instance arg own))
-                          (lambda (arg own)
-                            (invoke-inverse primitive-funject-class-instance arg own))
-                          (lambda (arg own)
-                            (try-symbols primitive-class-instance
-                                         arg
-                                         own
-                                         (lambda ()
-                                           (invoke primitive-funject-class-instance arg own))))
-                          (lambda (arg own)
-                            (try-symbols-inverse primitive-class-instance
-                                                 arg
-                                                 own
-                                                 (lambda ()
-                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
-(define primitive-class-class-instance (get-class-instance primitive-class-class))
-
-; funject
-(define primitive-funject-class
-  (create-primitive-class (lambda (arg own)
-                            (cond
-                              [(equal-lang? 'Symbol "superclass" arg)
-                               (placeholder)]
-                              [(equal-lang? 'Symbol "subclasses" arg)
-                               (placeholder)]
-                              [(equal-lang? 'Symbol "all-subclasses" arg)
-                               (placeholder)]
-                              [(equal-lang? 'Symbol "methods" arg)
-                               (placeholder)]
-                              [(equal-lang? 'Symbol "all-methods" arg)
-                               (placeholder)]))
-                          primitive-default-inverse
-                          (lambda (arg own)
-                            (try-symbols primitive-funject-instance
-                                         arg 
-                                         own
-                                         (lambda ()
-                                           (user-error-cannot-find-match arg own))))
-                          (lambda (arg own)
-                            (cond
-                              (try-symbols-inverse primitive-funject-instance
-                                                   arg 
-                                                   own
-                                                   (lambda ()
-                                                     (user-error-cannot-find-match arg own)))))))
-(define primitive-funject-class-instance (get-class-instance primitive-funject-class))
-                          
-
-; number
-(define primitive-number-class 
-  (create-primitive-class (lambda (arg own)
-                            (cond
-                              [(equal-lang? 'Symbol arg "e") 
-                               (create-lang 'Number 2.71828182845904523536028747135266249775724709369995)]
-                              [(equal-lang? 'Symbol arg "pi") 
-                               (create-lang 'Number 3.14159265358979323846264338327950288419716939937510)]
-                              [(lang? 'List arg)
-                               (lang-contents arg
-                                              (lambda (elems)
-                                                (unless (= 1 (mlength elems))
-                                                        (user-error-cannot-find-match "Number" arg)
-                                                        (invoke (mcar elems) (create-lang 'Symbol "to-number")))))]
-                              [else
-                               (invoke primitive-funject-class arg primitive-number-class)]))
-                          (lambda (result--arg own)
-                            (lang-list-contents result--arg
-                                                user-error-cannot-find-match
-                                                (lambda (result arg)
-                                                  (cond
-                                                    [(equal-lang? 'Number result 2.71828182845904523536028747135266249775724709369995)
-                                                     (create-lang 'List (mlist (create-lang 'Symbol "e")))]
-                                                    [(equal-lang? 'Number result 3.14159265358979323846264338327950288419716939937510)
-                                                     (create-lang 'List (mlist (create-lang 'Symbol "pi")))]
-                                                    [(equal? result (invoke primitive-number-class (create-lang 'Symbol "instance")))
-                                                     (create-lang 'List (mlist (create-lang 'Symbol "instance")))]
-                                                    [else
-                                                     (user-error-cannot-find-match "Number" result--arg)]))))
-                          (lambda (arg own)
-                            (try-symbols primitive-number-instance
-                                         arg 
-                                         own
-                                         (lambda ()
-                                           (invoke primitive-funject-class-instance arg own))))
-                          (lambda (arg own)
-                            (cond
-                              (try-symbols-inverse primitive-number-instance
-                                                   arg 
-                                                   own
-                                                   (lambda ()
-                                                     (invoke-inverse primitive-funject-class-instance arg own)))))))
-(define primitive-number-class-instance (get-class-instance primitive-number-class))
-
-;string
-(define primitive-string-class
-  (create-primitive-class (primitive-vanilla-of primitive-class-class-instance)
-                          (primitive-inverse-of primitive-class-class-instance)
-                          (lambda (arg own)
-                            (try-symbols primitive-string-instance
-                                         arg
-                                         own
-                                         (lambda ()
-                                           (invoke primitive-funject-class-instance arg own))))
-                          (lambda (arg own)
-                            (try-symbols-inverse primitive-string-instance
-                                                 arg 
-                                                 own
-                                                 (lambda ()
-                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
-(define primitive-string-class-instance (get-class-instance primitive-string-class))
 
 
-;boolean
-(define primitive-boolean-class
-  (create-primitive-class (primitive-vanilla-of primitive-class-class-instance)
-                          (primitive-inverse-of primitive-class-class-instance)
-                          (lambda (arg own)
-                            (try-symbols primitive-boolean-instance
-                                         arg
-                                         own
-                                         (lambda ()
-                                           (invoke primitive-funject-class-instance arg own))))
-                          (lambda (arg own)
-                            (try-symbols-inverse primitive-boolean-instance
-                                                 arg
-                                                 own
-                                                 (lambda ()
-                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
-(define primitive-boolean-class-instance (get-class-instance primitive-boolean-class))
 
 
-;symbol
-(define primitive-symbol-class
-  (create-primitive-class (primitive-vanilla-of primitive-class-class-instance)
-                          (primitive-inverse-of primitive-class-class-instance)
-                          (lambda (arg own)
-                            (try-symbols primitive-symbol-instance
-                                         arg
-                                         own
-                                         (lambda ()
-                                           (invoke primitive-funject-class-instance arg own))))
-                          (lambda (arg own)
-                            (try-symbols-inverse primitive-symbol-instance
-                                                 arg
-                                                 own
-                                                 (lambda ()
-                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
-(define primitive-symbol-class-instance (get-class-instance primitive-symbol-class))
 
 
-;nil
-(define primitive-nil-class
-  (create-primitive-class (primitive-vanilla-of primitive-class-class-instance)
-                          (primitive-inverse-of primitive-class-class-instance)
-                          (lambda (arg own)
-                            (try-symbols primitive-nil-instance
-                                         arg
-                                         own
-                                         (lambda ()
-                                           (invoke primitive-funject-class-instance arg own))))
-                          (lambda (arg own)
-                            (try-symbols-inverse primitive-nil-instance
-                                                 arg
-                                                 own
-                                                 (lambda ()
-                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
-(define primitive-nil-class-instance (get-class-instance primitive-nil-class))
 
 
-;unknown
-(define primitive-unknown-class
-  (create-primitive-class (primitive-vanilla-of primitive-class-class-instance)
-                          (primitive-inverse-of primitive-class-class-instance)
-                          (lambda (arg own)
-                            (try-symbols primitive-unknown-instance
-                                         arg
-                                         own
-                                         (lambda ()
-                                           (invoke primitive-funject-class-instance arg own))))
-                          (lambda (arg own)
-                            (try-symbols-inverse primitive-unknown-instance
-                                                 arg 
-                                                 own
-                                                 (lambda ()
-                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
-(define primitive-unknown-class-instance (get-class-instance primitive-unknown-class))
-
-
-;list
-(define primitive-list-class
-  (create-primitive-class (primitive-vanilla-of primitive-class-class-instance)
-                          (primitive-inverse-of primitive-class-class-instance)
-                          (lambda (arg own)
-                            (try-symbols primitive-list-instance
-                                         arg
-                                         own
-                                         (lambda ()
-                                           (invoke primitive-funject-class-instance arg own))))
-                          (lambda (arg own)
-                            (try-symbols-inverse primitive-list-instance
-                                                 arg
-                                                 own
-                                                 (lambda ()
-                                                   (invoke-inverse primitive-funject-class-instance arg own))))))
-(define primitive-list-class-instance (get-class-instance primitive-list-class))
 
 
 ;;;;    invoke-<builtin>
@@ -3492,36 +3694,14 @@
   (lambda (receiver arg own)
     (lang-contents-typed receiver
                          type
-                         user-error-cannot-find-match
+                         (raise-argument-error "I can only invoke the type I know!" type receiver)
                          (lambda internals
                            (lang-contents-typed arg
                                                 'Symbol
-                                                user-error-cannot-find-match
+                                                (partial default-primitive-parent arg own)
                                                 (lambda (name)
                                                   (apply callback (append (list receiver arg own) internals (list name)))))))))
 
-(define (create-delegate-instance-method-to-class class-itself)
-  (let* ((instance-prototype (invoke class-itself (create-lang 'Symbol "instance"))))
-    (lambda (method-name self)
-      (let* ((method (invoke instance-prototype method-name)))
-        (try 
-         (invoke method (create-lang-list-mlist self))
-         (catch (lambda (ex)
-                  (unless (and (lang-error? ex)
-                               (equal? 'cannot-find-match (lang-error-name ex)))
-                          (raise ex)
-                          (create-primitive (lambda (arg own)
-                                              (invoke method (create-lang-list-mlist self arg)))
-                                            (lambda (inverse-arg own)
-                                              (lang-list-contents inverse-arg
-                                                                  user-error-cannot-find-match
-                                                                  (lambda (result arg)
-                                                                    (invoke-inverse method (create-lang 'List (mlist result (create-lang 'List (mlist self arg)))))))))))))))))
-
-(define (create-delegate-instance-method-inverse-to-class class-itself) ;Yak does not currently support (most) inverses of instances.
-    (lambda (self arg)
-      (invoke primitive-default-inverse arg self)))
-    
 
 ;number
 (define invoke-number
@@ -3529,7 +3709,7 @@
      (define delegate (create-delegate-instance-method-to-class primitive-number-class))
      (lambda (receiver arg own)
        (unless (lang? 'Symbol arg)
-               (invoke primitive-funject-god arg own)
+               (delegate arg own)
                (lang-contents arg
                               (lambda (str)
                                 (cond 
@@ -3542,7 +3722,7 @@
                                   [(equal? str "/") 
                                    (create-primitive-number-/ (mcadr receiver))]
                                   [else 
-                                   (delegate receiver arg own)]))))))))
+                                   (delegate arg own)]))))))))
 
 (define invoke-inverse-number ;takes receiver arg own
   ((lambda ()
@@ -3678,6 +3858,26 @@
          [else
           (delegate arg own)])))))
 
+;future
+(define invoke-future
+  ((lambda ()
+     (define delegate (create-delegate-instance-method-to-class primitive-future-class))
+     (create-invoke-type 'Future
+                         (lambda (receiver arg own name)
+                           (cond
+                             [(equal? name "touch") 
+                              (invoke primitive-touch own)]
+                             [else
+                              (delegate arg own)]))))))
+
+(define invoke-inverse-future
+  ((lambda ()
+     (define delegate (create-delegate-instance-method-inverse-to-class primitive-future-class))
+     (lambda (receiver arg own)
+       (cond
+         [else
+          (delegate arg own)])))))
+
 
 
 
@@ -3694,7 +3894,7 @@
 (define (private-of funject) (env-get funject privates))
 
 
-(define global-env (env-create (env-pairs (create-env-pair-strict "Funject" primitive-funject-god)
+(define global-env (env-create (env-pairs (create-env-pair-strict "Funject" primitive-funject-class)
                                           (create-env-pair-strict "Number" primitive-number-class)
                                           (create-env-pair-strict "String" primitive-string-class)
                                           (create-env-pair-strict "Boolean" primitive-boolean-class)
@@ -3703,6 +3903,7 @@
                                           (create-env-pair-strict "Unknown" primitive-unknown-class)
                                           (create-env-pair-strict "List" primitive-list-class)
                                           (create-env-pair-strict "Class" primitive-class-class)
+                                          (create-env-pair-strict "Future" primitive-future-class)
                                           (create-env-pair-strict "+" (create-lang 'Symbol "+"))
                                           (create-env-pair-strict "-" (create-lang 'Symbol "-"))
                                           (create-env-pair-strict "*" (create-lang 'Symbol "*"))
@@ -3757,7 +3958,9 @@
                    (foldl (lambda (str rest)
                             (string-append rest 
                                            "" 
-                                           str))
+                                           (if (string? str)
+                                               str
+                                               (->string str))))
                           ""
                           contents))))
 
@@ -3780,6 +3983,10 @@
      (apply (lambda (receiver arg)
               (user-error 'cannot-find-match "I find no pattern matching " arg " in " receiver))
             args)]))
+
+(define (lang-error-cannot-find-match? ex)
+  (and (lang-error? ex)
+       (equal? 'cannot-find-match (lang-error-name ex))))
 
 (define (user-error-cannot-reset-unset-variable var) (user-error 'cannot-reset-unset-variable "You tried to reset the variable " var ", but you haven't even assigned it yet!"))
 
@@ -3901,7 +4108,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Executable interface
 
-(let ((argv (current-command-line-arguments)))
+#|(let ((argv (current-command-line-arguments)))
   (unbridge (mlast (cond
                      [(= 0 (vector-length argv))
                       (interpret (port->string (current-input-port)))]
@@ -3911,5 +4118,4 @@
                      [else
                       (vector-map (lambda (path)
                                     (interpret (file->string path)))
-                                  argv)]))))
-
+                                  argv)]))))|#
