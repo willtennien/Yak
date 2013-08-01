@@ -8,14 +8,16 @@
 	Yak is a dynamic language, and like many other existing dynamic languages (Python, Ruby, Javascript, Lua, Smalltalk, etc.) you can perform basic mathematical calculations by simply writing the expression out. Here are some examples:
 </p>
 <code>
-	# Before we show you the match examples, this is a quick example of a comment!
-	# We're showing you this now because they'll be used a lot in code blocks for explaining things.
-	# Anything that comes after a pound sign is a comment. Commends are pieces of code that are completely
-	# ignored when the code is run. Yak just skips over them. Comments are used to explain
-	# or document pieces of code.
+	>> # Before we show you the match examples, this is a quick example of a comment!
+	>> # We're showing you this now because they'll be used a lot in code blocks for explaining things.
+	>> # Anything that comes after a pound sign is a comment. Commends are pieces of code that are completely
+	>> # ignored when the code is run. Yak just skips over them. Comments are used to explain
+	>> # or document pieces of code.
 
 	>> 10 # Entering anything withuout any operands simply evaluates to itself so 10 evaluates to 10! Simple enough, right?
 	10
+	>> # Notice how after doing anything (excepting comments), what it evaluates to is printed on the next line.
+	>> #If it doesnt evaluate to anything, "nil" will be printed on the next line.
 	>> 3 + 2 # Now, for addition
 	5
 	>> 2 + 3 # You can switch the operands like in normal addition
@@ -86,6 +88,84 @@
 	Undefined variable speed
 	  at input:1:1
 </code>
+<h2>Strings</h2>
+<p>
+	Strings are the next data type available in funject. Strings represent test. String values can be created by enclosing text in either double, or single quotes.
+</p>
+<code>
+	>> 'This is a string value!'
+	'This is a string value'
+	>> "This is also a string value"
+	'This is also a string value'
+	>> "This is not a string!' # You can't mix single and double quotes, if you start a string with one type, you have to end it with that type.
+	Unterminated string at input:4:1
+	>> 'You can use "double quotes" inside single quoted strings'
+	'You can use "double quote" inside single quoted strings'
+	>> "And you can use 'single quotes' inside double quoted strings"
+	'And you can use \'single quotes\' inside double quoted strings'
+</code>
+<p>
+	The "print" funject. We haven't learned about funject calls yet, but bear with us, and trust that we will explain in full detail what's going on later, for now, all you need to know is this: The print funject prints a string. When you call the print funject, it will write the string you give it to the console. Here's an example of how to use the print funject
+</p>
+<code>
+	>> print['This string will be printed to the console!']
+	This string will be printed to the console!
+	nil
+	>> print['This string is cooler though...']
+	This string is cooler though...
+	nil
+</code>
+<p>
+	Now we've seen how to make strings, and print them, so let's say you want to combine two strings into one string. You would to this using "concatenation". You can concatenate strings like this:
+</p>
+<code>
+	>> print['This string ' + 'will be attached to this string']
+	This string will be attached to this string
+	nil
+	>> # You can also concatenate multiple strings at once like this
+	>> print['This string ' + 'will be attached to this one, AND ' + 'this one!']
+	This string will be attached to this one, AND this one!
+	nil
+	>> # You can even do this:
+	>> fruitSalad = 'apples' + 'and ' + 'oranges ' + 'and ' + 'grapes ' + 'and ' + 'bananas'
+	'apples and oranges and grapes and bananas'
+	>> print[fruitSalad + ' are ' + 'yummy, yummy!']
+	apples and oranges and grapes and bananas are yummy, yummy!
+	nil
+</code>
+<p>
+	There are also some characters that can't be written in strings. If you want to use them in a string, you instead input the character "\" followed by the code for the character you want to replace. Heres a list of commonly used escapes:
+</p>
+<ul>
+	<li>\n is a new line character</li>
+	<li>\r is a carriage return character. These are used in windows line endings, but dont worry about them too much, just use \n</li>
+	<li>\t is a horizontal tab character</li>
+	<li>\' escapes a single quote (for use in a single quote encapsulated string)</li>
+	<li>\" escapes a double quote (for use in a double quote encapsulated string)</li>
+	<li>\\ escapes the escape character, so it represents a backslash</li>
+</ul>
+<p>
+	Here's an example for the use of each escape character
+</p>
+<code>
+	>> print['This makes\na new line']
+	This makes
+	a new line
+	nil
+	>> print['\t Makes a tab character']
+		Makes a tab character
+	nil
+	>> print['With escapes, you can use a \'single quote\' inside of a single quoted string']
+	With escapes, you can use a a 'single quote' inside of a double quoted string
+	nil
+	>> print["or \"double quotes\" within a double quoted string"]
+	or "double quotes" within a double quoted string
+	nil
+	>> print['And last but not least, you can use the \\ character by escaping it with itself!']
+	And last but not least, you can use the \ character by escaping it with itself!
+	nil
+</code>
+
 
 
 
