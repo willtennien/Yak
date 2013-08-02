@@ -73,7 +73,7 @@ Symbols are like Strings but you can't edit the characters in them as easily. Th
 
 <h3>Nil</h3>
 
-The only funject of type Nil is <code>nil</code>. It represents "nothingness", much like Java's <code>null</code>, C's null pointer, Python's <code>None</code>, or Ruby's <code>nil</code>. For example, a funject that returns the index of an element in an array and fails to find an element in a particular array would probably return <code>nil</code>. 
+The only funject of type Nil is <code>nil</code>. It represents "nothingness", much like Java's <code>null</code>, C's null pointer, Python's <code>None</code>, or Ruby's <code>nil</code>. For example, a funject that returns the index of an element in an list and fails to find an element in a particular list would probably return <code>nil</code>. 
 
 <h3>Unknown</h3>
 
@@ -207,6 +207,27 @@ During the execution of a consequent, a funject has access to a special keyword 
 
 This definition also uses the mathematical operations times (<code>*</code>) and minus (<code>-</code>). The interpreter actually handles mathematical operations in an interesting way; the interpreter does not handle them as a special case, operation, or syntax but handles them as standard library funjects. Suffice it to know for now that the interpreter evaluates <code>a + b</code> as the sum of <code>a</code> and <code>b</code>, <code>a - b</code> as the difference of <code>a</code> and <code>b</code>, <code>a * b</code> as the product, and <code>a / b</code> as the quotient. 
 
+<h1>Intermezzo: Comments</h1>
+
+Yak supports single and multiline comments. Single line comments begin with a pound (<code>#</code>), like in every other damn scripting language.
+
+#I'm a comment!
+
+'the interpreter will evaluate me!'
+
+#the interpreter won't evaluate me, though.
+
+You delinate multiline comments with <code>#|</code> and <code>|#</code>. You can nest comments, like in this example:
+
+#|
+	I'm in a comment
+	#|
+		I, too, am in a comment
+		I'm yet another line.
+I have hokey, but legal, identation.
+	|# 
+I get the last word (budum-cshh). |#
+
 
 <h1>Variables and Assignment</h1>
 
@@ -245,7 +266,7 @@ y
 
 In this case, the interpreter first sets x equal to 0, sets y equal to the lazy expression <code>x</code>, resets x to 1, and finally evaluates y. Because it evaluates the expression <code>x</code> when it evaluates the last line, it evaluates y as 1. When we say that "y is x", we seem to mean that y is whatever x is. Because we used lazy assignment, we will find that y always equals whatever x does. But if we had used strict assignment, as many other languages solely support, the interpreter would have evaluated y as 0. 
 
-<code>Scope</code>
+<h3>Scope</h3>
 
 The interpreter evaluates the consequent of a funject in a scope that is newly created for each execution but that has access to the scope in which the funject was defined. For example:
 
@@ -271,5 +292,108 @@ When the interpreter evaluates <code>x |= 'inner'</code>, it searches for the va
 
 The interpreter evaluates the lazy reset assignment operator (<code>|:=</code>) in much the same way, but it delays the evaluation of the right hand side until you attempt to reference the variable. 
 
+<h1>Intermezzo: Conditionals & Sequences</h1>
 
-<h1>Inverses</h1>
+Yak supports conditionals (if-expressions) for convenience. They add no expressive power. They have two syntaxes and look much like CoffeeScript's conditionals:
+
+Form 1:
+
+if false
+	'this will not evaluate'
+else if 4 is 4
+	'Why yes, 4 is 4!'
+else print['Why include a print statement in a condition?']
+	'print statements always evaluate to nil'
+else
+	'this, too, will never evaluate'
+
+Form 2:
+
+if 8 is 2 then "8 is 2?" else "8 isn't 2!"
+
+In both forms you may omit the <code>else</code> clause. If expressions are expressions, and evaluate to the evaluated clause. If the condition of a conditional evaluates to anything but <code>true</code> or <code>false</code>, the interpreter attempts to coerce it to a Boolean by invoking it with the symbol <code>.to-boolean</code>: <code>condition.to-boolean<code>. If this fails to match—just as when any argument fails to match—the interpreter throws an error. If the condition of a conditional evaluates to false and has no <code>else</code> clause, the entire conditional evaluates to <code>nil</code>.
+
+
+
+
+<h1>Patterns & Inverses</h1>
+
+Yak supports extensive pattern matching. For example, you can match a deeply nested list:
+
+{ [1, [[@x], [3]], 4]: @x } [1, [[2], [3]], 4]
+
+The interpreter matches the parameter <code>@x</code> to <code>2</code> and evaluates the entire expression as <code>2</code>.
+
+You can also match invocations. To do so, you must define the <em>inverse</em> of a funject with the <code>&:lt;-</code> operator. The <code>&:lt;-</code> operator sets its right hand side to be the inverse of its left hand side. Inverse funjects must conform to certain criteria. 
+
+plus = {
+	[a, b]: a + b
+}
+
+plus <- {
+	[@result, [unknown, @b]]: [@result - @b]
+	[@result, [@a, unknown]]: [@result - @a]
+}
+
+The second of these two expressions sets the inverse of plus. You will understand its rules when I explain how the interpreter uses them. When the interpreter encounters an application in a pattern, it attempts to evaluate it. If it finds that the argument of the application contains a parameter, it checks to see whether the argument contains other parameters of a different name. If it does, the interpreter throws an error. Otherwise, it replaces all occurances of the unknown parameter with the special funject "<code>unknown</code>". It then passes the inverse of the funject a list of two elements: the first is the value the interpreter was attempting to match the application to; the second is this modified argument. Consider an example:
+
+{ ['fum', plus[@x, 27]]: @x + 10 }['fum', 42]
+
+The interpreter first attempts to match the pattern to the argument by matching 'fum' against 'fum'. Since this succeeds, it proceeds to match the application <code>plus[@a, 27]</code> against the <code>42</code>. It checks that the argument contains only one parameter, converts the only instance of it to <code>unknown</code>, and passes <code>[42, [unknown, 27]]</code> to the inverse:
+
+{
+	[@result, [unknown, @b]]: [@result - @b]
+	[@result, [@a, unknown]]: [@result - @a]
+} [42, [unknown, 27]]
+
+The interpreter matches the first rule and evaluates this application of the inverse to <code>[42 - 27]</code>, <code>[15]</code>. The interpreter then sets the <em>possible</em> values of the unmatched parameter <code>@x</code> to the result of evaluating the inverse, in this case <code>[15]</code>. Each element in the list indicates a possible value for the parameter <code>@x</code>. You may return multiple possibilities in an list (or none with an empty list). If the interpreter were to evaluate another invocation and receiver other possible values for <code>@x</code> it would filter out those possibilities not present in both lists. If the interpreter ever finds that a parameter as no possible values, it moves on to the next rule (or throws an error if there are none). If the interpreter ever finishes matching a pattern and has multiple possibilities for a parameter, it chooses one randomly.
+
+In this case, the interpreter assigns <code>@x</code> to the only possibility, <code>15</code>. It then evaluates the consequent of the first funject—<code>@x + 10</code>—as <code>25</code>.
+
+Just as you can have multiple instances of the same parameter in a normal pattern, you can the same in an argument in a pattern. If we augment our inverse to this:
+
+plus <- {
+	[@result, [unknown, @b]]: [@result - @b]
+	[@result, [@a, unknown]]: [@result - @a]
+	[@result, [unknown, unknown]: [@result / 2]
+}
+
+The following expression,
+
+{ [plus[@x, @x]]: @x } [8] 
+
+will now evaluate to <code>4</code>.
+
+<h1>Intermezzo: Sequences</h1>
+
+A sequence is simply an indented series of expressions, each on their own line. A sequence can appear anywhere an expression can. Because all syntactic constructs in Yak are expressions, this is everywhere.
+
+Consider an example:
+
+y = 0
+x := 
+	y = y + 1
+	'this string accomplishes nothing'
+	y + 10
+
+Upon encountering a sequence, the interpreter evaluates each of the sub-expressions, in order, and then evaluates the result of the sequence as the last expression. Since sequences do not have their own scope, the following calls will each increment y.
+
+x #this is 11
+
+#y is now 1
+
+100 + x #this is 112
+
+#y is now 2
+
+1000 + x #this is 1013
+
+#y is now 3
+
+10000 + x #this is 10014
+
+#y is now 4
+
+
+<h1>Intermezzo: How do numbers work?</h1>
+
