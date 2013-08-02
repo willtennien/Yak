@@ -165,7 +165,54 @@
 	And last but not least, you can use the \ character by escaping it with itself!
 	nil
 </code>
-
+<p>
+	Behind the scenes, strings are actually just a bunch of characters strung together. (hence why they're called "strings"). This means that if yuo want to, you can get an individual character from a string like this:
+</p>
+<code>
+	>> lyric = 'bananas'
+	'bananas'
+	>> print['This **** is ' + lyric]
+	This **** is bananas
+	nil
+	>> print[lyric[0]]
+	b
+	nil
+	>> print[lyric[1]]
+	a
+	nil
+	>> print[lyric[2]]
+	n
+	nil
+	>> print[lyric[3]]
+	a
+	nil
+	>> print[lyric[4]]
+	n
+	nil
+	>> print[lyric[5]]
+	a
+	nil
+	>> print[lyric[6]]
+	s
+	nil
+</code>
+<p>
+	If you try and get the character at a negative index, it gives you the character at that index if you were counting from the end! -0 Is the same as 0, so the last character is indexed at -1
+</p>
+<code>
+	>> word = 'hello!'
+	'hello!'
+	>> reversed = word[-1] + word[-2] + word[-3] + word[-4] + word[-5]
+	'!olleh'
+</code>
+<h2>Lists</h2>
+<p>
+	Lists are essentially a single data type that can hold other data types. They're exactly like they sound, a way to <em>list</em> or group other values. Note that lists <em>can</em> contain multiple different type, but do not have to. Lists look like this.
+</p>
+<code>
+	>> tenToPowersAndFruits = ['apples', 10, 'banana', 100, 'starfruit', 10000]
+	['apples', 10, 'banana', 100, 'starfruit', 1000]
+</code>
 
 
 
