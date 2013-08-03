@@ -1,8 +1,7 @@
 <h1>Yak For New Programmers</h1>
 <h2>What is Yak?</2>
 <p>
-	Yak is the first language ever of the funject paradigm. This means that rather than using traditional objects, or functions, Yak combines both concepts into a brand new thing called a Funject. Funjects are in essence the best parts of objects, the best parts of functions put together with some cool new ideas to make them mesh nicely with eachother.
-</p>
+	Yak is the first language ever of the funject paradigm. This means that rather than using traditional objects, or functions, Yak combines both concepts into a brand new thing called a funject. funjects are in essence the best parts of objects, the best parts of functions put together with some cool new ideas to make them mesh nicely with eachother. For those reading this who are already comfortable with programming, or who are very familiar with another dynamic language, you may wish to skim the first few sections, until you reach the secion on funjects, which is where we begin to explain all the new conecpts that make Yak different from other languages.
 <h2>Math</h2>
 <p>
 	Yak is a dynamic language, and like many other existing dynamic languages (Python, Ruby, Javascript, Lua, Smalltalk, etc.) you can perform basic mathematical calculations by simply writing the expression out. Here are some examples:
@@ -37,7 +36,7 @@
 	>> 10 % 2 # There's even modulo!
 	0
 	# Another note before we move on...
-	#|
+	#|Fobjec
 		Block comments look like this!
 		A block comment is a comment that spans multiple lines!
 		This is useful for writing long comments without having to add a new comment character ('#')
@@ -90,7 +89,7 @@
 </code>
 <h2>Strings</h2>
 <p>
-	Strings are the next data type available in funject. Strings represent test. String values can be created by enclosing text in either double, or single quotes.
+	Strings are the next data type available in funject. Strings represent text. String values can be created by enclosing text in either double, or single quotes.
 </p>
 <code>
 	>> 'This is a string value!'
@@ -105,7 +104,7 @@
 	'And you can use \'single quotes\' inside double quoted strings'
 </code>
 <p>
-	The "print" funject. We haven't learned about funject calls yet, but bear with us, and trust that we will explain in full detail what's going on later, for now, all you need to know is this: The print funject prints a string. When you call the print funject, it will write the string you give it to the console. Here's an example of how to use the print funject
+	The "print" funject is used to print values to the console. We haven't learned about funject calls yet, but bear with us, and trust that we will explain in full detail what's going on later, for now, all you need to know is this: The print funject prints a value. When you call the print funject, it will write the string you give it to the console. Here's an example of how to use the print funject
 </p>
 <code>
 	>> print['This string will be printed to the console!']
@@ -116,6 +115,7 @@
 	nil
 </code>
 <p>
+	Keep in mind that the "nil" printed after your string is there because as mentioned earlier, when something doesn't evaluate to anything, it instead writes nil as what it evaluated to. If you're running a yak file rather than using the R.E.P.L. (Read Evaluate Print Loop, a.k.a. the console version of yak), nil will not show up, as the results of expressions are only printed in the R.E.P.L. Note that print can be used for any data type! But for now, we'll just worry about strings.
 	Now we've seen how to make strings, and print them, so let's say you want to combine two strings into one string. You would to this using "concatenation". You can concatenate strings like this:
 </p>
 <code>
@@ -205,6 +205,33 @@
 	>> reversed = word[-1] + word[-2] + word[-3] + word[-4] + word[-5]
 	'!olleh'
 </code>
+<p>
+	One nice feature of strings, is the ability to get their length. This is done using the somelist.length property. This is particularly useful, as it allows you to easilly determine the index of the last element in the string.
+</p>
+<code>
+	>> animals = ['cow', 'chicken', 'horse', 'dog', 'cat', 'mouse', 'owl']
+	['cow', 'chicken', 'horse', 'dog', 'cat', 'mouse', 'owl']
+	>> animals.length
+	7
+	>> animals[animals.length - 1]
+	'owl'
+</code>
+<p>
+	Finally, because strings are so good at displaying information, you can get the string representation of anything by using the to-string funject. The to-string funject can be used like this:
+</p>
+<code>
+	>> 10.to-string # For example, numbers
+	'10'
+	>> (20 + 30).to-string
+	'50'
+	>> (3 / 2).to-string
+	'1.5'
+	>> 'You can even use to-string on strings! It doesn\'t do much though...'.to-string
+	'You can even use to-string on strings! It doesn\'t do much though...'
+	>> # nil is the special funject that is returned whenever an operation doesn't evalate to anything, and you can even use to-string on it!
+	>> nil.to-string
+	'nil'
+</code>
 <h2>Lists</h2>
 <p>
 	Lists are essentially a single data type that can hold other data types. They're exactly like they sound, a way to <em>list</em> or group other values. Note that lists <em>can</em> contain multiple different type, but do not have to. Lists look like this.
@@ -213,8 +240,157 @@
 	>> tenToPowersAndFruits = ['apples', 10, 'banana', 100, 'starfruit', 10000]
 	['apples', 10, 'banana', 100, 'starfruit', 1000]
 </code>
-
-
-
-
-
+<p>
+	Unlike strings, lists are mutable. This means that you can change a single element of the list, without reassigning the entire list.
+</p>
+<code>
+	>> colors = ['red', 'starfruit', 'blue']
+	['red', 'starfruit', 'blue']
+	>> # Oh no! starfruit isn't a color! Let's change it to green.
+	>> colors[1] = 'green'
+	['red', 'green', 'blue']
+	>> # Now, when we check the value of colors, we can see that it has changed!
+	>> colors
+	['red', 'green', 'blue']
+</code>
+<p>
+	Many of the concepts learned earlier with strings can also be applied to lists, as strings can be thought of as lists of single characters. (the main difference being, strings are immutable) Here are some examples of concepts you learned with strings being applied to lists.
+</p>
+<code>
+	# You can concatenate arrays, just like you can strings
+	>> snowsports = ['hockey', 'skiing']
+	['hockey', 'skiing']
+	>> watersports = ['surfing', 'swimming']
+	['surfing', 'swimming']
+	>> teamsports = ['football', 'baseball', 'basketball']
+	['football', 'baseball', 'baskeyball']
+	>> sports = snowsports + watersports + teamsports
+	['hockey', 'skiing', 'surfing', 'swimming', 'football', 'baseball', 'basketball']
+	# You can also make arrays into strings using the to-string funject, and get their length with the length funject
+	>> users = ['jake', 'lucy', 'katherine']
+	['jake', 'lucy', 'katherine']
+	>> print['You have ' + users.length.to-string + ' and their names are: ' + users.to-string]
+	You have 3 users and their names are: ['jake', 'lucy', 'katherine']
+</code>
+<p>
+	Lists can contain any data type, and that includes lists! This means that you can nest lists within eachother.
+</p>
+<code>
+	>> # In this example, coordinates represents a list of lists of x and y coordinates.
+	>> coordinates = [[10, 30], [40, 10], [21, 26], [3, 22]]
+	[[10, 30], [40, 10], [21, 26], [3, 22]]
+	>> # Let's say we want to get the y value of the coordinate pair at the index 2, we would do it like this
+	>> coordinates[2][1]
+	26
+	>> # Here are some other values, simply for demonstration
+	>> coordinates[0][0]
+	10
+	>> coordinates[0][1]
+	30
+	>> coordinates[3, 0]
+	3
+</code>
+<h1>funjects</h1>
+<p>
+	Now that we've gotten through the basic introduction to types, and programming in Yak, we can start to talk about funjects. Tutorials for many other languages would around this point being to explain how functions, and objects work, but Yak replaces both concept with the universal funject, so we have this section instead. Let's get to it!
+</p>
+<p>
+	The first thing to remember, is that <strong>everything</strong> in Yak is a funject. Because of this, funjects have a lot of cool properties. Let's start by creating an empty funject. funjects in yak are represented by an open curly brace ('{'), the body of the funject (we'll get to that later), followed a close curly brace ('}') which signifies the end of the funject body. So let's start by simply declaring an empty funject.
+</p>
+<code>
+	>> afunject = {}
+	#&lt;funject>
+	>> # Note that the R.E.P.L. represents defined funjects as just &lt;funject> (unless they have a class, we'll get to that later)
+</code>
+<p>
+	So far, nothing too interesting. We set afunject to an empty funject, and it evaluates to {}. Now, we can talk about what funjects interesting: Pattern matching. funjects, like functions, can be used to execute blocks of code with parameters, however the process they go through to do this is different. Concider the following code block. (explanation below)
+</p>
+<code>
+	>> example = {
+	..     [0]: 1
+	.. 	   [5]: 2
+	.. }
+	#&lt;funject>
+	>> example[0]
+	1
+	>> example[5]
+	2
+</code>
+<p>
+	Here, we define example, a funject with two Patterns in it. These two patterns match a list containing only the element 0, and a list containing only the element 5. Then further down, we invoke the funject example with the argument a list containing one element 0, and again with 5. When Yak is given this code, here's what it's doing.
+<p>
+	First, Yak Creates a funject called example, with two patterns, one that matches [0], and another that matches [1]. Then, it invokes eample with the argument [0]. When a funject is invoked, it does something interesting. It goes through the funject, and looks for any patterns that match the argument passed. It then evaluates the expression assigned to it (everything after the colon), and returns the result of that expression. So in this case, it finds that the passed argument, [0], matches the first pattern, evaluates the expression mapped to that, which comes out as one, and returns one. Hence why example[0] is 1. It then does the same thing for example[5], which matches the pattern five, and returns 2.
+</p>
+<p>
+	One thing to note is that you can format your code in two different ways when writing the expression for a pattern match. If you only need one line of code, you might do this:
+</p>
+<code>
+	>> foo = {
+	..     ['a']: 3
+	.. }
+	&lt;funject>
+	>> foo['a']
+	3
+</code>
+<p>
+	But if you wanted the pattern to map to multiple lines of code, you would write it like this:
+</p>
+<code>
+	>> foo = {
+	..    ['a']:
+	..        number = 1 + 1
+	..        number * 3
+	.. }
+	>> foo['a']
+	6
+</code>
+<p>
+	If you have a multiple line expression like this, and you don't indent consistently, the Yak interpreter will throw an error. This is because the end of the expression, is signified by unindenting, so proper identation is necessary. Note that with a multiple line expression, the result of the <em>last</em> expression is
+</p>
+<p>
+	Let's say though we wanted to define a Funject that could take a wide range of things as it's argument. It would be horrible if you had to explicitely define an output for every single input. So for that, there are parameters. In a pattern, any time you use the at symbol followed by a alphanumeric string to accept anything as input. Concider this code. (also explained below)
+</p>
+<code>
+	>> addOne = {
+	..     [@number]: @number + 1
+	.. }
+	&lt;funject>
+	>> addOne[4]
+	5
+	>> addOne[-2]
+	-1
+	>> addOne[9]
+	10
+</code>
+<p>
+	Here, addOne contains a pattern that matches the parameter @number. When a pattern contains a parameter, it allows anything to in the place of that parameter, <bold>and</bold> it then "binds" the value to that paramater. When a parameter has been bound to a value, the parameter acts like a variable whos value is set to what it was bound to.
+	That's why in the addOne example, the expression @number + 1 evaluates to whatever you passed as an argument plus one.
+</p>
+<p>
+	For those of you new to programming, the idea of recursion might seem foreign to you. Recursion, is invoking one funject from within itself. This is usefull for all sorts of things, and is used a lot in math funjects. In this example, we'll show you how to use recursion, and pattern matching, to make the famous recursive factorial function in Yak.
+</p>
+<p>
+	Recursive factorial works by first using something called a "base case", which checks if the input is a certain value, and if it is, returns a set value. For factorial the base case is 0, which should always return 1. Because of pattern matching, we can easily make the base case without having to use any control blocks as one might in another language. Then, if the argument is anything other than the base case, factorial returns the argument times factorial invoked with the argument being the original argument minus one. The implementation of the function would look like this.
+</p>
+<code>
+	>> factorial = {
+	..     [0]: 1 # Base case, if the argument is zero, factorial will always return one
+	..     [@number]: @number * factorial(@number - 1)
+	.. }
+	&lt;funject>
+	>> factorial[5]
+	120
+</code>
+<p>
+	To better understand why this works, here's a list of what the code would do when you call factorial[5]. If you already have a understanding of recursion, you can skip over this.
+</p>
+<ol>
+	<li>Invokes factorial with the argument [5]</li>
+	<li>Takes 5, and multiplies it by itself - 1 (overall expression: 5 * factorial[4])</li>
+	<li>Takes 4, and multiplies it by itself - 1 (overall expression: 5 * 4 * factorial[3])</li>
+	<li>Takes 3, and multiplies it by itself - 1 (overall expression: 5 * 4 * 3 * factorial[2])</li>
+	<li>Takes 2, and multiplies it by itself - 1 (overall expression: 5 * 4 * 3 * 2 * factorial[1])</li>
+	<li>Takes 1, and multiplies it by itself - 1 (overall expression: 5 * 4 * 3 * 2 * 1 * factorial[0])
+	<li>Finds that [0] matches the base case, so it evaluates to one</li>
+	<li>This leaves the final expression as 5 * 4 * 3 * 2 * 1 * 1, which is exactly what 5! does in mathematics!</li>
+</ol>
