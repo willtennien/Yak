@@ -1,0 +1,220 @@
+<h1>Yak For New Programmers</h1>
+<h2>What is Yak?</2>
+<p>
+	Yak is the first language ever of the funject paradigm. This means that rather than using traditional objects, or functions, Yak combines both concepts into a brand new thing called a Funject. Funjects are in essence the best parts of objects, the best parts of functions put together with some cool new ideas to make them mesh nicely with eachother.
+</p>
+<h2>Math</h2>
+<p>
+	Yak is a dynamic language, and like many other existing dynamic languages (Python, Ruby, Javascript, Lua, Smalltalk, etc.) you can perform basic mathematical calculations by simply writing the expression out. Here are some examples:
+</p>
+<code>
+	>> # Before we show you the match examples, this is a quick example of a comment!
+	>> # We're showing you this now because they'll be used a lot in code blocks for explaining things.
+	>> # Anything that comes after a pound sign is a comment. Commends are pieces of code that are completely
+	>> # ignored when the code is run. Yak just skips over them. Comments are used to explain
+	>> # or document pieces of code.
+
+	>> 10 # Entering anything withuout any operands simply evaluates to itself so 10 evaluates to 10! Simple enough, right?
+	10
+	>> # Notice how after doing anything (excepting comments), what it evaluates to is printed on the next line.
+	>> #If it doesnt evaluate to anything, "nil" will be printed on the next line.
+	>> 3 + 2 # Now, for addition
+	5
+	>> 2 + 3 # You can switch the operands like in normal addition
+	5
+	>> 10 - 3
+	7
+	>> 3 - 10
+	-7
+	>> 5 * 4
+	20
+	>> 6 / 3
+	2
+	>> 3 / 6 # The result of the operation can be a decimal
+	0.5
+	>> 2 + 2.5 # Decimal numbers can be used as operands
+	4.25
+	>> 10 % 2 # There's even modulo!
+	0
+	# Another note before we move on...
+	#|
+		Block comments look like this!
+		A block comment is a comment that spans multiple lines!
+		This is useful for writing long comments without having to add a new comment character ('#')
+		at the beginning of every line.
+	|#
+</code>
+<p>
+	Variables are things that can store values, variables can store just about any value, but for now, we'll use the for numbers. To "assign" a value to a variable, use the "=" operator. "=" takes the value on its left, and assigns it to the value on the right.
+</p>
+<code>
+	>> hours = 3
+	3
+	>> hours # Like with numbers, Entering a variable without operands evaluates to its value
+	3
+	>> hours + 4 # You can treat a variable as if it was its value. That means we can add things to the hours variable.
+	7
+	>> seconds = 3 * 10 # You can assign variables to the result of another expression
+	30
+	>> minutes = hours * 60 # Those expressions can contain other variables
+	180
+	>> minutes = minutes + 5 # They can even be self referential!
+	185
+</code>
+<p>
+	Multiple variables can be defined at once by "chaining" the expression together like so:
+</p>
+<code>
+	>> a = b = c = d = e = f = 5
+	5
+	>> a
+	5
+	>> b
+	5
+	>> c
+	5
+	>> d
+	5
+	>> e
+	5
+	>> f
+	5
+</code>
+<p>
+	Note that if you try and use a variable that hasn't already been defined (set to something using the "=" operator), an error will occur.
+</p>
+<code>
+	>> speed + 10
+	Undefined variable speed
+	  at input:1:1
+</code>
+<h2>Strings</h2>
+<p>
+	Strings are the next data type available in funject. Strings represent test. String values can be created by enclosing text in either double, or single quotes.
+</p>
+<code>
+	>> 'This is a string value!'
+	'This is a string value'
+	>> "This is also a string value"
+	'This is also a string value'
+	>> "This is not a string!' # You can't mix single and double quotes, if you start a string with one type, you have to end it with that type.
+	Unterminated string at input:4:1
+	>> 'You can use "double quotes" inside single quoted strings'
+	'You can use "double quote" inside single quoted strings'
+	>> "And you can use 'single quotes' inside double quoted strings"
+	'And you can use \'single quotes\' inside double quoted strings'
+</code>
+<p>
+	The "print" funject. We haven't learned about funject calls yet, but bear with us, and trust that we will explain in full detail what's going on later, for now, all you need to know is this: The print funject prints a string. When you call the print funject, it will write the string you give it to the console. Here's an example of how to use the print funject
+</p>
+<code>
+	>> print['This string will be printed to the console!']
+	This string will be printed to the console!
+	nil
+	>> print['This string is cooler though...']
+	This string is cooler though...
+	nil
+</code>
+<p>
+	Now we've seen how to make strings, and print them, so let's say you want to combine two strings into one string. You would to this using "concatenation". You can concatenate strings like this:
+</p>
+<code>
+	>> print['This string ' + 'will be attached to this string']
+	This string will be attached to this string
+	nil
+	>> # You can also concatenate multiple strings at once like this
+	>> print['This string ' + 'will be attached to this one, AND ' + 'this one!']
+	This string will be attached to this one, AND this one!
+	nil
+	>> # You can even do this:
+	>> fruitSalad = 'apples' + 'and ' + 'oranges ' + 'and ' + 'grapes ' + 'and ' + 'bananas'
+	'apples and oranges and grapes and bananas'
+	>> print[fruitSalad + ' are ' + 'yummy, yummy!']
+	apples and oranges and grapes and bananas are yummy, yummy!
+	nil
+</code>
+<p>
+	There are also some characters that can't be written in strings. If you want to use them in a string, you instead input the character "\" followed by the code for the character you want to replace. Heres a list of commonly used escapes:
+</p>
+<ul>
+	<li>\n is a new line character</li>
+	<li>\r is a carriage return character. These are used in windows line endings, but dont worry about them too much, just use \n</li>
+	<li>\t is a horizontal tab character</li>
+	<li>\' escapes a single quote (for use in a single quote encapsulated string)</li>
+	<li>\" escapes a double quote (for use in a double quote encapsulated string)</li>
+	<li>\\ escapes the escape character, so it represents a backslash</li>
+</ul>
+<p>
+	Here's an example for the use of each escape character
+</p>
+<code>
+	>> print['This makes\na new line']
+	This makes
+	a new line
+	nil
+	>> print['\t Makes a tab character']
+		Makes a tab character
+	nil
+	>> print['With escapes, you can use a \'single quote\' inside of a single quoted string']
+	With escapes, you can use a a 'single quote' inside of a double quoted string
+	nil
+	>> print["or \"double quotes\" within a double quoted string"]
+	or "double quotes" within a double quoted string
+	nil
+	>> print['And last but not least, you can use the \\ character by escaping it with itself!']
+	And last but not least, you can use the \ character by escaping it with itself!
+	nil
+</code>
+<p>
+	Behind the scenes, strings are actually just a bunch of characters strung together. (hence why they're called "strings"). This means that if yuo want to, you can get an individual character from a string like this:
+</p>
+<code>
+	>> lyric = 'bananas'
+	'bananas'
+	>> print['This **** is ' + lyric]
+	This **** is bananas
+	nil
+	>> print[lyric[0]]
+	b
+	nil
+	>> print[lyric[1]]
+	a
+	nil
+	>> print[lyric[2]]
+	n
+	nil
+	>> print[lyric[3]]
+	a
+	nil
+	>> print[lyric[4]]
+	n
+	nil
+	>> print[lyric[5]]
+	a
+	nil
+	>> print[lyric[6]]
+	s
+	nil
+</code>
+<p>
+	If you try and get the character at a negative index, it gives you the character at that index if you were counting from the end! -0 Is the same as 0, so the last character is indexed at -1
+</p>
+<code>
+	>> word = 'hello!'
+	'hello!'
+	>> reversed = word[-1] + word[-2] + word[-3] + word[-4] + word[-5]
+	'!olleh'
+</code>
+<h2>Lists</h2>
+<p>
+	Lists are essentially a single data type that can hold other data types. They're exactly like they sound, a way to <em>list</em> or group other values. Note that lists <em>can</em> contain multiple different type, but do not have to. Lists look like this.
+</p>
+<code>
+	>> tenToPowersAndFruits = ['apples', 10, 'banana', 100, 'starfruit', 10000]
+	['apples', 10, 'banana', 100, 'starfruit', 1000]
+</code>
+
+
+
+
+
