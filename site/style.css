@@ -1,3 +1,10 @@
+@import url(http://fonts.googleapis.com/css?family=Raleway:400,100,200,300,500,600);
+@import url(http://fonts.googleapis.com/css?family=Crimson+Text:400,400italic,600,600italic,700,700italic);
+@import url(http://fonts.googleapis.com/css?family=Lusitana:400);
+@import url(http://fonts.googleapis.com/css?family=Unna:400);
+@import url(http://fonts.googleapis.com/css?family=Ubuntu:300,400);
+@import url(http://fonts.googleapis.com/css?family=EB+Garamond:400);
+
 body {
     margin: 0 24px;
     background: #ddd;
@@ -14,19 +21,20 @@ header {
     z-index: 1;
 }
 header .container {
-    background: rgb(118, 170, 214);
-    padding-top: 48px;
+    background-color: rgb(103, 172, 211);
+    background-image: url("header.jpg");
+    background-repeat: no-repeat;
 }
 header h1 {
-    font: 156px/1 Georgia, serif;
-    color: #000;
+    text-rendering: optimizeLegibility;
+    font: 85px/1 Garamond, sans-serif;
+    color: #fff;
     margin: 0;
-    text-align: center;
+    padding: 80px 0 35px 30px;
 }
-header p {
-    font: 16px/1.5 Georgia, serif;
-    text-align: center;
-    margin: 0 0 48px;
+header h1 .subheading {
+    font-size: 36px;
+    font-weight: 300;
     color: #000;
 }
 header .interpreter {
@@ -87,7 +95,7 @@ header nav {
     margin: 0 -12px;
     padding: 0 124px;
     text-align: center;
-    background: rgb(82, 136, 182);
+    background: rgb(103, 172, 211);
     box-shadow: 0 11px 3px -10px rgba(0, 0, 0, .3);
 }
 header nav::before {
@@ -95,7 +103,7 @@ header nav::before {
     width: 0;
     height: 0;
     display: block;
-    border-top: rgb(47, 98, 141) 8px solid;
+    border-top: rgb(63, 132, 171) 8px solid;
     border-left: transparent 12px solid;
     position: absolute;
     top: 100%;
@@ -106,7 +114,7 @@ header nav::after {
     width: 0;
     height: 0;
     display: block;
-    border-top: rgb(47, 98, 141) 8px solid;
+    border-top: rgb(63, 132, 171) 8px solid;
     border-right: transparent 12px solid;
     position: absolute;
     top: 100%;
@@ -122,16 +130,17 @@ header a, header button {
     text-decoration: none;
 }
 header a.active {
-    box-shadow: inset 0 -4px rgb(47, 98, 141);
+    box-shadow: inset 0 -4px rgb(63, 132, 171);
 }
 header a:hover,
 header button:hover {
+    background: rgb(83, 152, 192);
     /*background: rgb(51, 110, 160);*/
-    background: rgb(60, 114, 160);
-}
+/*    background: rgb(60, 114, 160);
+*/}
 header a:active,
 header button:active {
-    background: rgb(47, 98, 141);
+    background: rgb(63, 132, 171);
 }
 header button {
     display: none;
@@ -152,7 +161,7 @@ article {
 }
 article h1,
 article h2 {
-    font: 3em/1 Georgia, serif;
+    font: 3em/1 Garamond, serif;
     margin: 48px 0 0;
 }
 article h2 {
