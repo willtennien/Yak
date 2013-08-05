@@ -24,6 +24,7 @@ header .container {
     background-color: rgb(103, 172, 211);
     background-image: url("header.jpg");
     background-repeat: no-repeat;
+    border-bottom: 1px solid white;
 }
 header h1 {
     text-rendering: optimizeLegibility;
