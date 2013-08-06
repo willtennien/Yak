@@ -24,10 +24,18 @@ List.instance.clear! = {
         }
 }
 
+List.instance.clear = {
+	[@self]: []
+}
+
 List.instance.set! = {
     [@self, [@l]]:
         @self.clear!
         @l.length.times[{[@i]: @self.push![@l[@i]]}]
+}
+
+List.instance.set = {
+	[@self, [@l]]: @l.copy
 }
 
 List.instance.contains? = {
@@ -41,8 +49,16 @@ List.instance.pop! = {
         result
 }
 
+List.instance.pop = {
+	[@self]: @self.copy.pop!
+}
+
 List.instance.push! = {
     [@self, [@f]]: @self.insert![@self.length, @f]
+}
+
+List.instance.push = {
+	[@self, [@f]]: @self.copy.push![@f]
 }
 
 List.instance.shift! = {
@@ -52,12 +68,16 @@ List.instance.shift! = {
         result
 }
 
+List.instance.shift = {
+	[@self, [@f]]: @self.clone.shift![@f]
+}
+
 List.instance.unshift! = {
     [@self, [@f]]: @self.insert![0, @f]
 }
 
-List.instance.pop = {
-    [@self]: @self[@self.length - 1]
+List.instance.unshift = {
+	[@self, [@f]]: @self.copy.unshift![@f]
 }
 
 List.instance.index-of = {
@@ -106,8 +126,16 @@ List.instance.pluck! = {
     [@self, [@key]]: @self.map![by[@key]]
 }
 
+List.instance.pluck = {
+	[@self, [@key]]: @self.clone.pluck![@key]
+}
+
 List.instance.invoke! = {
     [@self, [@f]]: @self.map![{[@e]: (@e @f)[]}]
+}
+
+List.instance.invoke = {
+	[@self, [@f]]: @self.clone.invoke![@f]
 }
 
 List.instance.filter! = {
@@ -122,6 +150,10 @@ List.instance.filter! = {
         @self
 }
 
+List.instance.filter = {
+	[@self, [@f]]: @self.copy.filter![@f]
+}
+
 List.instance.reject! = {
     [@self, [@f]]:
         i = @self.length - 1
@@ -132,4 +164,8 @@ List.instance.reject! = {
                 i |= i - 1
         }
         @self
+}
+
+List.instance.reject = {
+	[@self, [@f]]: @self.copy.reject![@f]
 }
