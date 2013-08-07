@@ -4,11 +4,13 @@
 @import url(http://fonts.googleapis.com/css?family=Unna:400);
 @import url(http://fonts.googleapis.com/css?family=Ubuntu:300,400);
 @import url(http://fonts.googleapis.com/css?family=EB+Garamond:400);
+@import url(http://fonts.googleapis.com/css?family=EB+Garamond:400);
+@import url(http://fonts.googleapis.com/css?family=Lato:100,300,400,700,100italic,300italic,400italic,700italic);
 
 body {
     margin: 0 24px;
     background: #ddd;
-    font: 16px/1.5 Helvetica Neue, Helvetica, Arial, sans-serif;
+    font: 17px Lato, Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 .container {
     max-width: 960px;
@@ -21,20 +23,20 @@ header {
     z-index: 1;
 }
 header .container {
-    background-color: rgb(103, 172, 211);
+    background-color: rgb(103, 172, 210);
     background-image: url("header.png");
     background-repeat: no-repeat;
     border-bottom: 1px solid white;
 }
 header h1 {
     text-rendering: optimizeLegibility;
-    font: 85px/1 Garamond, sans-serif;
+    font: 120px/1 Garamond, sans-serif;
     color: #fff;
     margin: 0;
-    padding: 80px 0 35px 30px;
+    padding: 95px 0 25px 50px;
 }
 header h1 .subheading {
-    font-size: 36px;
+    font-size: 31px;
     font-weight: 300;
     color: #000;
 }
@@ -96,7 +98,7 @@ header nav {
     margin: 0 -12px;
     padding: 0 124px;
     text-align: center;
-    background: rgb(103, 172, 211);
+    background: rgb(103, 172, 210);
     box-shadow: 0 11px 3px -10px rgba(0, 0, 0, .3);
 }
 header nav::before {
@@ -162,8 +164,13 @@ article {
 }
 article h1,
 article h2 {
-    font: 3em/1 Garamond, serif;
+    font: 3em/1 Lato, serif;
     margin: 48px 0 0;
+}
+article .encapsulation {
+    font-size: 18px;
+    color: #948884;
+    text-transform: uppercase;
 }
 article h2 {
     font-size: 2em;
@@ -171,4 +178,19 @@ article h2 {
 .bookmark {
     position: relative;
     top: -144px;
+}
+.more {
+    color: #948884;
+    font-size: 12px;
+}
+code.block {
+    border-left: 2px solid rgba(190, 180, 180, 1);
+    padding-left: 2em;
+}
+article a[href] {
+    color: #948884;
+    /*text-decoration: none;*/
+}
+article a[href]:hover {
+    color: rgb(60, 57, 211);
 }

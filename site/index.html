@@ -20,20 +20,40 @@ factorial[5]</textarea></div>
         </section>
         <nav>
             <button class=try-yak>Try Yak</button>
-            <a href=#>Welcome</a><a href=#install>Install</a><a href=#learn>Learn</a><a href=#docs>Docs</a>
+            <a href=#>Welcome</a><a href='#about'>About</a><a href=#install>Install</a><a href=#learn>Learn</a><a href=#docs>Docs</a>
         </nav>
     </div>
 </header>
 <div class=container>
     <article>
 
-<h1>Install</h1>
+<h1>What is it? <span class=encapsulation> About</span></h1>
+<div class=bookmark id="about"></div>
+
+<p>Yak is a remarkably powerful scripting language that leverages the new concept of a funject—a programmatic construct with properties of both functions and objects. Funjects allow you to say anything you could with a function or object, but they also allow you to express things you couldn't before. <span class='more'>Read more about the mythical founding of funjects.</p>
+<p>Yak comes in three flavors: an Racket-based executable, an npm package, and an HTML include that interprets yak inline or included in the HTML. The executable supports parallelization and pretty much anything you'd find in Racket. The npm package gives you access to node.js through <code>require</code> statements and allows you to write entire servers. The third interpreter, once included on your webpage, interprets all script tags with  the attribute <code>type='text/yak'</code>.
+
+<h1>Get it. <span class=encapsulation> Install</span></h1>
 <div class=bookmark id="install"></div>
 
-<h1>Learn</h1>
+<p>The simplist way to get Yak is to include the following line in your HTML:</p>
+
+<code class='block'>&lt;script type='text/javascript' src='http://www.yak-lang.org/ys.js'&gt;&lt;/script&gt;</code>
+
+<p>This will interpret all script tags written after it that contain the attribute <code>type='text/yak'</code>. Any libraries you include (such as jQuery) you can access from Yak using our simple <a href='doc/js-bridge'>bridging pattern</a>.</p> 
+
+<p>You can download the Racket-based interpreter for <a href='download/Mac'>Mac OS X</a>, <a href='download/Windows'>Windows</a>, or <a href='download/Ubuntu'>Ubuntu</a>.</p>
+
+<p>To use Yak with node, first download node, then run:</p>
+
+<code class=block>npm install yak-lang</code>
+
+<p>You can then run yak files with the <code>yak</code> command and <code>require</code> node's <code>http</code> or <code>fs</code>.
+
+<h1>Learn about it. <span class=encapsulation> Learn</span></h1>
 <div class=bookmark id="learn"></div>
 
-<h1>Docs</h1>
+<h1>Really learn about it. <span class=encapsulation> Docs</span></h1>
 <div class=bookmark id="docs"></div>
 
     </article>
