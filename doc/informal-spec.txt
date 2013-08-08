@@ -71,7 +71,7 @@ Nil
 List
 Unknown
 
-Funject is God. Everything inherits from Funject. Number, String, and Boolean, are what they sound like. Lists are like Arrays. Nil is like null in Java, None in Python, or nil in Ruby. Dot exists solely to allow the cool syntactic sugar foo.bar => foo[dot, 'bar']. (For those interested, I could not adopt JavaScript-style syntactic sugar (foo.bar => foo['bar']) because some funjects take strings as "arguments", and so it would become difficult for them to have "properties". ex: capitalize.prop => capitalize['prop'] => 'Prop'.) Unknown has to two with pattern matching. (Later versions of Yak may include a Regex type, an Undefined type, or Class type). 
+Funject is God. Everything inherits from Funject. Number, String, and Boolean, are what they sound like. Lists are like Arrays. Nil is like null in Java, None in Python, or nil in Ruby. Dot exists solely to allow the cool syntactic sugar foo.bar => foo[dot, 'bar']. (For those interested, I could not adopt JavaScript-style syntactic sugar (foo.bar => foo['bar']) because some funjects take strings as "arguments", and so it would become difficult for them to have "properties". ex: capitalize.prop => capitalize['prop'] => 'Prop'.) Unknown has to two with pattern matching. (Later versions of Yak may include a Regex type, an Undefined type, or Class type).
 
 Numbers are written as you might expect. These are all valid Numbers:
 
@@ -101,11 +101,11 @@ Lists are written like Lists in Haskell, lists in Python, or Arrays in JavaScrip
 
 [[1, 2], [3, 4]]
 
-Nil is the type of "nil", which stands for nothing. For example, nil might be returned by a request for a database connection that fails to connect. 
+Nil is the type of "nil", which stands for nothing. For example, nil might be returned by a request for a database connection that fails to connect.
 
 Dot is the type of "dot", which exists only to allow the convenient syntax (foo.bar => foo[dot, 'bar']). You can pass it around like any other funject, but it performs no other operation.
 
-Unknown has to do with pattern matching. I will discuss it later. 
+Unknown has to do with pattern matching. I will discuss it later.
 
 Funject literals are like object literals in JavaScript or Ruby (the newer, symbol-based syntax), but with two crucial differences. Key-value pairs are separated not by commas, but by newline characters and equal indentation. This is to encourage (force) programmers to make their code more readable—especially since the values of key-value pairs are generally longer in funject than in other languages. The values of funject literals can be on the same line as the key, or on subsequent lines at the same level of indentation. Everytime a funject is "invoked", the value of the key-value pair is reevaluated. If the value contains multiple lines, the last line is returned as the result. (Later versions of Yak will probably include a "return" keyword). These are all valid funject literals:
 
@@ -115,16 +115,16 @@ foo = {['bar']: 'baz'}
 
 integer-times = {
     [@x, 0]: 0
-    [@x, 1]: 
+    [@x, 1]:
         redundant-variable = @x
         redundant-variable
-    [@x, @y]: 
+    [@x, @y]:
         y-minus-one = minus[@y, 1]
         answer-minus-x = integer-times[@x, y-minus-one]
         plus[@x, answer-minus-x]
 }
 
-This specification is incomplete. Later versions will discuss pattern matching, scoping, and funject's rich diversity of assignment operators. 
+This specification is incomplete. Later versions will discuss pattern matching, scoping, and funject's rich diversity of assignment operators.
 
 
 
@@ -160,7 +160,7 @@ This specification is incomplete. Later versions will discuss pattern matching, 
 
 
 
- 
+
 
 
 
