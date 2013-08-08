@@ -14,6 +14,6 @@ unreachable := error['Unreachable code executed']
 
 argumentFlag = false
 
-vim := 'Real programmers use emacs, try using "emacs" instead'
+vim := print['Real programmers use emacs, try using "emacs" instead']
 
-emacs := 'Real programmers use vim, try using "vim" instead'
+emacs := print['Real programmers use vim, try using "vim" instead']
