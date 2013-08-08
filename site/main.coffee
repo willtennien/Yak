@@ -86,18 +86,18 @@ autoSize = ->
 textarea.addEventListener "input", autoSize
 autoSize()
 
+log = (level, s) ->
+    div = document.createElement("div")
+    div.className = level
+    div.textContent = s
+    interpreter.insertBefore div, prompt
+    interpreter.scrollTop = interpreter.scrollHeight
+
 keyboard = (e) ->
     insert = (s) ->
         b = before + s
         textarea.value = b + after
         textarea.selectionStart = textarea.selectionEnd = b.length
-
-    log = (level, s) ->
-        div = document.createElement("div")
-        div.className = level
-        div.textContent = s
-        interpreter.insertBefore div, prompt
-        interpreter.scrollTop = interpreter.scrollHeight
 
     before = textarea.value.slice(0, textarea.selectionStart)
     after = textarea.value.slice(textarea.selectionStart)
@@ -134,3 +134,6 @@ keyboard = (e) ->
                 insert Array(Math.floor(line.length / 4 + 1) * 4 - line.length + 1).join(" ")
 
 textarea.addEventListener "keydown", keyboard
+
+Yak.interpreter.print = (string) ->
+    log "print", string

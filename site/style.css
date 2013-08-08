@@ -47,8 +47,11 @@ header .interpreter {
 .interpreter .help {
     color: #666;
 }
-.interpreter .output {
+.interpreter .print {
     color: #aaa;
+}
+.interpreter .output {
+    color: #8c8;
 }
 .interpreter .error {
     color: #c88;
