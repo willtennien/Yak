@@ -3477,37 +3477,50 @@
 (hash-set! primitive-class-instance "all-subclasses" (primitive-placeholder-named "Class::all-subclasses"))
 ((lambda ()
    (define (subclass? arg own self other)
-     (display self)
-     (create-lang 'Boolean (cond 
-                             [(lang? 'Funject self)
-                              (or (equal? self other)
-                                  (and (lang? 'Class 
-                             [(lang? 'Class self)
-                              (or (equal? self other)
-                                  (lang-contents self
-                                                 (lambda (exports superclass)
-                                                   (mcadr (subclass? arg own superclass other)))))]
-                             [(or (equal? self primitive-funject-class)
-                                  (equal? self primitive-class-class)
-                                  (equal? self primitive-number-class)
-                                  (equal? self primitive-string-class)
-                                  (equal? self primitive-boolean-class)
-                                  (equal? self primitive-symbol-class)
-                                  (equal? self primitive-nil-class)
-                                  (equal? self primitive-unknown-class)
-                                  (equal? self primitive-list-class)
-                                  (equal? self primitive-future-class))
-                              (equal? other primitive-funject-class)]
-                             [else
-                              (user-error 'instance-received-wrong-self-type
-                                          "Class::subclass? can only determine the ancestry of a class, but you passed it this: "
-                                          self)])))
+     (cond 
+       [(lang? 'Funject self)
+        (or (equal? self other)
+            (subclass? arg 
+                       own
+                       (funject-parent-of self)
+                       other)
+            (and (lang? 'Class other)
+                 (lang-contents other
+                                (lambda (exports _)
+                                  (equal? self exports)))))]
+       [(lang? 'Class self)
+        (or (equal? self other)
+            (lang-contents self
+                           (lambda (exports superclass)
+                             (subclass? arg own superclass other)))
+            (and (lang? 'Funject other)
+                 (lang-contents self
+                                (lambda (exports superclass) 
+                                  (equal? exports other)))))]
+       [(or (equal? self primitive-funject-class)
+            (equal? self primitive-class-class)
+            (equal? self primitive-number-class)
+            (equal? self primitive-string-class)
+            (equal? self primitive-boolean-class)
+            (equal? self primitive-symbol-class)
+            (equal? self primitive-nil-class)
+            (equal? self primitive-unknown-class)
+            (equal? self primitive-list-class)
+            (equal? self primitive-future-class))
+        (equal? other primitive-funject-class)]
+       [else
+        (user-error 'instance-received-wrong-self-type
+                    "Class::subclass? can only determine the ancestry of a class, but you passed it this: "
+                    self)]))
    
    (define (superclass? own arg self other)
      (cond 
        [(or (lang? 'Class other)
             (lang? 'Funject other))
-        (subclass? other self)]
+        (subclass? arg 
+                   own 
+                   other 
+                   self)]
        [(and (equal? self primitive-funject-class)
              (or (equal? other primitive-funject-class)
                  (equal? other primitive-class-class)
@@ -3520,10 +3533,12 @@
                  (equal? other primitive-list-class)
                  (equal? other primitive-future-class)))]
        [else
-        (create-lang 'Boolean false)]))
-   (hash-set! primitive-class-instance "subclass?" (create-primitive-method subclass?
+        false]))
+   (hash-set! primitive-class-instance "subclass?" (create-primitive-method (lambda (arg own self other)
+                                                                              (create-lang 'Boolean (subclass? arg own self other)))
                                                                             default-primitive-inverse))
-   (hash-set! primitive-class-instance "superclass?" (create-primitive-method superclass?
+   (hash-set! primitive-class-instance "superclass?" (create-primitive-method (lambda (arg own self other)
+                                                                                (create-lang 'Boolean (superclass? arg own self other)))
                                                                               default-primitive-inverse))))
 (hash-set! primitive-class-instance "methods" (primitive-placeholder-named "Class::methods"))
 (hash-set! primitive-class-instance "all-methods" (primitive-placeholder-named "Class::all-methods"))
@@ -3599,11 +3614,11 @@
             (Unknown . "unknown?")
             (List . "list?")
             (Future . "future?")))
-(hash-set! primitive-funject-instance "integer?" (create-primitive-method (lambda (arg own self)
+(hash-set! primitive-funject-instance "integer?" (create-primitive-attribute (lambda (arg own self)
                                                                             (create-lang 'Boolean (and (lang? 'Number self)
                                                                                                        (lang-contents self integer?))))
                                                                           default-primitive-inverse))
-(hash-set! primitive-funject-instance "float?" (create-primitive-method (lambda (arg own self)
+(hash-set! primitive-funject-instance "float?" (create-primitive-attribute (lambda (arg own self)
                                                                             (create-lang 'Boolean (and (lang? 'Number self)
                                                                                                        (lang-contents self (compose not integer?)))))
                                                                           default-primitive-inverse))
