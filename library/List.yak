@@ -3,20 +3,22 @@
 List.instance.* = {
     [@self, @n]:
         list = []
-        @n.times[{[@i]: list.concat![@self]}]
+        @n.times[{[@i]: list |= list + @self}]
         list
 }
 
 List.instance.+ = {
     [@self, @l]:
-        @l.length.times[{[@i]: @self.push![@l[@i]]}]
-        @self
+        list = @self.copy
+        @l.length.times[{[@i]: list.push![@l[@i]]}]
+        list
 }
 
 List.instance.- = {
     [@self, @l]:
-        @l.length.times{[@i]: @self.remove-all![@l[@i]]}
-        @self
+        list = @self.copy
+        @l.length.times[{[@i]: list.remove-all![@l[@i]]}]
+        list
 }
 
 List.instance.empty? = {
@@ -65,7 +67,7 @@ List.instance.set = {
 }
 
 List.instance.contains? = {
-    [@self, [@f]]: @self.index-of[@f] == -1
+    [@self, [@f]]: @self.index-of[@f] != -1
 }
 
 List.instance.pop! = {
@@ -88,14 +90,14 @@ List.instance.push = {
 }
 
 List.instance.shift! = {
-    [@self, [@f]]:
+    [@self]:
         result = @self[0]
         @self.delete-at![0]
         result
 }
 
 List.instance.shift = {
-	[@self, [@f]]: @self.clone.shift![@f]
+	[@self]: @self.copy.shift!
 }
 
 List.instance.unshift! = {
@@ -169,7 +171,7 @@ List.instance.filter! = {
         i = @self.length - 1
         {[]: i >= 0}.while-true {
             []:
-                if f[@self[i]].not
+                if @f[@self[i]].not
                     @self.delete-at![i]
                 i |= i - 1
         }
@@ -185,7 +187,7 @@ List.instance.reject! = {
         i = @self.length - 1
         {[]: i >= 0}.while-true {
             []:
-                if f[@self[i]]
+                if @f[@self[i]]
                     @self.delete-at![i]
                 i |= i - 1
         }
@@ -221,7 +223,7 @@ List.instance.reduce-right = {
         result
 }
 
-List.instance.every = {
+List.instance.every? = {
     [@self, [@f]]:
         self = @self.copy
         i = 0
@@ -234,7 +236,7 @@ List.instance.every = {
         result
 }
 
-List.instance.any = {
+List.instance.any? = {
     [@self, [@f]]:
         self = @self.copy
         i = 0
@@ -249,7 +251,6 @@ List.instance.any = {
 
 List.instance.first = {
     []: nil
-    [@self]: @self[0]
     [@self, [@f]]:
         result = nil
         i = 0
@@ -265,7 +266,6 @@ List.instance.first = {
 
 List.instance.last = {
     []: nil
-    [@self]: @self[@self.length - 1]
     [@self, [@f]]:
         result = nil
         found = false
@@ -296,7 +296,7 @@ List.instance.take-while! = {
         self = @self.copy
         @self.clear!
         i = 0
-        {[]: @f[self[i]]}.while-true {
+        {[]: i < self.length and @f[self[i]]}.while-true {
             []:
                 @self.push![self[i]]
                 i |= i + 1
@@ -309,7 +309,7 @@ List.instance.take-while = {
 }
 
 List.instance.drop! = {
-    [@self, [@n]]: 
+    [@self, [@n]]:
         self = @self.copy
         @self.clear!
         repeat = self.length - @n
@@ -342,8 +342,7 @@ List.instance.drop-while = {
 }
 
 List.instance.remove-all! = {
-    [@self, [@f]]:
-        @self.reject![{[@compare]: @f == @compare}]
+    [@self, [@f]]: @self.reject![{[@compare]: @f == @compare}]
 }
 
 List.instance.remove-all = {

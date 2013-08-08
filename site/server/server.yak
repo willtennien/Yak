@@ -1,0 +1,5 @@
+http = require['http']
+fs = require['fs']
+
+http.Server[{[@req, @res]:
+    fs.readFile['.' + @req.url].pipe[@res]}]

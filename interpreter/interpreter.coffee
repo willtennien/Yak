@@ -258,9 +258,15 @@ class Funject
         new ListFunject result
 
     isObject: ->
-        for k in @keys()
-            if not k.isMemberOf lang.Symbol
+        try
+            for k in @keys()
+                if not k.isMemberOf lang.Symbol
+                    return false
+        catch e
+            if e instanceof InterpreterError
                 return false
+            else
+                throw e
         true
 
     native: (pattern, argument) ->
@@ -1474,12 +1480,12 @@ globalScope.set 'throw', new Funject
 
 globalScope.set 'print', new Funject
     call: [['*'], (thing) ->
-        console.log '' + thing
+        _exports.print '' + thing
         lang.nil]
 
-globalScope.set 'debug', new Funject
+globalScope.set 'inspect', new Funject
     call: [['*'], (thing) ->
-        console.log thing.toSource -1
+        _exports.print thing.toSource -1
         lang.nil]
 
 itself = (n) -> @return lang[n.type]
@@ -2118,3 +2124,5 @@ else
 _exports.ALLOW_CLASS_REDEFINITION = false
 _exports.eval = evaluate
 _exports.evalSync = evaluateSynchronous
+_exports.print = (string) ->
+    console.log string
