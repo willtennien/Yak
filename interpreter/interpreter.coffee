@@ -258,9 +258,15 @@ class Funject
         new ListFunject result
 
     isObject: ->
-        for k in @keys()
-            if not k.isMemberOf lang.Symbol
+        try
+            for k in @keys()
+                if not k.isMemberOf lang.Symbol
+                    return false
+        catch e
+            if e instanceof InterpreterError
                 return false
+            else
+                throw e
         true
 
     native: (pattern, argument) ->
