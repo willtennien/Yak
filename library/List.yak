@@ -9,22 +9,16 @@ List.instance.* = {
 
 List.instance.+ = {
     [@self, @l]:
-        if @l.list?
-            list = @self.copy
-            @l.length.times[{[@i]: list.push![@l[@i]]}]
-            list
-        else
-            @self.push[@l]
+        list = @self.copy
+        @l.length.times[{[@i]: list.push![@l[@i]]}]
+        list
 }
 
 List.instance.- = {
     [@self, @l]:
-        if @l.list?
-            list = @self.copy
-            @l.length.times[{[@i]: list.remove-all![@l[@i]]}]
-            list
-        else
-            @self.remove-all[@l]
+        list = @self.copy
+        @l.length.times[{[@i]: list.remove-all![@l[@i]]}]
+        list
 }
 
 List.instance.empty? = {
@@ -315,7 +309,7 @@ List.instance.take-while = {
 }
 
 List.instance.drop! = {
-    [@self, [@n]]: 
+    [@self, [@n]]:
         self = @self.copy
         @self.clear!
         repeat = self.length - @n
