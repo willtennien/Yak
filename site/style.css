@@ -24,13 +24,14 @@ header {
 }
 header .container {
     background-color: rgb(103, 172, 210);
-    background-image: url("header.png");
     background-repeat: no-repeat;
-    border-bottom: 1px solid white;
+}
+header .with-logo {
+    background-image: url("header.png");    
 }
 header h1 {
     text-rendering: optimizeLegibility;
-    font: 120px/1 Garamond, sans-serif;
+    font: 120px/1 Garamond, serif;
     color: #fff;
     margin: 0;
     padding: 95px 0 25px 50px;
@@ -184,11 +185,12 @@ article h2 {
     font-size: 12px;
 }
 code.block {
+    display: block;
     border-left: 2px solid rgba(190, 180, 180, 1);
     padding-left: 2em;
 }
 article a[href] {
-    color: #948884;
+    color: #746A69;
     /*text-decoration: none;*/
 }
 article a[href]:hover {
