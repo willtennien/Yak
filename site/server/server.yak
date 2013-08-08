@@ -1,0 +1,17 @@
+http = require['http']
+fs = require['fs']
+
+notFound = {[@res]:
+    res.writeHead[404]
+    res.end["Resource not found.\n"]
+}
+
+http.Server[{[@req, @res]:
+    fs.readFile['.' + req.url, {[@err, @data]:
+        if @err.nil?
+            res.writeHead[200]
+            res.end[data]
+        else
+            notFound[@res]
+
+}].listen[3000]

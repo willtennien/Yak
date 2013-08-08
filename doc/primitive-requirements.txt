@@ -38,7 +38,7 @@ Strings
 - * n
 - + s
 - [<number>]
-- [<range>]
+ - [<range>]
 - .length
 - .contains?
 - .replace # Primitive for speed

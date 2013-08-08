@@ -1,42 +1,49 @@
-Note: escape all &, <, >, (maybe) ', ", and / with meaning.
+<h1></h1>
 
+<h2>Contents</h2>
+<ul>
+	<li><a href='#getting-started'>Getting Started</a></li>
+	<li><a href='#overview'>An Overview of Yak</a></li>
+	<li><a href='#builtin-types'>Builtin types</a></li>
+	<li><a href='#applications-and-parameters'>Applications and Parameters</a></li>
+	<li><a href='#comments'>Intermezzo: Comments</a></li>
+	<li><a href='#inheritance'>Inheritance and <code>own</code>(ership)</a></li>
+	<li><a href='#conditionals'>Intermezzo: Conditionals</a></li>
+	<li><a href='#variables-and-assignment'>Variables and Assignment</a></li>
+	<li><a href='#sequences'>Intermezzo: Sequences</a></li>
+	<li><a href='#patterns'>Patterns &amp; Inverses</a></li>
+</ul>
 
-<h1>Getting Started</h1>
+<h2 id='getting-started'>Getting Started</h2>
 
 <h3>About this Guide</h3>
 
 <ul>
 <li>This Guide assumes you already have some experience with programming. If you don't, consider reading one of our excellent <a>softer</a> introductions.</li>
-<li>This Guide also assumes you have a reasonable appetite to learn Yak. This does not feature lots of "in-depth" examples, but aims for concision by enumerating the precepts of the language with a few, short examples. It is the ideal guide for a programmer who wants to learn the whole lanaguage quickly.</li>
+<li>This Guide also assumes you have a reasonable appetite to learn Yak. This does not feature lots of "in-depth" examples, but aims for concision by enumerating the precepts of the language with a few, short examples. It is the ideal guide for a programmer who wants to learn the whole language quickly.</li>
 </ul>
 
-How Do I get Yak?
+<h3>How Do I get Yak?</h3>
 
-<I'll fill this in later.>
-
-
-<h3>More about this Guide</h3>
-
-<Here I'll talk about the font for code conventions.>
+<p>Follow these great <a href='/#install'>instructions</a>!
 
 
-
-
-<h1>An Overview of Yak</h1>
+<h2 id='overview'>An Overview of Yak</h2>
 
 <h3>What is Yak?</h3>
 
-Yak is the first language to conform to the funject paradigm. In the funject paradigm, neither functions nor objects exist; rather, the roles of these two concepts are merged into the idea of a "funject". Absolutely everything in Yak is a funject, including numbers, strings, booleans, and the "nil" funject.
+<p>Yak is the first language to conform to the funject paradigm. In the funject paradigm, neither functions nor objects exist; rather, the roles of these two concepts are merged into the idea of a "funject". Absolutely everything in Yak is a funject, including numbers, strings, booleans, and the "nil" funject.</p>
 
 
-<h1>Builtin types</h1>
+<h2 id='builtin-types'>Builtin types</h2>
 
 <p>Yak has eight builtin types: Number, String, Boolean, Symbol, Nil, Unknown Lists, and the "plain" Funject. Any funject of any type is also a type of Funject. Each of these builtin types has its own literal syntax.</p>
 
 <h3>Numbers</h3>
 
-Yak does not distinguish between different types of numbers—integers, floats, doubles. Rather, everything is simply a number. Number literals contain a number of digits followed by some optional decimal digits and then optional scientific notation. The following are all valid numbers.
+<p>Yak does not distinguish between different types of numbers&#x2014;integers, floats, doubles. Rather, everything is simply a number. Number literals contain a number of digits followed by some optional decimal digits and then optional scientific notation. The following are all valid numbers.</p>
 
+<code class=block>
 1
 
 3.14159
@@ -46,63 +53,92 @@ Yak does not distinguish between different types of numbers—integers, floats, 
 2.997e+8
 
 1.213e-5
+</code>
 
 <h3>Strings</h3>
 
-Strings are written as a series of characters enclosed in double or single quotes. Strings can contain some standard escape sequences beginning with the backslash character (<code\</code>): newline "\n", tab "\t", carriage return "\r", and backslash itself "\\". Valid Strings include:
+<p>Strings are written as a series of characters enclosed in double or single quotes. Strings can contain some standard escape sequences beginning with the backslash character (<code>\</code>): newline "\n", tab "\t", carriage return "\r", and backslash itself "\\". Valid Strings include:</p>
 
+<code class=block>
 'yak'
 
 "5479"
 
 'By the rude bridge\nThat marked the flood...'
+</code>
 
 <h3>Booleans</h3>
 
-The two Booleans are the values <code>true</code> and <code>false</code>. Yak ascribes meaning to case, so <code>True</code> does not evaluate to <code>true</true> 
+<p>The two Booleans are the values <code>true</code> and <code>false</code>. Yak ascribes meaning to case, so <code>True</code> does not evaluate to <code>true</code>. </p>
 
 <h3>Symbols</h3>
 
-Symbols are like Strings but you can't edit the characters in them as easily. They are more often less important for the characters they comprise than the concepts they represent—hence their name "symbols". They are like symbols in Ruby or Lisp. You write symbols as a dot (<code>.</code>) followed by a series of numbers, letters or other characters: <code>_</code> (underscore), <code>-</code> (minus sign), <code>?</code>, <code>!</code>, <code>+</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>~</code>, <code>$</code>, <code><</code>, and <code>></code>. Symbols may not begin with a number. Valid symbols include:
+<p>
+Symbols are like Strings but you can't edit the characters in them as easily. They are more often less important for the characters they comprise than the concepts they represent&#x2014;hence their name "symbols". They are like symbols in Ruby or Lisp. You write symbols as a dot (<code>.</code>) followed by a series of numbers, letters or other characters: <code>_</code> (underscore), <code>-</code> (minus sign), <code>?</code>, <code>!</code>, <code>+</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>~</code>, <code>$</code>, <code>&lt;</code>, and <code>></code>. Symbols may not begin with a number. Valid symbols include:
+</p>
 
+<code class=block>
 .i-am-a-symbol
 
 .$
 
 .yak+ice-cream->hooray!
+</code>
 
 <h3>Nil</h3>
 
-The only funject of type Nil is <code>nil</code>. It represents "nothingness", much like Java's <code>null</code>, C's null pointer, Python's <code>None</code>, or Ruby's <code>nil</code>. For example, a funject that returns the index of an element in an list and fails to find an element in a particular list would probably return <code>nil</code>. 
+<p>
+The only funject of type Nil is <code>nil</code>. It represents "nothingness", much like Java's <code>null</code>, C's <code>NULL</code> pointer, Python's <code>None</code>, or Ruby's <code>nil</code>. For example, a funject that returns the index of an element in an list and fails to find an element in a particular list would probably return <code>nil</code>. 
+</p>
 
 <h3>Unknown</h3>
 
+<p>
 The only funject of type Unknown is <code>unknown</code>. You use it in pattern matching, so I will discuss it later.
+</p>
 
-<h3>Lists<h3>
+<h3>Lists</h3>
 
-Lists—like many language's Arrays—represent a series of funjects. You write lists as a series of expressions separated by commas and enclosed in square brackets. Valid lists include:
+<p>
+Lists&#x2014;like many language's Arrays&#x2014;represent a series of funjects. You write lists as a series of expressions separated by commas and enclosed in square brackets. Valid lists include:
+</p>
 
+<code class=block>
 ['one', 2, 'three']
+</code>
 
+<code class=block>
 []
+</code>
 
+<code class=block>
 ['hooray!', [['nesting!']]]
+</code>
+
 
 <h4>Funject Literals</h4> 
 
-In addition to all the aforementioned types—which are themselves funjects—you can also write "plain" funjects with the funject literal syntax:
+<p>
+In addition to all the aforementioned types&#x2014;which are themselves funjects&#x2014;you can also write "plain" funjects with the funject literal syntax:
+</p>
 
+<code class=block>
 {
-	pattern1: consequent1
+	pattern1: consequent1 &#xA;
 	pattern2: consequent2
 	...
 }
+</code>
 
+<p>
 A funject literal is a series of any number of pattern-consequent pairs separated by newlines and enclosed in curly braces. A pattern-consequent pair is a pattern followed by a colon followed by an expression. A pattern is a restricted set of Yak syntax that I will explicate more fully later. When writing a funject literal, you must indent all the pairs the same distance. Valid funject literals include:
+</p>
 
+<code class=block>
 {}
+</code>
 
+<code class=block>
 {'pattern': "consequent"}
 
 {
@@ -114,23 +150,30 @@ A funject literal is a series of any number of pattern-consequent pairs separate
 {
 	[1]: 'one'
 	[2]: 'two' }
+</code>
 
+<p>
 You can write a curly braces on the same line as a pair or you can separate it from the first (or last) pair with any number of newline characters. 
+</p>
 
 
-<h1>Applications and Parameters</h1>
+<h2 id='applications-and-parameters'>Applications and Parameters</h2>
 
+<p>
 When you write two expressions next to one another, the interpreter interprets it as an invocation and invokes the lefthand expression with the righthand expression as its argument.
+</p>
 
-<code>exp1 exp2</code>
+<code class=block>exp1 exp2</code>
 
+<p>
 Funjects always take one argument, and everything is a funject, so placing two expressions next to one another is always a syntactically legal invocation. Invocation is left-associative; this means that the interprets a series of expressions thus:
+</p>
 
-exp1 exp2 exp3 exp4 ...
+<code class=block>exp1 exp2 exp3 exp4 ...</code>
 
-(((exp1 exp2) exp3) exp4) ...
+<code class=block>(((exp1 exp2) exp3) exp4) ...</code>
 
-The interpreter invokes a funject in three steps:
+<p>The interpreter invokes a funject in three steps:</p>
 
 <ul>
 <li>It attempts to match the argument to one of the funject's patterns</li>
@@ -138,23 +181,29 @@ The interpreter invokes a funject in three steps:
 <li>It evaluates the consequent of the pair and returns the result.</li>
 </ul>
 
-For example, consider the following invocation.
+For example, consider the following invocation:
 
+<code class=block>
 {
 	0: 'zero'
 	1: 'one'
 	2: 'two'
 } 1
+</code>
 
 <p>The interpreter first identifies the funject literal as the receiver (to be invoked) and <code>1</code> as the argument. It then looks at each of the patterns in the receiver in the order in which they were defined. Next, it tries to match the first pattern, <code>0</code>, to the argument, <code>1</code>, but this fails. It then tries to match the second pattern, <code>1</code>, to <code>1</code>. Since this succeeds, it evaluates the consequent, <code>'one'</code>, and returns this as the result of the whole invocation.</p>
 
 <p>This may remind you of function (or procedure or method) application from languages like Java and Ruby. Like functions, funjects can contain parameters. You write a function an at sign (<code>@</code>) optionally followed by a sequence of characters the same as the ones you can put in a symbol. Valid parameters include:</p>
 
-<code>
+<code class=block>
 @I-am-A-pArAmEtEr
+</code>
 
+<code class=block>
 @yak+ice-cream->hooray!
+</code>
 
+<code class=block>
 @
 </code>
 
@@ -164,61 +213,56 @@ A parameter matches any value. Moreover, when the interpreter matches a paramete
 {@x: [@x, @x]} 4
 </code>
 
-evaluates to [4, 4], because the interpreter matches <code>@x</code> to the argument, <code>4</code>, and simultaneously assigns <code>@x</code> the value <code>4</code>. Then, when it evaluates the expression <code>[@x, @x]</code>, it replaces all occurances of <code>@x</code> with <code>4</code>. It therefore evaluates the entire invocation as [4, 4]. 
+evaluates to [4, 4], because the interpreter matches <code>@x</code> to the argument, <code>4</code>, and simultaneously assigns <code>@x</code> the value <code>4</code>. Then, when it evaluates the expression <code>[@x, @x]</code>, it replaces all occurances of <code>@x</code> with <code>4</code>. It therefore evaluates the entire invocation as <code>[4, 4]</code>. 
 
 Parameters can also appear as components of patterns:
 
+<code class=block>
 {[@x, 'plumblum']: @x} ['blog', 'plumblum']
+</code>
 
-This evaluates to <code>'blog'</code>: the interpreter tries to match <code>[@x, 'plumblum']</code> to <code>['blog', 'plumblum']</code> by matching each of the List's elements. It matches <code>@x</code> to <code>'blog'</code>, <code>'plumblum'</code> to <code>'plumblum'</code>, and evaluates the consequent—<code>@x</code>—as <code>'blog'</code>. 
+This evaluates to <code>'blog'</code>: the interpreter tries to match <code>[@x, 'plumblum']</code> to <code>['blog', 'plumblum']</code> by matching each of the List's elements. It matches <code>@x</code> to <code>'blog'</code>, <code>'plumblum'</code> to <code>'plumblum'</code>, and evaluates the consequent&#x2014;<code>@x</code>&#x2014;as <code>'blog'</code>. 
 
 Funject supports relatively logical pattern matching, so the following:
 
+<code class=block>
 {
 	[@x, @x]: @x
 	[@x, @y]: [@y, @x]
 } [4, 5]
+</code>
 
 will evaluate to <code>[5, 4]</code> because the first pattern matches only a list of two same elements. Since the parameter <code>@x</code> appears twice in the pattern, the interpreter needs to match both occurrences to the same value. Accordingly, the interpreter will evaluate the following:
 
+<code class=block>
 {
 	[@x, @x]: @x
 	[@x, @y]: [@y, @x]
 } [2, 2]
+</code>
 
 as <code>2</code>, because <code>[2, 2]</code> <em>does</em> match a list of two same elements. 
 
-<h1>Inheritance and <code>own</code>(ership)</h1>
 
-<h3>What if none of the patterns match?</h3>
 
-Every funject has an parent funject; we say that a funject "inherits" from its parent. By default, funjects created with funject literals inherit from a special default parent of the type Funject. This default parent contains a number of useful pattern-consequent pairs (hence called "rules"). 
 
-If the interpreter invokes a funject with an argument and fails to match each of the parameters of a funject to that argument, then it invokes the funject's parent with the argument. Since all funjects inherit—directly or indirectly—from the default parent, if the interpreter continues to fail to find a match for an argument it will eventually invoke the default parent. The default parent contains a special, catch-all pattern that signals an error complaining that the interpreter has found no match. 
 
-<h3>Own</h3>
 
-During the execution of a consequent, a funject has access to a special keyword <code>own</code>. <code>own</code> represents the funject itself. Using <own>code</code>, a funject can invoke itself, pass itself as an argument, and even return itself. Compare <code>own</code> to JavaScript's <code>arguments.callee</code>. For example, we can write the famous recursive factorial algorithm as a funject:
-
-{
-	[0]: 1
-	[@n]: @n * own[@n - 1]
-}
-
-This definition also uses the mathematical operations times (<code>*</code>) and minus (<code>-</code>). The interpreter actually handles mathematical operations in an interesting way; the interpreter does not handle them as a special case, operation, or syntax but handles them as standard library funjects. Suffice it to know for now that the interpreter evaluates <code>a + b</code> as the sum of <code>a</code> and <code>b</code>, <code>a - b</code> as the difference of <code>a</code> and <code>b</code>, <code>a * b</code> as the product, and <code>a / b</code> as the quotient. 
-
-<h1>Intermezzo: Comments</h1>
+<h2 id='comments'>Intermezzo: Comments</h2>
 
 Yak supports single and multiline comments. Single line comments begin with a pound (<code>#</code>), like in every other damn scripting language.
 
+<code class=block>
 #I'm a comment!
 
 'the interpreter will evaluate me!'
 
 #the interpreter won't evaluate me, though.
+</code>
 
 You delinate multiline comments with <code>#|</code> and <code>|#</code>. You can nest comments, like in this example:
 
+<code class=block>
 #|
 	I'm in a comment
 	#|
@@ -227,19 +271,93 @@ You delinate multiline comments with <code>#|</code> and <code>|#</code>. You ca
 I have hokey, but legal, identation.
 	|# 
 I get the last word (budum-cshh). |#
+</code>
 
 
-<h1>Variables and Assignment</h1>
+
+
+
+
+<h2 id='inheritance'>Inheritance and <code>own</code>(ership)</h2>
+
+<h3>What if none of the patterns match?</h3>
+
+Every funject has an parent funject; we say that a funject "inherits" from its parent. By default, funjects created with funject literals inherit from a special default parent of the type Funject. This default parent contains a number of useful pattern-consequent pairs (hence called "rules"). 
+
+If the interpreter invokes a funject with an argument and fails to match each of the patterns to the argument, then it invokes the funject's parent with the argument. Since all funjects inherit&#x2014;directly or indirectly&#x2014;from the default parent, if the interpreter continues to fail to find a match for an argument it will eventually invoke the default parent. The default parent contains a special, catch-all pattern that signals an error complaining that the interpreter has found no match. 
+
+You can set the parent of a funject with the inheritance operator (<code>&lt;&lt;</code>).
+
+<code class=block>
+heir &lt;&lt; inherited
+</code>
+
+When the interpreter fails to find a match on <code>heir</code>, it will invoke <code>inherited</code>. You may reset a funject's parent any number of times.
+
+<h3>Own</h3>
+
+During the execution of a consequent, a funject has access to a special keyword <code>own</code>. <code>own</code> represents the funject itself. Using <own>code</code>, a funject can invoke itself, pass itself as an argument, and even return itself. Compare <code>own</code> to JavaScript's <code>arguments.callee</code>. For example, we can write the famous recursive factorial algorithm as a funject:
+
+<code class=block>
+{
+	[0]: 1
+	[@n]: @n * own[@n - 1]
+}
+</code>
+
+This definition also uses the mathematical operations times (<code>*</code>) and minus (<code>-</code>). The interpreter actually handles mathematical operations in an interesting way; the interpreter does not handle them as a special case, operation, or syntax but handles them as standard library funjects. Suffice it to know for now that the interpreter evaluates <code>a + b</code> as the sum of <code>a</code> and <code>b</code>, <code>a - b</code> as the difference of <code>a</code> and <code>b</code>, <code>a * b</code> as the product, and <code>a / b</code> as the quotient. 
+
+
+
+
+
+
+
+<h2 id='conditionals'>Intermezzo: Conditionals</h2>
+
+Yak supports conditionals (if-expressions) for convenience. They add no expressive power. They have two syntaxes and look much like CoffeeScript's conditionals:
+
+Form 1:
+
+<code class=block>
+if false
+	'this will not evaluate'
+else if 4 is 4
+	'Why yes, 4 is 4!'
+else print['Why include a print statement in a condition?']
+	'print statements always evaluate to nil'
+else
+	'this, too, will never evaluate'
+</code>
+
+Form 2:
+
+<code class=block>
+if 8 is 2 then "8 is 2?" else "8 isn't 2!"
+</code>
+
+In both forms you may omit the <code>else</code> clause. If expressions are expressions, and evaluate to the evaluated clause. If the condition of a conditional evaluates to anything but <code>true</code> or <code>false</code>, the interpreter attempts to coerce it to a Boolean by invoking it with the symbol <code>.to-boolean</code>: <code>condition.to-boolean</code>. If this fails to match&#x2014;just as when any argument fails to match&#x2014;the interpreter throws an error. If the condition of a conditional evaluates to false and has no <code>else</code> clause, the entire conditional evaluates to <code>nil</code>.
+
+
+
+
+
+
+<h2 id='variables-and-assignment'>Variables and Assignment</h2>
 
 <h3>The Simple Assignment Operator</h3>
 
 Yak has a rich variety of assignment operators. The simplest is the simple assignment:
 
+<code class=block>
 x = 4
+</code>
 
 When the interpreter encounters this expression, it identifies the left hand side as a variable, evaluates the right hand side, and sets the variable <code>x</code> to point to the value, <code>4</code> in whatever scope the interpreter encountered the assignment. It then evaluates the entire expression as the right hand side, and substitutes the value set in place of the assignment. This allows you such nice syntax as:
 
+<code class=block>
 x = y = 'pomegranate'
+</code>
 
 The assignment <code>y = 'pomegranate'</code> evaluates to <code>'pomegranate'</code> itself, and the interpreter sets <code>x</code> equal to <code>'pomegranate'</code>.
 
@@ -249,20 +367,26 @@ When assigning a variable, you need not declare its type; futhermore, you may re
 
 You can also assign values lazily. The <code>:=</code> operator denotes a lazy assignment:
 
+<code class=block>
 x := 2 + 2
+</code>
 
 When the interpreter encounters this expression, it identifies left hand side as a variable and sets it equal to the delayed expression on the right hand side in the scope where it encountered the assignment. Instead of returning the right hand side (which it hasn't evaluated yet) it simply returns <code>nil</code>. The interpreter evaluates the expression not when you assign the variable, but when you reference it. Thus to compute the expression:
 
+<code class=block>
 x + x
+</code>
 
 The interpreter evaluates the first <code>x</code> by looking up the variable in the current scope, finding that it points to a lazy expression, evaluating that expression, and then substituting the result of the evaluation for the variable. Everytime you reference the variable, the interpreter evaluates the expression again. In the example above, the interpreter evaluates <code>x + x</code> twice for each reference to <code>x</code>. 
 
 You can use lazy assignments to great effect such as by tracking the value of a variable. Consider the following:
 
+<code class=block>
 x = 0
 y := x
 x = 1
 y
+</code>
 
 In this case, the interpreter first sets x equal to 0, sets y equal to the lazy expression <code>x</code>, resets x to 1, and finally evaluates y. Because it evaluates the expression <code>x</code> when it evaluates the last line, it evaluates y as 1. When we say that "y is x", we seem to mean that y is whatever x is. Because we used lazy assignment, we will find that y always equals whatever x does. But if we had used strict assignment, as many other languages solely support, the interpreter would have evaluated y as 0. 
 
@@ -270,114 +394,56 @@ In this case, the interpreter first sets x equal to 0, sets y equal to the lazy 
 
 The interpreter evaluates the consequent of a funject in a scope that is newly created for each execution but that has access to the scope in which the funject was defined. For example:
 
+<code class=block>
 x = 'outer'
 { []: x = 'inner' } []
 x
+</code>
 
 When the interpreter evaluates this, it first sets x equal to 'outer' in the outer scope, then matches the pattern of the funject to its argument, and evaluates the consequent of the funject by creating a new scope and setting x equal to 'inner' in that scope. When it then looks up the variable <code>x</code> in the outer scope, and finds it equal to 'outer'. Lazy assignments work the same way:
 
+<code class=block>
 x := 'outer'
 { []: x := 'inner' } []
 x
+</code>
 
 On the last line, the interpreter evaluates <code>x</code> as 'outer'. 
 
 If you want to reset the variable of an outer scope, you need to use the reset assignment operators. You can reset simple values with <code>|=</code>
 
+<code class=block>
 x = 'outer'
 { []: x |= 'inner' } []
 x
+</code>
 
-When the interpreter evaluates <code>x |= 'inner'</code>, it searches for the variable <code>x</code> in an enclosing scope—not in the current scope—beginnign with the "closest" scope and working up the "scope chain" (successively enclosing scopes). If it fails to find such a variable, it signals an error. Otherwise, it resets the first variable it finds to the result of evaluating the left hand side. In this example, it searches outside of the scope of the consequent and finds the variable created in the assignment <code>x = 'outer'</code>. It then resets this to <code>'inner'</code>. When it lookups <code>x</code> on the last line, it finds it equal to <code>'inner'</code>. 
+When the interpreter evaluates <code>x |= 'inner'</code>, it searches for the variable <code>x</code> in an enclosing scope&#x2014;not in the current scope&#x2014;beginnign with the "closest" scope and working up the "scope chain" (successively enclosing scopes). If it fails to find such a variable, it signals an error. Otherwise, it resets the first variable it finds to the result of evaluating the left hand side. In this example, it searches outside of the scope of the consequent and finds the variable created in the assignment <code>x = 'outer'</code>. It then resets this to <code>'inner'</code>. When it lookups <code>x</code> on the last line, it finds it equal to <code>'inner'</code>. 
 
 The interpreter evaluates the lazy reset assignment operator (<code>|:=</code>) in much the same way, but it delays the evaluation of the right hand side until you attempt to reference the variable. 
 
-<h1>Intermezzo: Conditionals & Sequences</h1>
-
-Yak supports conditionals (if-expressions) for convenience. They add no expressive power. They have two syntaxes and look much like CoffeeScript's conditionals:
-
-Form 1:
-
-if false
-	'this will not evaluate'
-else if 4 is 4
-	'Why yes, 4 is 4!'
-else print['Why include a print statement in a condition?']
-	'print statements always evaluate to nil'
-else
-	'this, too, will never evaluate'
-
-Form 2:
-
-if 8 is 2 then "8 is 2?" else "8 isn't 2!"
-
-In both forms you may omit the <code>else</code> clause. If expressions are expressions, and evaluate to the evaluated clause. If the condition of a conditional evaluates to anything but <code>true</code> or <code>false</code>, the interpreter attempts to coerce it to a Boolean by invoking it with the symbol <code>.to-boolean</code>: <code>condition.to-boolean<code>. If this fails to match—just as when any argument fails to match—the interpreter throws an error. If the condition of a conditional evaluates to false and has no <code>else</code> clause, the entire conditional evaluates to <code>nil</code>.
 
 
 
 
-<h1>Patterns & Inverses</h1>
 
-Yak supports extensive pattern matching. For example, you can match a deeply nested list:
-
-{ [1, [[@x], [3]], 4]: @x } [1, [[2], [3]], 4]
-
-The interpreter matches the parameter <code>@x</code> to <code>2</code> and evaluates the entire expression as <code>2</code>.
-
-You can also match invocations. To do so, you must define the <em>inverse</em> of a funject with the <code>&:lt;-</code> operator. The <code>&:lt;-</code> operator sets its right hand side to be the inverse of its left hand side. Inverse funjects must conform to certain criteria. 
-
-plus = {
-	[a, b]: a + b
-}
-
-plus <- {
-	[@result, [unknown, @b]]: [@result - @b]
-	[@result, [@a, unknown]]: [@result - @a]
-}
-
-The second of these two expressions sets the inverse of plus. You will understand its rules when I explain how the interpreter uses them. When the interpreter encounters an application in a pattern, it attempts to evaluate it. If it finds that the argument of the application contains a parameter, it checks to see whether the argument contains other parameters of a different name. If it does, the interpreter throws an error. Otherwise, it replaces all occurances of the unknown parameter with the special funject "<code>unknown</code>". It then passes the inverse of the funject a list of two elements: the first is the value the interpreter was attempting to match the application to; the second is this modified argument. Consider an example:
-
-{ ['fum', plus[@x, 27]]: @x + 10 }['fum', 42]
-
-The interpreter first attempts to match the pattern to the argument by matching 'fum' against 'fum'. Since this succeeds, it proceeds to match the application <code>plus[@a, 27]</code> against the <code>42</code>. It checks that the argument contains only one parameter, converts the only instance of it to <code>unknown</code>, and passes <code>[42, [unknown, 27]]</code> to the inverse:
-
-{
-	[@result, [unknown, @b]]: [@result - @b]
-	[@result, [@a, unknown]]: [@result - @a]
-} [42, [unknown, 27]]
-
-The interpreter matches the first rule and evaluates this application of the inverse to <code>[42 - 27]</code>, <code>[15]</code>. The interpreter then sets the <em>possible</em> values of the unmatched parameter <code>@x</code> to the result of evaluating the inverse, in this case <code>[15]</code>. Each element in the list indicates a possible value for the parameter <code>@x</code>. You may return multiple possibilities in an list (or none with an empty list). If the interpreter were to evaluate another invocation and receiver other possible values for <code>@x</code> it would filter out those possibilities not present in both lists. If the interpreter ever finds that a parameter as no possible values, it moves on to the next rule (or throws an error if there are none). If the interpreter ever finishes matching a pattern and has multiple possibilities for a parameter, it chooses one randomly.
-
-In this case, the interpreter assigns <code>@x</code> to the only possibility, <code>15</code>. It then evaluates the consequent of the first funject—<code>@x + 10</code>—as <code>25</code>.
-
-Just as you can have multiple instances of the same parameter in a normal pattern, you can the same in an argument in a pattern. If we augment our inverse to this:
-
-plus <- {
-	[@result, [unknown, @b]]: [@result - @b]
-	[@result, [@a, unknown]]: [@result - @a]
-	[@result, [unknown, unknown]: [@result / 2]
-}
-
-The following expression,
-
-{ [plus[@x, @x]]: @x } [8] 
-
-will now evaluate to <code>4</code>.
-
-<h1>Intermezzo: Sequences</h1>
+<h2 id='sequences'>Intermezzo: Sequences</h2>
 
 A sequence is simply an indented series of expressions, each on their own line. A sequence can appear anywhere an expression can. Because all syntactic constructs in Yak are expressions, this is everywhere.
 
 Consider an example:
 
+<code class=block>
 y = 0
 x := 
 	y = y + 1
 	'this string accomplishes nothing'
 	y + 10
+</code>
 
 Upon encountering a sequence, the interpreter evaluates each of the sub-expressions, in order, and then evaluates the result of the sequence as the last expression. Since sequences do not have their own scope, the following calls will each increment y.
 
+<code class=block>
 x #this is 11
 
 #y is now 1
@@ -393,7 +459,70 @@ x #this is 11
 10000 + x #this is 10014
 
 #y is now 4
+</code>
 
 
-<h1>Intermezzo: How do numbers work?</h1>
+
+
+
+
+<h2 id='patterns'>Patterns &amp; Inverses</h2>
+
+Yak supports extensive pattern matching. For example, you can match a deeply nested list:
+
+<code class=block>
+{ [1, [[@x], [3]], 4]: @x } [1, [[2], [3]], 4]
+</code>
+
+The interpreter matches the parameter <code>@x</code> to <code>2</code> and evaluates the entire expression as <code>2</code>.
+
+You can also match invocations. To do so, you must define the <em>inverse</em> of a funject with the <code>&lt;-</code> operator. The <code>&lt;-</code> operator sets its right hand side to be the inverse of its left hand side. Inverse funjects must conform to certain criteria. 
+
+<code class=block>
+plus = {
+	[a, b]: a + b
+}
+
+plus &lt;- {
+	[@result, [unknown, @b]]: [@result - @b]
+	[@result, [@a, unknown]]: [@result - @a]
+}
+</code>
+
+The second of these two expressions sets the inverse of plus. You will understand its rules when I explain how the interpreter uses them. When the interpreter encounters an application in a pattern, it attempts to evaluate it. If it finds that the argument of the application contains a parameter, it checks to see whether the argument contains other parameters of a different name. If it does, the interpreter throws an error. Otherwise, it replaces all occurances of the unknown parameter with the special funject "<code>unknown</code>". It then passes the inverse of the funject a list of two elements: the first is the value the interpreter was attempting to match the application to; the second is this modified argument. Consider an example:
+
+<code class=block>
+{ ['fum', plus[@x, 27]]: @x + 10 }['fum', 42]
+</code>
+
+The interpreter first attempts to match the pattern to the argument by matching 'fum' against 'fum'. Since this succeeds, it proceeds to match the application <code>plus[@a, 27]</code> against the <code>42</code>. It checks that the argument contains only one parameter, converts the only instance of it to <code>unknown</code>, and passes <code>[42, [unknown, 27]]</code> to the inverse:
+
+<code class=block>
+{
+	[@result, [unknown, @b]]: [@result - @b]
+	[@result, [@a, unknown]]: [@result - @a]
+} [42, [unknown, 27]]
+</code>
+
+The interpreter matches the first rule and evaluates this application of the inverse to <code>[42 - 27]</code>, <code>[15]</code>. The interpreter then sets the <em>possible</em> values of the unmatched parameter <code>@x</code> to the result of evaluating the inverse, in this case <code>[15]</code>. Each element in the list indicates a possible value for the parameter <code>@x</code>. You may return multiple possibilities in an list (or none with an empty list). If the interpreter were to evaluate another invocation and receiver other possible values for <code>@x</code> it would filter out those possibilities not present in both lists. If the interpreter ever finds that a parameter as no possible values, it moves on to the next rule (or throws an error if there are none). If the interpreter ever finishes matching a pattern and has multiple possibilities for a parameter, it chooses one randomly.
+
+In this case, the interpreter assigns <code>@x</code> to the only possibility, <code>15</code>. It then evaluates the consequent of the first funject&#x2014;<code>@x + 10</code>&#x2014;as <code>25</code>.
+
+Just as you can have multiple instances of the same parameter in a normal pattern, you can the same in an argument in a pattern. If we augment our inverse to this:
+
+<code class=block>
+plus &lt;- {
+	[@result, [unknown, @b]]: [@result - @b]
+	[@result, [@a, unknown]]: [@result - @a]
+	[@result, [unknown, unknown]: [@result / 2]
+}
+</code>
+
+The following expression,
+
+<code class=block>
+{ [plus[@x, @x]]: @x } [8] 
+</code>
+
+will now evaluate to <code>4</code>.
 
