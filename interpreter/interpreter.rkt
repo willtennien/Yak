@@ -3124,7 +3124,7 @@
       (and (lang? 'Symbol arg)
            (lang-contents arg
                           (lambda (name)
-                            (or (->boolean (member name '("is" "==" "clone" "number?" "string?" "boolean?" "symbol?" "unknown?" "nil?" "list?" "integer?" "float?" "to-string" "inspect" "silently" "apply" "then" "on" "while-true" "do-while-true" "has?" "append" "insert" "is-member-of?" "is-kind-of?")))
+                            (or (->boolean (member name '("is" "==" "clone" "number?" "string?" "boolean?" "symbol?" "unknown?" "nil?" "list?" "integer?" "float?" "to-string" "inspect" "silently" "apply" "then" "on" "while-true" "do-while-true" "has?" "append" "insert" "member-of?" "kind-of?")))
                                 (and (lang? 'Class self)
                                      (or (->boolean (member name '("superclass" "subclasses" "all-subclasses" "subclass?" "superclass?" "methods" "all-methods" "instance")))
                                          (lang-contents self
@@ -3535,10 +3535,20 @@
        [else
         false]))
    (hash-set! primitive-class-instance "subclass?" (create-primitive-method (lambda (arg own self other)
-                                                                              (create-lang 'Boolean (subclass? arg own self other)))
+                                                                              (lang-list-n-contents other
+                                                                                                    1
+                                                                                                    (lambda ()
+                                                                                                      (user-error-cannot-find-match own arg))
+                                                                                                    (lambda (other)
+                                                                                                      (create-lang 'Boolean (subclass? arg own self other)))))
                                                                             default-primitive-inverse))
    (hash-set! primitive-class-instance "superclass?" (create-primitive-method (lambda (arg own self other)
-                                                                                (create-lang 'Boolean (superclass? arg own self other)))
+                                                                              (lang-list-n-contents other
+                                                                                                    1
+                                                                                                    (lambda ()
+                                                                                                      (user-error-cannot-find-match own arg))
+                                                                                                    (lambda (other)
+                                                                                                      (create-lang 'Boolean (superclass? arg own self other)))))
                                                                               default-primitive-inverse))))
 (hash-set! primitive-class-instance "methods" (primitive-placeholder-named "Class::methods"))
 (hash-set! primitive-class-instance "all-methods" (primitive-placeholder-named "Class::all-methods"))
@@ -3723,8 +3733,24 @@
                                                                                                                                                    self))))))))
                                                                   default-primitive-inverse))
                                                                                                                                     
-(hash-set! primitive-funject-instance "is-member-of?" (primitive-placeholder-named "is-member-of?"))
-(hash-set! primitive-funject-instance "is-kind-of?" (primitive-placeholder-named "is-kind-of?"))
+(hash-set! primitive-funject-instance "member-of?" (create-primitive-method (lambda (arg own self other)
+                                                                                 (lang-list-n-contents other
+                                                                                                       1
+                                                                                                       (lambda ()
+                                                                                                         (user-error-cannot-find-match own arg))
+                                                                                                       (lambda (klass)
+                                                                                                         (create-lang 'Boolean (equal? klass
+                                                                                                                                       (invoke self (create-lang 'Symbol "class")))))))
+                                                                               default-primitive-parent))
+(hash-set! primitive-funject-instance "kind-of?" (create-primitive-method (lambda (arg own self other)
+                                                                               (lang-list-n-contents other
+                                                                                                     1
+                                                                                                     (lambda ()
+                                                                                                       (user-error-cannot-find-match own arg))
+                                                                                                     (lambda (klass)
+                                                                                                       (invoke (invoke klass (create-lang 'Symbol "superclass?"))
+                                                                                                               (create-lang-list-mlist (invoke self (create-lang 'Symbol "class")))))))
+                                                                             default-primitive-parent))
 
 
 ;;  Number

@@ -69,8 +69,8 @@ is x # identity comparison; when one changes, the other changes
 .integer? # true if the receiver is a number and has no fractional component
 .float? # true if the receiver is a number and has a fractional component
 
-.is-member-of?[c] # true if receiver is an instance of class c
-.is-kind-of?[c] # true if the receiver is an instance of class c or one of its subclasses
+.member-of?[c] # true if receiver is an instance of class c
+.kind-of?[c] # true if the receiver is an instance of class c or one of its subclasses
 
 .to-string # a human-readable string representation
 .inspect # a debugger-friendly string representation
