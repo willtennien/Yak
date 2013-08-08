@@ -392,5 +392,5 @@
 	<li>Takes 2, and multiplies it by itself - 1 (overall expression: 5 * 4 * 3 * 2 * factorial[1])</li>
 	<li>Takes 1, and multiplies it by itself - 1 (overall expression: 5 * 4 * 3 * 2 * 1 * factorial[0])
 	<li>Finds that [0] matches the base case, so it evaluates to one</li>
-	<li>This leaves the final expression as 5 * 4 * 3 * 2 * 1 * 1, which is exactly what 5! does in mathematics!</li>
+	<li>This leaves the final expression as 5 * 4 * 3 * 2 * 1 * 1, which is exactly what 5! (factorial) does in mathematics!</li>
 </ol>
