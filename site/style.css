@@ -29,13 +29,23 @@ header p {
     margin: 0 0 48px;
     color: #000;
 }
-header .interpreter {
-    display: none;
-    overflow: auto;
+header .interpreter,
+code {
     font: 11px/13px Menlo, Monaco, Consolas, Courier New, monospace;
     background: rgba(0, 0, 0, .8);
     box-shadow: inset 0 2px 8px #000;
     color: #fff;
+    overflow: auto;
+}
+pre code {
+    display: block;
+    padding: 12px;
+}
+code {
+    padding: 2px 6px;
+}
+header .interpreter {
+    display: none;
     height: 20em;
     padding: 12px 12px 12px 24px;
 }
@@ -138,6 +148,7 @@ header button:active {
 }
 header button {
     display: none;
+    outline: 0;
     border: 0;
     padding: 0;
     float: left;
@@ -155,13 +166,23 @@ article {
 }
 article h1,
 article h2 {
-    font: 3em/1 Georgia, serif;
-    margin: 48px 0 0;
+    font: 700 4em/1 HelveticaNeue-CondensedBold, HelveticaNeueCondensedBold, Helvetica Neue-Condensed Bold, Helvetica Neue Condensed Bold, Helvetica, Arial, sans-serif;
+    margin: 48px 0 -1rem;
 }
 article h2 {
-    font-size: 2em;
+    font-size: 3em;
 }
 .bookmark {
     position: relative;
     top: -144px;
+}
+article a {
+    color: #05d;
+    text-decoration: none;
+}
+article a:hover {
+    text-decoration: underline;
+}
+article a:active {
+    color: #028;
 }
