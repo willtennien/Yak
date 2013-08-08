@@ -3,18 +3,50 @@
 List.instance.* = {
     [@self, @n]:
         list = []
-        @n.times[{[@i]: list.concat![@self]}]
+        @n.times[{[@i]: list |= list + @self}]
         list
 }
 
 List.instance.+ = {
     [@self, @l]:
-        @l.length.times[{[@i]: @self.push![@l[@i]]}]
-        @self
+        if @l.list?
+            list = @self.copy
+            @l.length.times[{[@i]: list.push![@l[@i]]}]
+            list
+        else
+            @self.push[@l]
+}
+
+List.instance.- = {
+    [@self, @l]:
+        if @l.list?
+            list = @self.copy
+            @l.length.times[{[@i]: list.remove-all![@l[@i]]}]
+            list
+        else
+            @self.remove-all[@l]
 }
 
 List.instance.empty? = {
     [@self]: @self.length == 0
+}
+
+List.instance.insert = {
+    [@self, [@n, @f]]: @self.copy.insert![@n, @f]
+}
+
+List.instance.delete-at = {
+    [@self, [@n]]: @self.copy.delete-at![@n]
+}
+
+List.instance.set-at! = {
+    [@self, [@n, @f]]:
+        @self.insert![@n, @f]
+        @self.delete-at![@n + 1]
+}
+
+List.instance.set-at = {
+    [@self, [@n, @f]]: @self.copy.set-at![@n, @f]
 }
 
 List.instance.clear! = {
@@ -22,16 +54,26 @@ List.instance.clear! = {
         {[]: @self.length > 0}.while-true {
             []: @self.delete-at![0]
         }
+        @self
+}
+
+List.instance.clear = {
+	[@self]: []
 }
 
 List.instance.set! = {
     [@self, [@l]]:
         @self.clear!
         @l.length.times[{[@i]: @self.push![@l[@i]]}]
+        @self
+}
+
+List.instance.set = {
+	[@self, [@l]]: @l.copy
 }
 
 List.instance.contains? = {
-    [@self, [@f]]: @self.index-of[@f] == -1
+    [@self, [@f]]: @self.index-of[@f] != -1
 }
 
 List.instance.pop! = {
@@ -41,23 +83,35 @@ List.instance.pop! = {
         result
 }
 
+List.instance.pop = {
+	[@self]: @self.copy.pop!
+}
+
 List.instance.push! = {
     [@self, [@f]]: @self.insert![@self.length, @f]
 }
 
+List.instance.push = {
+	[@self, [@f]]: @self.copy.push![@f]
+}
+
 List.instance.shift! = {
-    [@self, [@f]]:
+    [@self]:
         result = @self[0]
         @self.delete-at![0]
         result
+}
+
+List.instance.shift = {
+	[@self]: @self.copy.shift!
 }
 
 List.instance.unshift! = {
     [@self, [@f]]: @self.insert![0, @f]
 }
 
-List.instance.pop = {
-    [@self]: @self[@self.length - 1]
+List.instance.unshift = {
+	[@self, [@f]]: @self.copy.unshift![@f]
 }
 
 List.instance.index-of = {
@@ -106,8 +160,16 @@ List.instance.pluck! = {
     [@self, [@key]]: @self.map![by[@key]]
 }
 
+List.instance.pluck = {
+	[@self, [@key]]: @self.clone.pluck![@key]
+}
+
 List.instance.invoke! = {
     [@self, [@f]]: @self.map![{[@e]: (@e @f)[]}]
+}
+
+List.instance.invoke = {
+	[@self, [@f]]: @self.clone.invoke![@f]
 }
 
 List.instance.filter! = {
@@ -115,11 +177,15 @@ List.instance.filter! = {
         i = @self.length - 1
         {[]: i >= 0}.while-true {
             []:
-                if f[@self[i]].not
+                if @f[@self[i]].not
                     @self.delete-at![i]
                 i |= i - 1
         }
         @self
+}
+
+List.instance.filter = {
+	[@self, [@f]]: @self.copy.filter![@f]
 }
 
 List.instance.reject! = {
@@ -127,9 +193,282 @@ List.instance.reject! = {
         i = @self.length - 1
         {[]: i >= 0}.while-true {
             []:
-                if f[@self[i]]
+                if @f[@self[i]]
                     @self.delete-at![i]
                 i |= i - 1
         }
         @self
+}
+
+List.instance.reject = {
+	[@self, [@f]]: @self.copy.reject![@f]
+}
+
+List.instance.reduce = {
+    [@self, [@f]]:
+        i = 0
+        result = @self[i]
+        {[]: i < @self.length - 1}.while-true {
+            []:
+                i |= i + 1
+                result |= @f[result, @self[i]]
+        }
+        result
+
+}
+
+List.instance.reduce-right = {
+    [@self, [@f]]:
+        i = @self.length - 1
+        result = @self[i]
+        {[]: i > 0}.while-true {
+            []:
+                i |= i - 1
+                result |= @f[result, @self[i]]
+        }
+        result
+}
+
+List.instance.every? = {
+    [@self, [@f]]:
+        self = @self.copy
+        i = 0
+        result = true
+        {[]: i < self.length and result}.while-true {
+            []:
+                result |= @f[self[i]]
+                i |= i + 1
+        }
+        result
+}
+
+List.instance.any? = {
+    [@self, [@f]]:
+        self = @self.copy
+        i = 0
+        result = false
+        {[]: i < self.length and result.not}.while-true {
+            []:
+                result |= @f[self[i]]
+                i |= i + 1
+        }
+        result
+}
+
+List.instance.first = {
+    []: nil
+    [@self, [@f]]:
+        result = nil
+        i = 0
+        {[]: i < @self.length and found.not}.while-true {
+            []:
+                if @f[@self[i]]
+                    result |= @self[i]
+                    found |= true
+                i |= i + 1
+        }
+        result
+}
+
+List.instance.last = {
+    []: nil
+    [@self, [@f]]:
+        result = nil
+        found = false
+        i = 0
+        {[]: i >= 0 and found.not}.while-true {
+            []:
+                if @f[@self[i]]
+                    result |= @self[i]
+                    found |= true
+                i |= i - 1
+        }
+}
+
+List.instance.take! = {
+    [@self, [@n]]:
+        self = @self.copy
+        @self.clear!
+        @n.times[{[@i]: @self.push![self[@i]]}]
+        @self
+}
+
+List.instance.take = {
+    [@self, [@n]]: @self.copy.take![@n]
+}
+
+List.instance.take-while! = {
+    [@self, [@f]]:
+        self = @self.copy
+        @self.clear!
+        i = 0
+        {[]: i < self.length and @f[self[i]]}.while-true {
+            []:
+                @self.push![self[i]]
+                i |= i + 1
+        }
+        @self
+}
+
+List.instance.take-while = {
+    [@self, [@f]]: @self.copy.take-while![@f]
+}
+
+List.instance.drop! = {
+    [@self, [@n]]: 
+        self = @self.copy
+        @self.clear!
+        repeat = self.length - @n
+        repeat.times[{[@i]: @self.push[self[@n + @i]]}]
+        @self
+}
+
+List.instance.drop = {
+    [@self, [@n]]: @self.copy.drop![@n]
+}
+
+List.instance.drop-while! = {
+    [@self, [@f]]:
+        self = @self.copy
+        @self.clear!
+        dropping = true
+        i = 0
+        {[]: i < self.length}.while-true {
+            []:
+                if dropping.not or self[i].not
+                    @self.push![self[i]]
+                    dropping |= false
+                i |= i + 1
+        }
+        @self
+}
+
+List.instance.drop-while = {
+    [@self, [@f]]: @self.copy.drop-while![@f]
+}
+
+List.instance.remove-all! = {
+    [@self, [@f]]: @self.reject![{[@compare]: @f == @compare}]
+}
+
+List.instance.remove-all = {
+    [@self, [@f]]: @self.copy.remove-all![@f]
+}
+
+List.instance.unique! = {
+    [@self]:
+        result = []
+        @self.length.times[{
+            [@i]:
+                if result.contains?[@self[@i]].not
+                    result.push![@self[@i]]
+        }]
+        @self.set![result]
+}
+
+List.instance.unique = {
+    [@self, [@f]]: @self.copy.unique!
+}
+
+List.union! = {
+    @l:
+        result = []
+        joined = []
+        @l.length.times[{[@i]: joined = joined + @l[@i]}]
+        joined.length.times[{
+            [@i]:
+                if result.contains?[joined[@i]].not
+                    result.push![joined[@i]]
+        }]
+        @l.set![result]
+}
+
+List.union = {
+    @l: @l.copy.union!
+}
+
+List.instance.union! = {
+    [@self, @l]: @self.set![List.union[@self + @l]]
+}
+
+List.instance.union = {
+    [@self, @l]: @self.copy.union![@l]
+}
+
+List.intersection! = {
+    @l:
+        joined = []
+        refined = []
+        @l.length.times[{[@i]: joined = joined + @l[@i]}]
+        joined.length.times[{
+            [@i]:
+                allContains = true
+                i = 0
+                {[]: i < @l.length and allContains}.while-true {
+                    []:
+                        allContains |= @l[i].contains?[joined[@i]]
+                        i |= i + 1
+                }
+                if allContains.not
+                    refined.remove-all![joined[i]]
+        }]
+        @l.set![refined.unique]
+}
+
+List.intersection = {
+    @l: @l.copy.intersection!
+}
+
+List.instance.intersection! = {
+    [@self, @l]: @self.set![List.intersection[@self + @l]]
+}
+
+List.instance.intersection = {
+    [@self, @l]: @self.copy.intersection![@l]
+}
+
+List.instance.compact! = {
+    [@self]: @self.remove-all![nil]
+}
+
+List.instance.compact = {
+    [@self]: @self.copy.compact!
+}
+
+List.instance.swap! = {
+    [@self, [@index1, @index2]]:
+        store = @self[index1]
+        @self.set-at![@index1, @self[@index2]]
+        @self.set-at![@index2, store]
+        @self
+}
+
+List.instance.swap = {
+    [@self, [@index1, @index2]]: @self.copy.swap![@index1, @index2]
+}
+
+List.instance.shuffle! = {
+    [@self]:
+        @self.length.times[{
+            [@i]:
+                switch = Number.random[@self.length]
+                @self.swap![@i, switch]
+        }]
+        @self
+}
+
+List.instance.shuffle = {
+    [@self]: @self.copy.shuffle!
+}
+
+List.instance.reverse! = {
+    [@self]:
+        result = []
+        @self.length.times[{[@i]: result.push![@self[@self.length - 1 - @i]]}]
+        @self.set![result]
+        @self
+}
+
+List.instance.reverse = {
+    [@self]: @self.copy.reverse!
 }

@@ -820,8 +820,12 @@ class ListFunject extends Funject
     copy: -> new ListFunject @value
 
     constructor: (@value) ->
-    toString: -> "[#{@value.join ', '}]"
-    toSource: (depth) -> "[#{(v.toSource depth - 1 for v in @value).join ', '}]"
+    toString: -> "[#{(v.toSource 4 for v in @value).join ', '}]"
+    toSource: (depth) ->
+        if depth <= 0
+            "[...]"
+        else
+            "[#{(v.toSource depth - 1 for v in @value).join ', '}]"
 
     call: [
         'own', ['number'], (self, n) ->
@@ -1128,8 +1132,8 @@ yakClass 'List', lang.Funject,
             yakBoolean x.value.length is 0
         length: yakFunction ['list'], (x) ->
             new NumberFunject x.value.length
-        length: yakFunction ['list'], (x) ->
-            new NumberFunject x.value.length
+        copy: yakFunction ['list'], (x) ->
+            new ListFunject x.value.slice 0
         'delete-at!': yakFunction ['list', ['number']], (x, i) ->
             if i < 0
                 i += x.value.length
