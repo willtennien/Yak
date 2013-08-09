@@ -1,6 +1,7 @@
 environment = global ? @
 
 SPECIAL_FORM = {}
+NO_MATCH = {}
 
 last = (thing) -> thing[thing.length - 1]
 
@@ -393,7 +394,8 @@ class Funject
                         args.unshift interpreter
                     if SPECIAL_FORM is result = value.apply @, args
                         return
-                    return interpreter.return result
+                    if NO_MATCH isnt result
+                        return interpreter.return result
 
         if @patterns
             arg = interpreter.frame.arg ? 0
@@ -571,7 +573,10 @@ class Funject
             when 'function' then new Funject
                 call: [
                     'list', (list) -> Funject.bridge v.apply context, Funject.unbridge list,
-                    'symbol', (property) -> Funject.bridge v[property.value], v]
+                    'symbol', (property) ->
+                        if property of v
+                            return Funject.bridge v[property.value], v
+                        NO_MATCH]
             when 'object' then new Funject
                 call: [
                     'symbol', (property) -> Funject.bridge v[property.value], v]
