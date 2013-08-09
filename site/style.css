@@ -37,7 +37,7 @@ header p {
 header .interpreter,
 code {
     font: 11px/13px Menlo, Monaco, Consolas, Courier New, monospace;
-    background: rgba(0, 0, 0, .8);
+    background: rgb(8%, 13%, 17%);
     box-shadow: inset 0 2px 8px #000;
     color: #fff;
     overflow: auto;
