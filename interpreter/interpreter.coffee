@@ -579,7 +579,10 @@ class Funject
                         NO_MATCH]
             when 'object' then new Funject
                 call: [
-                    'symbol', (property) -> Funject.bridge v[property.value], v]
+                    'symbol', (property) ->
+                        if property of v
+                            return Funject.bridge v[property.value], v
+                        NO_MATCH]
 
     @unbridge: (f) ->
         switch f.type
