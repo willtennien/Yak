@@ -15,19 +15,25 @@ header {
 }
 header .container {
     background: rgb(118, 170, 214);
-    padding-top: 48px;
+}
+header .welcome {
+    padding: 96px 0 24px;
+    background: bottom right url(yak-outlined-1.png) no-repeat;
+    overflow: hidden;
 }
 header h1 {
-    font: 156px/1 Georgia, serif;
-    color: #000;
-    margin: 0;
-    text-align: center;
+    font: 120px/1 Georgia, serif;
+    color: #fff;
+    text-shadow: 0 1px #000;
+    margin: 0 0 0 48px;
+    display: inline-block;
 }
 header p {
-    font: 16px/1.5 Georgia, serif;
+    font: 28px/1.5 Georgia, serif;
     text-align: center;
-    margin: 0 0 48px;
     color: #000;
+    margin: 0 0 0 36px;
+    display: inline-block;
 }
 header .interpreter,
 code {
