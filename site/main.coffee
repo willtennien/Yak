@@ -17,12 +17,6 @@ header.style.position = "fixed"
 header.style.left = "24px"
 header.style.right = "24px"
 
-resize = ->
-    space.style.height = header.offsetHeight + "px"
-
-window.addEventListener "resize", resize
-resize()
-
 fixedInterpret = false
 activeLink = undefined
 
@@ -59,6 +53,13 @@ scroll = (animate) ->
 
 window.addEventListener "scroll", scroll
 scroll()
+
+resize = ->
+    space.style.height = header.offsetHeight + "px"
+    scroll()
+
+window.addEventListener "resize", resize
+resize()
 
 tryYak.addEventListener "click", ->
     unless fixedInterpret

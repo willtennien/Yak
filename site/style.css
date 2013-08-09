@@ -17,7 +17,7 @@ header .container {
     background: rgb(118, 170, 214);
 }
 header .welcome {
-    padding: 96px 0 24px;
+    padding: 96px 144px 24px 48px;
     background: bottom right url(yak-outlined-1.png) no-repeat;
     overflow: hidden;
 }
@@ -25,14 +25,13 @@ header h1 {
     font: 120px/1 Georgia, serif;
     color: #fff;
     text-shadow: 0 1px #000;
-    margin: 0 0 0 48px;
+    margin: 0 36px 0 0;
     display: inline-block;
 }
 header p {
     font: 28px/1.5 Georgia, serif;
-    text-align: center;
     color: #000;
-    margin: 0 0 0 36px;
+    margin: 0;
     display: inline-block;
 }
 header .interpreter,
@@ -104,7 +103,7 @@ header nav {
     clear: both;
     position: relative;
     margin: 0 -12px;
-    padding: 0 124px;
+    padding: 0 112px;
     text-align: center;
     background: rgb(82, 136, 182);
     box-shadow: 0 11px 3px -10px rgba(0, 0, 0, .3);
@@ -158,7 +157,7 @@ header button {
     border: 0;
     padding: 0;
     float: left;
-    margin: 0 0 0 -112px;
+    margin: 0 0 0 -100px;
     font: inherit;
     background: transparent;
     height: 48px;
