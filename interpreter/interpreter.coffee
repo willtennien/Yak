@@ -2092,39 +2092,6 @@ if module?
 
     _exports = exports
     _exports.repl = repl
-    if not module.parent
-        expressions = []
-        i = 2
-        expressionNumber = 1
-        argc = process.argv.length
-        interactive = false
-        while i < argc
-            switch arg = process.argv[i++]
-                when '-h'
-                    console.error 'Usage: coffee interpreter.coffee [ <filename> | -e <expression> | -i | -h ]'
-                    return
-                when '-i'
-                    interactive = true
-                when '--allow-class-redefinition'
-                    _exports.allowClassRedefinition = true
-                when '-e'
-                    expressions.push
-                        file: "expression#{expressionNumber++}"
-                        source: process.argv[i++]
-                else
-                    expressions.push
-                        file: path.resolve arg
-                        source: '' + fs.readFileSync arg
-        for expression in expressions
-            try
-                evaluateSynchronous expression.source, expression.file
-            catch e
-                if e instanceof SyntaxError
-                    console.error e.message
-                else
-                    throw e
-        if interactive or expressions.length is 0
-            repl()
 else
     parser = Yak.parser
     (@Yak ?= {}).interpreter = _exports = {}
@@ -2134,3 +2101,37 @@ _exports.eval = evaluate
 _exports.evalSync = evaluateSynchronous
 _exports.print = (string) ->
     console.log string
+
+if module? and not module.parent
+    expressions = []
+    i = 2
+    expressionNumber = 1
+    argc = process.argv.length
+    interactive = false
+    while i < argc
+        switch arg = process.argv[i++]
+            when '-h'
+                console.error 'Usage: coffee interpreter.coffee [ <filename> | -e <expression> | -i | -h ]'
+                return
+            when '-i'
+                interactive = true
+            when '--allow-class-redefinition'
+                _exports.allowClassRedefinition = true
+            when '-e'
+                expressions.push
+                    file: "expression#{expressionNumber++}"
+                    source: process.argv[i++]
+            else
+                expressions.push
+                    file: path.resolve arg
+                    source: '' + fs.readFileSync arg
+    for expression in expressions
+        try
+            evaluateSynchronous expression.source, expression.file
+        catch e
+            if e instanceof SyntaxError
+                console.error e.message
+            else
+                throw e
+    if interactive or expressions.length is 0
+        repl()
