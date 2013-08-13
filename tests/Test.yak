@@ -576,3 +576,243 @@ class TestWhile < TestCase
             assert[ran]
         }
     }
+
+class TestString < TestCase
+    instance = {
+        .test-watman: {[@self]:
+            assert==[String.watman, 'NaNNaNNaNNaNNaNNaNNaNNaNNaNNaNNaNNaNNaNNaNNaN Batman!']
+        }
+
+        .test-+: {[@self]:
+            assert==['abc' + '123', 'abc123']
+            assert==['abc123' + '', 'abc123']
+            assert-error[{
+                []: 'abc' + 123
+            }]
+        }
+
+        .test-*: {[@self]:
+            assert==['abc123' * 3, 'abc123abc123abc123']
+            assert==['' * 3, '']
+            assert==['abc123' * 1, 'abc123']
+            assert-error[{
+                []: 'abc123' * -3
+            }]
+        }
+
+        .test--: {[@self]:
+            assert==['abc123' - '123', 'abc']
+            assert==['abc123' - 'abc', '123']
+            assert==['ababab' - 'b', 'aaa']
+        }
+
+        .test-contains?: {[@self]:
+            assert['abc123'.contains?['a']]
+            assert['abc123'.contains?['3']]
+            assert['abc123'.contains?['c']]
+            assert['abc123'.contains?['bc12']]
+            assert['abc123'.contains?['z'].not]
+            assert['abc123'.contains?['xyz'].not]
+        }
+
+        .test-begins-with?: {[@self]:
+            assert['abc123'.begins-with?['a']]
+            assert['abc123'.begins-with?['abc']]
+            assert['abc123'.begins-with?['123'].not]
+            assert['abc123'.begins-with?['z'].not]
+            assert['abc123'.begins-with?['xyz'].not]
+        }
+
+        .test-ends-with?: {[@self]:
+            assert['abc123'.ends-with?['3']]
+            assert['abc123'.ends-with?['123']]
+            assert['abc123'.ends-with?['abc'].not]
+            assert['abc123'.ends-with?['z'].not]
+            assert['abc123'.ends-with?['xyz'].not]
+        }
+
+        .test-index-of: {[@self]:
+            assert==['abc123'.index-of['a'], 0]
+            assert==['abc123'.index-of['c'], 2]
+            assert==['abc123'.index-of['3'], 5]
+            assert==['abc123'.index-of['bc12'], 1]
+            assert==['abc123'.index-of['z'], -1]
+            assert==['abc123'.index-of['xyz'], -1]
+            assert==['ababab'.index-of['b'], 1]
+        }
+
+        .test-last-index-of: {[@self]:
+            assert==['abc123'.last-index-of['a'], 0]
+            assert==['abc123'.last-index-of['c'], 2]
+            assert==['abc123'.last-index-of['3'], 5]
+            assert==['abc123'.last-index-of['bc12'], 1]
+            assert==['abc123'.last-index-of['z'], -1]
+            assert==['abc123'.last-index-of['xyz'], -1]
+            assert==['ababab'.last-index-of['b'], 5]
+        }
+
+        .test-split: {[@self]:
+            assert==['a b c 1 2 3'.split[' '], ['a', 'b', 'c', '1', '2', '3']]
+            assert==['a b c 1 2 3'.split[' '].length, 6]
+            assert==['abc123'.split[' '], ['abc123']]
+            assert==['abc123'.split['bc'], ['a', '123']]
+        }
+
+        .test-substring: {[@self]:
+            assert==['abc123'.substring[1], 'bc123']
+            assert==['abc123'.substring[2, 4], 'c1']
+            assert==['abc123'.substring[-1]]
+            assert==['abc123'.substring[3], '123']
+            assert==['abc123'.substring[-3], '123']
+            assert==['abc123'.substring[-1], 3]
+            assert-error[{
+                []: 'abc123'.substring[-10]
+            }]
+            assert-error[{
+                []: 'abc123'.substring[10]
+            }]
+        }
+
+        .test-replace: {[@self]:
+            assert==['abc123'.replace['a', 'z'], 'zbc123']
+            assert==['abc123'.replace['abc', 'xyz'], 'xyz123']
+            assert==['abc123'.replace['z', 'xyz'], 'abc123']
+            assert==['ababab'.replace['b', 'c'], 'acacac']
+        }
+
+        .test-replace-first: {[@self]:
+            assert==['abc123'.replace-first['a', 'z'], 'zbc123']
+            assert==['abc123'.replace-first['abc', 'xyz'], 'xyz123']
+            assert==['abc123'.replace-first['z', 'xyz'], 'abc123']
+            assert==['ababab'.replace-first['b', 'c'], 'acabab']
+        }
+
+        .test-repeat: {[@self]:
+            assert==['abc123'.repeat[3], 'abc123' * 3]
+            assert==['abc123'.repeat[1], 'abc123']
+            assert-error[{
+                []: 'abc123'.repeat[-3]
+            }]
+        }
+
+        .test-matches-set?: {[@self]:
+            set = 'abcdefghijklmnopqrstuvw1234567890'
+            assert['abc123'.matches-set?[set]]
+            assert[''.matches-set?[set]]
+            assert['j'.matches-set?[set]]
+            assert['xyz'.matches-set?[set].not]
+            assert['abcxyz'.matches-set?[set].not]
+        }
+
+        .test-uppercase?: {[@self]:
+            assert['ABC'.uppercase?]
+            assert['abc'.uppercase?.not]
+            assert['ABC123'.uppercase?]
+            assert['abc123'.uppercase?.not]
+            assert['.?!abc123'.uppercase?.not]
+        }
+
+        .test-uppercase-alpha?: {[@self]:
+            assert['ABC'.uppercase-alpha?]
+            assert['abc'.uppercase-alpha?.not]
+            assert['ABC123'.uppercase-alpha?.not]
+            assert['abc123'.uppercase-alpha?.not]
+            assert['.?!abc123'.uppercase-alpha?.not]
+        }
+
+        .test-lowercase?: {[@self]:
+            assert['ABC'.lowercase?.not]
+            assert['abc'.lowercase?]
+            assert['ABC123'.lowercase?.not]
+            assert['abc123'.lowercase?]
+            assert['.?!abc123'.lowercase?.not]
+        }
+
+        .test-lowercase-alpha?: {[@self]:
+            assert['ABC'.lowercase-alpha?.not]
+            assert['abc'.lowercase-alpha?]
+            assert['ABC123'.lowercase-alpha?.not]
+            assert['abc123'.lowercase-alpha?.not]
+            assert['.?!abc123'.lowercase-alpha?.not]
+        }
+
+        .test-alpha?: {[@self]:
+            assert['ABC'.alpha?]
+            assert['abc'.alpha?]
+            assert['ABC123'.alpha?.not]
+            assert['abc123'.alpha?.not]
+            assert['.?!abc123'.alpha?.not]
+        }
+
+        .test-alphanumeric?: {[@self]:
+            assert['ABC'.alphanumeric?]
+            assert['abc'.alphanumeric?]
+            assert['ABC123'.alphanumeric?]
+            assert['abc123'.alphanumeric?]
+            assert['.?!abc123'.alphanumeric?.not]
+        }
+
+        .test-uppercase: {[@self]:
+            assert==['abc123'.uppercase, 'ABC123']
+            assert==['ABC123'.uppercase, 'ABC123']
+        }
+
+        .test-lowercase: {[@self]:
+            assert==['abc123'.lowercase, 'abc123']
+            assert==['ABC123'.lowercase, 'abc123']
+        }
+
+        .test-swap-case: {[@self]:
+            assert==['aBcDeFg123'.swap-case, 'AbCdEfG123']
+            assert==['a'.swap-case, 'A']
+            assert==['A'.swap-case, 'a']
+        }
+
+        .test-title-case: {[@self]:
+            assert==['change to title case'.title-case, 'Change To Title Case']
+            assert==['', '']
+            assert==['CHANGE TO TITLE CASE'.title-case, 'Change To Title Case']
+        }
+
+        .test-capitalize: {[@self]:
+            assert==['this should capitalize like a sentence.'.capitalize, 'This should capitalize like a sentence.']
+            assert==['t'.capitalize, 'T']
+            assert==['This should capitalize like a sentence.'.capitalize, 'This should capitalize like a sentence.']
+            assert==['THIS SHOULD CAPITALIZE LIKE A SENTENCE.'.capitalize, 'This should capitalize like a sentence.']
+        }
+
+        .test-cap-first: {[@self]:
+            assert==['this should capitalize like a sentence.'.cap-first, 'This should capitalize like a sentence.']
+            assert==['t'.cap-first, 'T']
+            assert==['This should capitalize like a sentence.'.cap-first, 'This should capitalize like a sentence.']
+            assert==['THIS SHOULD CAPITALIZE NOT LIKE A SENTENCE.'.cap-first, 'THIS SHOULD CAPITALIZE NOT LIKE A SENTENCE.']
+        }
+
+        .test-quote: {[@self]:
+            assert==['this should "format" nicely'.quote, '"this should \\"format\\" nicely"']
+        }
+
+        .test-unquote: {[@self]:
+            example = 'this should "format" nicely'
+            assert==[example, example.quote.unquote]
+        }
+
+        .test-escape-html: {[@self]:
+            html = '<html><script type="text/javascript">function add(x, y) { return x + y }</script></body></html>'
+            escaped = '&lt;html&gt;&lt;script type=&quot;text/javascript&quot;&gt;function add(x, y) { return x + y }&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;'
+            assert==[html.escape-html, escaped]
+        }
+
+        .test-unescape-html: {[@self]:
+            html = '<html><script type="text/javascript">function add(x, y) { return x + y }</script></body></html>'
+            escaped = '&lt;html&gt;&lt;script type=&quot;text/javascript&quot;&gt;function add(x, y) { return x + y }&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;'
+            assert==[html, escaped.unescape-html]
+        }
+
+        .test-lines: {[@self]:
+            assert==['abc\n123', ['abc', '123']]
+            assert==['abc123', ['abc123']]
+            assert==['abc123\n'.lines, ['abc123', '']]
+        }
+
+    }
