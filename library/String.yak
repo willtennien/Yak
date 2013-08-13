@@ -8,7 +8,13 @@ String.uppercase-set = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 String.number-set = '0123456789'
 
+String.alpha-set = String.lowercase-set + String.uppercase-set
+
 String.alphanumeric-set = String.lowercase-set + String.uppercase-set + String.number-set
+
+String.instance.- = {
+    [@self, @s]: @self.replace[@s, '']
+}
 
 String.instance.contains? = {
     [@self, [@s]]: @self.index-of[@s] != -1
@@ -84,7 +90,7 @@ String.instance.split = {
             []:
                 next = check.substring[0, check.index-of[@s]]
                 result.push![next]
-                check |= check.substring[0, check.index-of[@s] + @s.length]
+                check |= check.substring[check.index-of[@s] + @s.length, check.length]
         }
         result.push![check]
 }
@@ -92,24 +98,27 @@ String.instance.split = {
 String.instance.substring = {
     [@self, [@start]]: @self.substring[@start, @self.length]
     [@self, [@start, @end]]:
-        start = @start
-        end = @end
-        (start < 0).on {
-            true: start |= @self.length + start
-            false: nil
-        }
-        (end < 0).on {
-            true: end |= @self.length + end
-            false: nil
-        }
-        result = ''
-        i = start
-        {[]: i < end}.while-true {
-            []:
-                result |= result + @self[i]
-                i |= i + 1
-        }
-        result
+        if @start.abs > @self.length or @end.abs > @self.length
+            error['Index out of bounds']
+        else
+            start = @start
+            end = @end
+            (start < 0).on {
+                true: start |= @self.length + start
+                false: nil
+            }
+            (end < 0).on {
+                true: end |= @self.length + end
+                false: nil
+            }
+            result = ''
+            i = start
+            {[]: i < end}.while-true {
+                []:
+                    result |= result + @self[i]
+                    i |= i + 1
+            }
+            result
 }
 
 String.instance.replace = {
@@ -150,20 +159,30 @@ String.instance.matches-set? = {
         result
 }
 
+# True if all characters are uppercase or numbers
 String.instance.uppercase? = {
-    [@self]: @self.matches-set[String.uppercase-set]
+    [@self]: @self.matches-set?[String.uppercase-set + String.number-set]
+}
+
+# True if all characters are uppercase
+String.instance.uppercase-alpha? = {
+    [@self]: @self.matches-set?[String.uppercase-set]
 }
 
 String.instance.lowercase? = {
-    [@self]: @self.matches-set[String.lowercase-set]
+    [@self]: @self.matches-set?[String.lowercase-set + String.number-set]
+}
+
+String.instance.lowercase-alpha? = {
+    [@self]: @self.matches-set?[String.lowercase-set]
 }
 
 String.instance.alpha? = {
-    [@self]: @self.uppercase? or @self.lowercase?
+    [@self]: @self.matches-set?[String.alpha-set]
 }
 
 String.instance.alphanumeric? = {
-    [@self]: @self.matches-set[String.alphanumeric-set]
+    [@self]: @self.matches-set?[String.alphanumeric-set]
 }
 
 String.instance.uppercase = {
@@ -173,7 +192,7 @@ String.instance.uppercase = {
         {[]: i < @self.length}.while-true {
             []:
                 char = @self[i]
-                if char.lowercase?
+                if char.lowercase-alpha?
                     char |= String.uppercase-set[String.lowercase-set.index-of[char]]
                 else
                     nil
@@ -190,7 +209,7 @@ String.instance.lowercase = {
         {[]: i < @self.length}.while-true {
             []:
                 char = @self[i]
-                if char.uppercase?
+                if char.uppercase-alpha?
                     char |= String.lowercase-set[String.uppercase-set.index-of[char]]
                 else
                     nil
@@ -228,9 +247,9 @@ String.instance.title-case = {
         {[]: i < list.length}.while-true {
             []:
                 if i != 0
-                    result |= result + ' ' + list[i][0].uppercase + list[i].substring[1]
+                    result |= result + ' ' + list[i][0].uppercase + list[i].substring[1].lowercase
                 else
-                    result |= result + list[i][0].uppercase + list[i].substring[1]
+                    result |= result + list[i][0].uppercase + list[i].substring[1].lowercase
                 i |= i + 1
         }
         result
@@ -248,6 +267,11 @@ String.instance.cap-first = {
 
 String.instance.quote = {
     [@self]: '"' + (@self.replace['\\', '\\\\'].replace['"', '\\"']) + '"'
+}
+
+# Assumes the string is in quoted string format
+String.instance.unquote = {
+    [@self]: @self.substring[1, @self.length - 1].replace['\\"', '"'].replace['\\\\', '\\']
 }
 
 #|
