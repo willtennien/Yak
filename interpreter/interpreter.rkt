@@ -78,24 +78,31 @@
   (lambda (b)
     (<= a b)))
 
+(define (/1 a)
+  (/ 1 a))
+
 (define (partial f . args)
   (define (result . more-args)
     (apply f (append args more-args)))
   result)
+
+(define (reverse-args f . args)
+  (apply f (reverse args)))
 
 (define (apply-n n f arg)
   (if (= 0 n)
       arg
       (apply-n (sub1 n) f (f arg))))
 
-(define (zip xs ys)
-  (if (or (empty? xs)
-          (empty? ys))
+(define (zip . args)
+  (if (ormap empty? 
+             args)
       empty
-      (cons (cons (car xs)
-                  (car ys))
-            (zip (cdr xs)
-                 (cdr ys)))))
+      (cons (map car 
+                 args)
+            (apply zip 
+                   (map cdr 
+                        args)))))
           
 
 (define mcadr (compose mcar mcdr))
@@ -811,7 +818,7 @@
                  
                  ;You may need these depending on how you define legal identifiers: "1" "2" "3" "4" "5" "6" "7" "8" "9"
                  (define numbers "1234567890")
-                 (define legal-variable-characters "-+*/%_$<>?!=0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
+                 (define legal-variable-characters "-+*/%^_$<>?!=0QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
                  (define numbers-and-legal-variable-characters (string-append numbers legal-variable-characters))
                  
                  (define (parse-identifier str indent)
@@ -2173,7 +2180,7 @@
                              (env-pairs)))
   (cond 
     [(primitive? receiver) 
-     (invoke-inverse-primitive arg own)]
+     (invoke-inverse-primitive receiver arg own)]
     [(lang? 'Number receiver) 
      (invoke-inverse-number receiver arg own)]
     [(lang? 'String receiver)
@@ -3415,17 +3422,17 @@
                                               (lambda (self other)
                                                 (vanilla arg own self other))))
                       (lambda (result--arg own)
-                        (lang-list-contents result--arg
-                                            2
-                                            (lambda () 
-                                              (on-failure result--arg own))
-                                            (lambda (result arg)
-                                              (lang-list-contents arg
-                                                                  2
-                                                                  (lambda ()
-                                                                    (on-failure result--arg own))
-                                                                  (lambda (self other)
-                                                                    (inverse result--arg own result self other)))))))))
+                        (lang-list-n-contents result--arg
+                                              2
+                                              (lambda () 
+                                                (on-failure result--arg own))
+                                              (lambda (result arg)
+                                                (lang-list-n-contents arg
+                                                                      2
+                                                                      (lambda ()
+                                                                        (on-failure result--arg own))
+                                                                      (lambda (self other)
+                                                                        (inverse result--arg own result self other)))))))))
 
 (define create-primitive-method (create-create-primitive-method default-primitive-parent
                                                                 default-primitive-inverse))
@@ -3797,30 +3804,125 @@
                                                                                                [else
                                                                                                 (default-primitive-parent result--arg own)]))))))))))
 
-  
-(hash-set! primitive-number-instance "-" (primitive-placeholder-named "Number::-"))
-(hash-set! primitive-number-instance "*" (primitive-placeholder-named "Number::*"))
-(hash-set! primitive-number-instance "/" (primitive-placeholder-named "Number::/"))
+(for-each (lambda (name op left-env right-inv)
+            (hash-set! primitive-number-instance name (create-primitive-method (lambda (arg own self other)
+                                                                                 (lang-contents-typed self
+                                                                                                      'Number
+                                                                                                      user-error-cannot-find-match
+                                                                                                      (lambda (a) 
+                                                                                                        (lang-contents-typed other
+                                                                                                                             'Number
+                                                                                                                             user-error-cannot-find-match
+                                                                                                                             (lambda (b)
+                                                                                                                               (create-lang 'Number (op a b)))))))
+                                                                               (lambda (result--arg own result self other)
+                                                                                 (lang-contents-typed result
+                                                                                                      'Number
+                                                                                                      create-lang-list-mlist
+                                                                                                      (lambda (difference)
+                                                                                                        (cond
+                                                                                                          [(lang? 'Unknown self)
+                                                                                                           (lang-contents-typed other
+                                                                                                                                'Number
+                                                                                                                                create-lang-list-mlist
+                                                                                                                                (lambda (b)
+                                                                                                                                  (create-lang-list-mlist (create-lang 'Number (left-env difference b)))))]
+                                                                                                          [(lang? 'Unknown other)
+                                                                                                           (lang-contents-typed self
+                                                                                                                                'Number
+                                                                                                                                create-lang-list-mlist
+                                                                                                                                (lambda (a)
+                                                                                                                                  (create-lang-list-mlist (create-lang 'Number (right-inv difference a)))))]
+                                                                                                          [else
+                                                                                                           (create-lang-list-mlist)])))))))
+          (list "-" "*" "^")
+          (list  -   *  expt)
+          (list  +   /  (lambda (r p)
+                          (expt r 
+                                (/ 1 p))))
+          (list  -   /  (lambda (r b)
+                          (/ (log r)
+                             (log b)))))
+
 (hash-set! primitive-number-instance "%" (primitive-placeholder-named "Number::%"))
-(hash-set! primitive-number-instance "^" (primitive-placeholder-named "Number::^"))
-(hash-set! primitive-number-instance "sqrt" (primitive-placeholder-named "Number::sqrt"))
-(hash-set! primitive-number-instance "ln" (primitive-placeholder-named "Number::ln"))
-(hash-set! primitive-number-instance "log" (primitive-placeholder-named "Number::log"))
-(hash-set! primitive-number-instance "sin" (primitive-placeholder-named "Number::sin"))
-(hash-set! primitive-number-instance "cos" (primitive-placeholder-named "Number::cos"))
-(hash-set! primitive-number-instance "tan" (primitive-placeholder-named "Number::tan"))
-(hash-set! primitive-number-instance "sec" (primitive-placeholder-named "Number::sec"))
-(hash-set! primitive-number-instance "csc" (primitive-placeholder-named "Number::csc"))
-(hash-set! primitive-number-instance "cot" (primitive-placeholder-named "Number::cot"))
-(hash-set! primitive-number-instance "asin" (primitive-placeholder-named "Number::asin"))
-(hash-set! primitive-number-instance "acos" (primitive-placeholder-named "Number::acos"))
-(hash-set! primitive-number-instance "atan" (primitive-placeholder-named "Number::atan"))
+(for-each (lambda (xs)
+            (reverse-args apply 
+                          xs
+                          (lambda (name op op-inv)
+                            (hash-set! primitive-number-instance 
+                                       name
+                                       (create-primitive-attribute (lambda (arg own self)
+                                                                     (lang-contents-typed self
+                                                                                          'Number
+                                                                                          (lambda ()
+                                                                                            (user-error-cannot-find-match own arg))
+                                                                                          (lambda (n)
+                                                                                            (create-lang 'Number (op n)))))
+                                                                   (lambda (result--arg own result self)
+                                                                     (cond
+                                                                       [(lang? 'Unknown self)
+                                                                        (lang-contents-typed result
+                                                                                             'Number
+                                                                                             (lambda ()
+                                                                                               (user-error-cannot-find-match own result--arg))
+                                                                                             (lambda (r)
+                                                                                               (create-lang-list-mlist (create-lang 'Number (op-inv r)))))]
+                                                                       [else
+                                                                        (user-error-cannot-find-match own result--arg)])))))))
+          (list (list "sqrt" sqrt sqr)
+                (list "ln"   log  exp)
+                (list "log"  
+                      (lambda (a)
+                        (/ (log a)
+                           (log 10)))
+                      (partial expt 10))
+                (list "sin"     sin       asin)
+                (list "cos"     cos       acos)
+                (list "tan"     tan       atan)
+                (list "asin"    asin      sin)
+                (list "acos"    acos      cos)
+                (list "atan"    atan      tan)
+                (list "sec"     
+                      (compose /1
+                               cos)
+                      (compose acos 
+                               /1))
+                (list "csc" 
+                      (compose /1
+                               sin)
+                      (compose asin
+                               /1))
+                (list "cot"
+                      (compose /1
+                               tan)
+                      (compose atan
+                               /1))
+                (list "floor"   floor     identity)
+                (list "ceil"    ceiling   identity)
+                (list "round"   round     identity)))
 (hash-set! primitive-number-instance "atan/" (primitive-placeholder-named "Number::atan/"))
 (hash-set! primitive-number-instance "abs " (primitive-placeholder-named "Number::abs "))
-(hash-set! primitive-number-instance "ceil" (primitive-placeholder-named "Number::ceil"))
-(hash-set! primitive-number-instance "floor" (primitive-placeholder-named "Number::floor"))
-(hash-set! primitive-number-instance "round" (primitive-placeholder-named "Number::round"))
-(hash-set! primitive-number-instance "times" (primitive-placeholder-named "Number::times"))
+(hash-set! primitive-number-instance "times" (create-primitive-method (lambda (arg own self other)
+                                                                        (lang-contents-typed self
+                                                                                             'Number
+                                                                                             (lambda ()
+                                                                                               (user-error-cannot-find-match own arg))
+                                                                                             (lambda (n)
+                                                                                               (lang-list-n-contents other
+                                                                                                                     1
+                                                                                                                     (lambda ()
+                                                                                                                       (user-error-cannot-find-match own arg))
+                                                                                                                     (lambda (f)
+                                                                                                                       (define (iter i)
+                                                                                                                         (cond
+                                                                                                                           [(<= n i)
+                                                                                                                            lang-nil]
+                                                                                                                           [else
+                                                                                                                            (invoke f (create-lang 'Number i))
+                                                                                                                            (iter (add1 i))]))
+                                                                                                                       (iter 1))))))
+                                                                      default-primitive-inverse))
+                                                                          
 
 
 ;;String
@@ -4248,13 +4350,49 @@
 (define invoke-string 
   ((lambda ()
      (define delegate (create-delegate-instance-method-to-class primitive-string-class))
-     (create-invoke-type 'String
-                         (lambda (receiver arg own internal name)
-                           (cond
-                             [(eq? name "+") 
-                              (create-primitive-string-+ internal)]
-                             [else 
-                              (delegate arg own)]))))))
+     (lambda (receiver arg own)
+       (define (no-match . args)
+         (user-error-cannot-find-match own arg))
+       (lang-contents-typed receiver
+                            'String
+                            no-match
+                            (lambda (s)
+                              (cond
+                                [(lang? 'List arg)
+                                 (lang-list-n-contents arg
+                                                       1
+                                                       no-match
+                                                       (lambda (lang-i)
+                                                         (lang-contents-typed lang-i
+                                                                              'Number
+                                                                              no-match
+                                                                              (lambda (i)
+                                                                                (cond
+                                                                                  [(and (integer? i)
+                                                                                        (<= 0 i)
+                                                                                        (< i 
+                                                                                           (string-length s)))
+                                                                                   (create-lang 'String (substring s
+                                                                                                                   i
+                                                                                                                   (add1 i)))]
+                                                                                  [(and (integer? i)
+                                                                                        (< i 0)
+                                                                                        (<= (- (string-length s))
+                                                                                            i))
+                                                                                   (let ((j (+ i (string-length s))))
+                                                                                     (create-lang 'String (substring s
+                                                                                                                     j
+                                                                                                                     (add1 j))))]
+                                                                                  [else
+                                                                                   (no-match)])))))]
+                                [(lang? 'Symbol arg)
+                                 (lang-contents arg
+                                                (lambda (name)
+                                                  (if (eq? name "+") 
+                                                      (create-primitive-string-+ s)
+                                                      (delegate arg own))))]
+                                [else
+                                 (no-match)])))))))
   
 (define invoke-inverse-string ;takes receiver arg own
   ((lambda ()
@@ -4439,6 +4577,8 @@
                                           (create-env-pair-strict "-" (create-lang 'Symbol "-"))
                                           (create-env-pair-strict "*" (create-lang 'Symbol "*"))
                                           (create-env-pair-strict "/" (create-lang 'Symbol "/"))
+                                          (create-env-pair-strict "%" (create-lang 'Symbol "%"))
+                                          (create-env-pair-strict "^" (create-lang 'Symbol "^"))
                                           (create-env-pair-strict "is" (create-lang 'Symbol "is"))
                                           (create-env-pair-strict "isnt" (create-lang 'Symbol "isnt"))
                                           (create-env-pair-strict "and" (create-lang 'Symbol "and"))

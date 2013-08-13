@@ -2,16 +2,23 @@ http = require['http']
 fs = require['fs']
 
 notFound = {[@res]:
-    res.writeHead[404]
-    res.end["Resource not found.\n"]
+    @res.writeHead[404]
+    @res.end["Error: 404. Resource not found.\n"]
 }
 
 http.Server[{[@req, @res]:
-    fs.readFile['.' + req.url, {[@err, @data]:
-        if @err.nil?
-            res.writeHead[200]
-            res.end[data]
-        else
-            notFound[@res]
-
+    @req.url.on {
+        '/': own '/index.html'
+        @path:
+            fs.readFile['..' + @path, {
+                [@err]: 
+                    notFound[@res]
+                [@err, @data]:
+                    if @err.nil?
+                        @res.writeHead[200]
+                        @res.end[@data.toString[]]
+                    else
+                        notFound[@res] 
+            }]
+    }
 }].listen[3000]
