@@ -57,6 +57,10 @@ pre code {
 code {
     padding: 2px 6px;
 }
+h2 code,
+h2 code {
+    font-size: 1em;
+}
 header .interpreter {
     display: none;
     height: 20em;

@@ -1,0 +1,6 @@
+console.log['here']
+console.log['banality']
+elem = $['<div>A</div>']
+console.log[elem]
+$['body'].append[elem]
+console.log['figurehead']
