@@ -2135,5 +2135,3 @@ if module? and not module.parent
                 throw e
     if interactive or expressions.length is 0
         repl()
-else
-    module.exports = evaluateSynchronous
