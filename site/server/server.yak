@@ -10,7 +10,7 @@ http.Server[{[@req, @res]:
     @req.url.on {
         '/': own '/index.html'
         @path:
-            fs.readFile['..' + @path, {
+            fs.readFile['pages' + @path, {
                 [@err]: 
                     notFound[@res]
                 [@err, @data]:

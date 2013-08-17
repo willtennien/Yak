@@ -1,7 +1,15 @@
+@import url(http://fonts.googleapis.com/css?family=EB+Garamond);
+@import url(http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic);
+
+@font-face {
+    font-family: Sabon Roman;
+    src: url("SabonGreek-Roman.otf");
+}
+
 body {
     margin: 0 24px;
     background: #ddd;
-    font: 16px/1.5 Helvetica Neue, Helvetica, Arial, sans-serif;
+    font: 16px/1.5 Lato, Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 .container {
     max-width: 960px;
@@ -22,14 +30,14 @@ header .welcome {
     overflow: hidden;
 }
 header h1 {
-    font: 120px/1 Georgia, serif;
+    font: 100px/1 Sabon, Sabon Roman, EB Garamond, serif;
     color: #fff;
     text-shadow: 0 1px #000;
     margin: 0 36px 0 0;
     display: inline-block;
 }
 header p {
-    font: 28px/1.5 Georgia, serif;
+    font: 28px/1.5 Sabon, Sabon Roman, EB Garamond, serif;
     color: #000;
     margin: 0;
     display: inline-block;
@@ -171,8 +179,8 @@ article {
 }
 article h1,
 article h2 {
-    font: 700 4em/1 HelveticaNeue-CondensedBold, HelveticaNeueCondensedBold, Helvetica Neue-Condensed Bold, Helvetica Neue Condensed Bold, Helvetica, Arial, sans-serif;
-    margin: 48px 0 -1rem;
+    font: 700 4em/1 Lato, HelveticaNeue-CondensedBold, HelveticaNeueCondensedBold, Helvetica Neue-Condensed Bold, Helvetica Neue Condensed Bold, Helvetica, Arial, sans-serif;
+    margin: 48px 0 0;
 }
 article h2 {
     font-size: 3em;
