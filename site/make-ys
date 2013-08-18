@@ -1,2 +1,0 @@
-#!/bin/sh
-coffee -j ys.js -c ../interpreter/parser.coffee ../interpreter/interpreter.coffee ../interpreter/ys.coffee

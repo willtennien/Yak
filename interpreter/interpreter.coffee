@@ -2088,30 +2088,29 @@ repl = ->
         console.log '' # put a newline after the last prompt
         process.exit 0
 
-# if module?
-#     fs = require 'fs'
-#     path = require 'path'
-#     parser = exports.parser or require './parser.coffee'
+if module?
+    fs = require 'fs'
+    path = require 'path'
+    parser = exports.parser or require './parser.coffee'
 
-#     _exports = exports
-#     _exports.repl = repl
-# else
-#     parser = Yak.parser
-#     (@Yak = evaluateSynchronous).parser = parser
-#     Yak.interpreter = _exports = {}
+    _exports = exports
+    _exports.repl = repl
+    _exports.evalFile = (filename, cb) ->
+        fs.readFile(filename, (err, data) ->
+            if err? then cb(err)
+            evaluate(data.toString(), filename, 1, cb))
+    _exports.evalFileSync = (filename) ->
+        evaluateSynchronous(fs.readFileSync(filename).toString(), filename, 1)
+else
+    parser = Yak.parser
+    (@Yak = evaluateSynchronous).parser = parser
+    Yak.interpreter = _exports = {}
 
-# _exports.allowClassRedefinition = false
-# _exports.eval = evaluate
-# _exports.evalSync = evaluateSynchronous
-# _exports.print = (string) ->
-#     console.log string
-# _exports.evalFile = (filename, cb) ->
-#     fs.readFile(filename, (err, data) ->
-#         if err? then cb(err)
-#         evaluate(data.toString(), filename, 1, cb))
-# _exports.evalFileSync = (filename) ->
-#     evaluateSynchronous(fs.readFileSync(filename).toString(), filename, 1)
-
+_exports.allowClassRedefinition = false
+_exports.eval = evaluate
+_exports.evalSync = evaluateSynchronous
+_exports.print = (string) ->
+    console.log string
 
 if module? and not module.parent
     expressions = []
