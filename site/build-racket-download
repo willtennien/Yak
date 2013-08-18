@@ -1,0 +1,5 @@
+#!/bin/sh
+cd downloads
+raco exe ../../interpreter/interpreter.rkt
+mv ../../interpreter/interpreter Yak/yak
+zip -r 'Yak for Mac'.zip Yak

@@ -4783,14 +4783,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                                Executable interface
 
-#|(let ((argv (current-command-line-arguments)))
-  (unbridge (mlast (cond
-                     [(= 0 (vector-length argv))
-                      (interpret (port->string (current-input-port)))]
-                     [(and (= 1 (vector-length argv))
-                           (equal? "-p" (vector-ref argv 0)))
-                      (interpret-parsed (deep-list->mlist (read (current-input-port))))]
-                     [else
-                      (vector-map (lambda (path)
-                                    (interpret (file->string path)))
-                                  argv)]))))|#
+(let ((argv (current-command-line-arguments)))
+  (cond
+    [(= 0 (vector-length argv))
+     (interpret (port->string (current-input-port)))]
+    [(and (= 1 (vector-length argv))
+          (equal? "-p" (vector-ref argv 0)))
+     (interpret-parsed (deep-list->mlist (read (current-input-port))))]
+    [else
+     (vector-map (lambda (path)
+                   (interpret (file->string path)))
+                 argv)])
+  (void))

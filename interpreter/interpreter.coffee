@@ -571,6 +571,7 @@ class Funject
             when 'string' then new StringFunject v
             when 'boolean' then lang[v]
             when 'function' then new Funject
+                bridged: v
                 call: [
                     'list', (list) -> Funject.bridge v.apply context, Funject.unbridge list,
                     'symbol', (property) ->
@@ -578,6 +579,7 @@ class Funject
                             return Funject.bridge v[property.value], v
                         NO_MATCH]
             when 'object' then new Funject
+                bridged: v
                 call: [
                     'symbol', (property) ->
                         if property of v
@@ -585,6 +587,7 @@ class Funject
                         NO_MATCH]
 
     @unbridge: (f) ->
+        if f.bridged? then return f.bridged
         switch f.type
             when 'nil' then null
             when 'unknown' then throw new InterpreterError "Cannot unbridge #{f.type}"
@@ -1413,7 +1416,7 @@ globalScope = new class extends Scope
         try
             super name
         catch e
-            if Object::hasOwnProperty.call environment, name
+            if (Object::hasOwnProperty.call environment, name) or (Object::hasOwnProperty.call environment.__proto__, name)
                 Funject.bridge environment[name]
             else if name is 'require' and module?
                 Funject.bridge require
@@ -2088,19 +2091,27 @@ repl = ->
 if module?
     fs = require 'fs'
     path = require 'path'
-    parser = require './parser.coffee'
+    parser = exports.parser or require './parser.coffee'
 
     _exports = exports
     _exports.repl = repl
 else
     parser = Yak.parser
-    (@Yak ?= {}).interpreter = _exports = {}
+    (@Yak = evaluateSynchronous).parser = parser
+    Yak.interpreter = _exports = {}
 
 _exports.allowClassRedefinition = false
 _exports.eval = evaluate
 _exports.evalSync = evaluateSynchronous
 _exports.print = (string) ->
     console.log string
+_exports.evalFile = (filename, cb) ->
+    fs.readFile(filename, (err, data) ->
+        if err? then cb(err)
+        evaluate(data.toString(), filename, 1, cb))
+_exports.evalFileSync = (filename) ->
+    evaluateSynchronous(fs.readFileSync(filename).toString(), filename, 1)
+
 
 if module? and not module.parent
     expressions = []

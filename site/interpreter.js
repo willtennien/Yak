@@ -938,6 +938,7 @@
           return lang[v];
         case 'function':
           return new Funject({
+            bridged: v,
             call: [
               'list', function(list) {
                 return Funject.bridge(v.apply(context, Funject.unbridge(list)));
@@ -951,6 +952,7 @@
           });
         case 'object':
           return new Funject({
+            bridged: v,
             call: [
               'symbol', function(property) {
                 if (property in v) {
@@ -965,6 +967,9 @@
 
     Funject.unbridge = function(f) {
       var interpreter, k, o, v, _i, _j, _len, _len1, _ref, _ref1, _results;
+      if (f.bridged != null) {
+        return f.bridged;
+      }
       switch (f.type) {
         case 'nil':
           return null;
@@ -3564,8 +3569,6 @@
     if (interactive || expressions.length === 0) {
       repl();
     }
-  } else {
-    module.exports = evaluateSynchronous;
   }
 
 }).call(this);

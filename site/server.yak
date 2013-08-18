@@ -1,12 +1,15 @@
 http = require['http']
 fs = require['fs']
 
+port = if process.env.has?[.VCAP_SERVICES_PORT] then process.env.VCAP_SERVICES_PORT else 3000
+
 notFound = {[@res]:
     @res.writeHead[404]
     @res.end["Error: 404. Resource not found.\n"]
 }
 
 http.Server[{[@req, @res]:
+    console.log[Date[] + ' |    I receive a request for \'' + @req.url.to-string + '\'.']
     @req.url.on {
         '/': own '/index.html'
         @path:
@@ -15,10 +18,13 @@ http.Server[{[@req, @res]:
                     notFound[@res]
                 [@err, @data]:
                     if @err.nil?
+                        console.log[@data.length]
                         @res.writeHead[200]
-                        @res.end[@data.toString[]]
+                        @res.end[@data]
                     else
                         notFound[@res] 
             }]
     }
-}].listen[3000]
+}].listen[port]
+
+console.log[Date[] + ' |    I am born on port ' + port.to-string + '.']

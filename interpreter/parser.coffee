@@ -686,7 +686,9 @@ stringify = (n) ->
 
 if module?
     _exports = exports
-    if not module.parent
+    if module.parent?
+        exports.parser = _exports
+    else
         expression = null
         racket = false
         i = 2

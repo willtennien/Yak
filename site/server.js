@@ -1,1 +1,1 @@
-require('./interpreter.js')(require('fs').readFileSync('./server.yak').toString());
+require('./yak.js').eval(require('fs').readFileSync('./server.yak').toString());
