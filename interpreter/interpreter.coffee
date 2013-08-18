@@ -2099,7 +2099,7 @@ if module?
         fs.readFile(filename, (err, data) ->
             if err? then cb(err)
             evaluate(data.toString(), filename, 1, cb))
-    _exports.evalFileSync = (filename) ->
+    _exports.evalFileSync = evalFileSync = (filename) ->
         evaluateSynchronous(fs.readFileSync(filename).toString(), filename, 1)
 else
     parser = Yak.parser
