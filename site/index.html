@@ -1,7 +1,7 @@
 <!doctype html>
 <meta charset=utf-8>
 <title>Yak</title>
-<link rel=stylesheet href=/assets/styles/style.css>
+<link rel="stylesheet" type="text/css" href="/assets/styles/style.css">
 <div class=header-fill></div>
 <header>
     <div class=container>
@@ -25,7 +25,7 @@ factorial[5]</textarea></div>
 <div class=container><article>
 
 <h1>Welcome</h1>
-<p>Yak is a remarkably powerful scripting language that leverages the new concept of a funject—a programmatic construct with properties of both functions and objects. Funjects allow you to say anything you could with a function or object, but they also allow you to express things you couldn't before. Read more about the mythical founding of funjects.</p>
+<p>Yak is a remarkably powerful scripting language that leverages the new concept of a funject—a programmatic construct with properties of both functions and objects. Funjects allow you to say anything you could with a function or object, but they also allow you to express things you couldn't before. <!--Read more about the mythical founding of funjects.--></p>
 
 <p>Yak comes in three flavors: an Racket-based executable, an npm package, and an HTML include that interprets yak inline or included in the HTML. The executable supports parallelization and pretty much anything you'd find in Racket. The npm package gives you access to node.js through require statements and allows you to write entire servers. The third interpreter, once included on your webpage, interprets all script tags with the attribute type='text/yak'.</p>
 
@@ -37,7 +37,7 @@ factorial[5]</textarea></div>
 
 <p>This will interpret all <code>&lt;script&gt;</code> tags written after it that contain the attribute <code>type=text/yak</code>. Any libraries you include (such as jQuery) you can access from Yak<!--using our simple <a href='doc/js-bridge'>bridging pattern</a>-->.</p>
 
-<p>You can download the Racket-based interpreter for <a href='downloads/Yak-for-Mac.zip'>Mac OS X</a>. We haven't compiled Yak on other operating systems just because we haven't had access to computers with other operating systems. If you have a Window or Linux, please download the <a href=https://github.com/williamtmurphy/yak>source</a>, compile it, and send to us it so we can post it here!
+<p>You can also download the Racket-based interpreter for <a href='downloads/Racket/Mac/Yak.zip'>Mac OS X</a>. We haven't compiled Yak on other operating systems just because we haven't had access to computers with other operating systems. If you have a Window or Linux, please download the <a href=https://github.com/williamtmurphy/yak>source</a>, compile it, and send to us it so we can post it here!
 
 <!--<a href='downloads/Yak for Windows.zip'>Windows</a>, or <a href='downloads/Yak for Ubuntu.zip'>Ubuntu</a>.</p>-->
 
@@ -45,11 +45,13 @@ factorial[5]</textarea></div>
 
 <pre><code>npm install yak-lang</code></pre>
 
-<p>You can then run yak files with the <code>yak</code> command and <code>require</code> node's <code>http</code>, <code>fs</code>, or your favorite node library.</p>
+<p>You can then evaluate Yak strings with <code>yak.eval</code> and evaluate files with <code>yak.evalFile</code>. In Yak, you can <code>require</code> node's <code>http</code>, <code>fs</code>, or your favorite node library. For more detail, see the <a href='//www.npmjs.org/package/yak-lang'>package</a>.</p>
 
 <h1>Learn</h1>
 <div class=bookmark id="learn"></div>
-<p>Yak is the first language ever of the funject paradigm. This means that rather than using traditional objects, or functions, Yak combines both concepts into a brand new thing called a funject. funjects are in essence the best parts of objects, the best parts of functions put together with some cool new ideas to make them mesh nicely with each other. For those reading this who are already comfortable with programming, or who are very familiar with another dynamic language, you may wish to skim the first few sections, until you reach the secion on funjects, which is where we begin to explain the concepts that differentiate Yak from other languages.</p>
+<p>What follows is a tutorial about Yak for those who have never programmed. If you already know how to program, consider reading <a href=/doc/a-concise-tutorial-of-yak.html>A Concise Tutorial of Yak</a>.</p>
+
+<p>Yak is the first language of the funject paradigm. This means that rather than using traditional objects, or functions, Yak combines both concepts into a brand new thing called a funject. funjects are in essence the best parts of objects, the best parts of functions put together with some cool new ideas to make them mesh nicely with each other. For those reading this who are already comfortable with programming, or who are very familiar with another dynamic language, you may wish to skim the first few sections, until you reach the secion on funjects, which is where we begin to explain the concepts that differentiate Yak from other languages.</p>
 
 <h2>Math</h2>
 <p>Yak is a dynamic language, and just as in many other existing dynamic languages (Python, Ruby, Javascript, Lua, Smalltalk, etc.) you can perform basic mathematical calculations simply by writing the expression. Here are some examples:</p>
@@ -565,7 +567,7 @@ false</code></pre>
 'red'
 'blue'</code></pre>
 
-<p>This looks very similar at first, to just declaring a funject that has a pattern in it that matches a symbol, with the exception of the strange funject called instance, and the strange pattern matching [@self].
+<p>This looks very similar at first, to just declaring a funject that has a pattern in it that matches a symbol, with the exception of the strange funject called instance, and the strange pattern matching [@self].</p>
 
 <h1>Docs</h1>
 <div class=bookmark id="docs"></div>

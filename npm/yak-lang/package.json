@@ -1,12 +1,11 @@
 {
   "name": "yak-lang",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "engines": "node 0.10",
   "author": {
     "name": "Will Murphy"
   },
   "main": "yak-lang.js",
-  "readme": "Yak\n=======\nThe first language of the funject paradigm.\n",
   "readmeFilename": "README.md",
   "_id": "yak-lang@1.0.0",
   "description": "The first language of the funject paradigm."

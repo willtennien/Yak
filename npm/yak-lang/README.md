@@ -1,7 +1,7 @@
 
 Yak
 =======
-Yak is the first language of the funject paradigm. If you don't know about, read about <a href='//www.yak-lang.org'>it</a>. The yak-lang module gives you a full Yak interpreter. 
+Yak is the first language of the funject paradigm. If you don't know about it, read about <a href='//www.yak-lang.org'>it</a>. The yak-lang module gives you a full Yak interpreter. 
 
 <h2>Installing</h2>
 
@@ -9,15 +9,15 @@ Yak is the first language of the funject paradigm. If you don't know about, read
 
 <h2>Usage</h2>
 
-<code></pre>var yak = require('yak-lang');</pre></code>
+<code><pre>var yak = require('yak-lang');</pre></code>
 
 You can evaluate strings of Yak:
 
-<code></pre>yak.eval('print["Hello, Yak!"]');</pre></code>
+<code><pre>yak.eval('print["Hello, Yak!"]');</pre></code>
 
 Or evaluate entire files:
 
-<code></pre>yak.evalFile('./awesomeness.yak', function (err, result) { 
+<code><pre>yak.evalFile('./awesomeness.yak', function (err, result) { 
     ... 
 });</pre></code>
 

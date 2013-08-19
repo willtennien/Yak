@@ -1,5 +1,9 @@
 #!/bin/sh
-cd downloads
-raco exe ../../interpreter/interpreter.rkt
-mv ../../interpreter/interpreter Yak/yak
-zip -r 'Yak for Mac'.zip Yak
+site=$(dirname "$0")
+raco exe "$site/downloads/../../interpreter/interpreter.rkt"
+mkdir "$site/downloads"
+mkdir "$site/downloads/Racket"
+mkdir "$site/downloads/Racket/Mac"
+mkdir "$site/downloads/Racket/Mac/Yak"
+mv "$site/../interpreter/interpreter" "$site/downloads/Racket/Mac/Yak/yak"
+zip -r "$site/downloads/Racket/Mac/Yak.zip" "$site/downloads/Racket/Mac/Yak"
