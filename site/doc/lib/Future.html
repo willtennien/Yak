@@ -1,0 +1,33 @@
+<head>
+    <link rel="stylesheet" type="text/css" href="/assets/styles/style.css">
+    <link rel="stylesheet" type="text/css" href="/assets/styles/classes.css">
+    <title>The (Once and) Future Class</title>
+</head>
+<div class=container>
+<article>
+
+<!--<nav>
+    <a href=/#>Welcome</a>
+    <a href=/#install>Install</a>
+    <a href=/#learn>Learn</a>
+    <a href=/#docs>Docs</a>
+</nav>-->
+
+<h1>The (Once and) Future Class</h1>
+
+<p>Please note that you can only access futures in the Racket-based interpreter.</p>
+
+<p>The Future class gives you access to parallelism. An instance of the future class represents a delayed expression that the interpreter evaluates in parallel with other futures.</p>
+
+<p>You can create a future by using the <code>future</code> funject:</p>
+
+<pre><code>my-future = future {[]: 'evaluate ' + 'me ' + 'in ' + 'parallel'}</code></pre>
+
+<p>The Future funject takes a funject and adds it to a metaphorical "pool" of other funjects to evaluate in parallel. When you want to evaluate a future, pass it to the <code>touch</code> funject:</p> 
+
+<pre><code>touch my-future # returns 'evaluate me in parallel'</code></pre>
+
+<p>Between when you pass <code>future</code> an expression and when you <code>touch</code> the resulting future, the interpreter will evaluate the expression. By giving the interpreter the freedom to evaluate the expression any time during that period, you allow the interpreter to interleave it with the other futures and to evaluate it when it will consume the least resources. As a result, your program will probably run faster. It does take the interpreter thought to create a future, however, so use it only for significant computations.</p>
+
+</article>
+</div>

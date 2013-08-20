@@ -1,0 +1,7 @@
+{
+    "name":"yak",
+    "version":"1.0.0",
+    "dependencies": {
+        "yak-lang": "1.0.x"
+    }
+}
