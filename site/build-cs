@@ -1,6 +1,0 @@
-#!/bin/sh
-site=$(dirname "$0")
-coffee -cp "$site/../interpreter/parser.coffee" "$site/../interpreter/interpreter.coffee" > site/tmp.js
-awk 'BEGIN { printf "exports.allowClassRedefinition = true;\nexports.evalSync(\"" } { gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); printf "%s\\n", $0 } END { printf "\");\nexports.allowClassRedefinition = false;\n" }' library/*.yak >> site/tmp.js
-uglifyjs "$site/tmp.js" -m >"$site/yak.js"
-rm "$site/tmp.js"

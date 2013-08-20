@@ -18,22 +18,22 @@ Number::abs[@x] # matches against a positive Number
 
 Free funjects
 =============
-by[.sym] # => {[f]: f.sym}; allows array.sort[by[.height]]
+by[.sym] # Equivalent to {[f]: f.sym}; this allows such things as array.sort[by[.height]].
 assert[assertion, message] # throws an error if assertion does not evaluate to true, the optional message pararmeter specifies the error message of the error to throw
 (assert==[i, j] or
  assert==[i, j, message] # throws an error if i and j are not equal (optionally throws a custom error))
-unreachable # throws an error if referenced, used for throwing an error indicating that a piece of code not intended to run was executed
-import[module] # Should import the specified module
+unreachable # throws an error if referenced, used for throwing an error indicating that a piece of code not intended to run was executed.
+import['path/to/module.yak'] # import the specified module (in the node version of Yak). 
 
 Class methods
 =============
-.superclass
+.superclass # a class's superclass
 .subclasses # the receiver's direct subclasses
 .all-subclasses # all of the receiver's subclasses
 .subclass?[c] # true if c is a subclass of the receiver or any of its subclasses
 .superclass?[c] # true if c is the superclass of the receiver or any of its superclasses
 .methods # the keys for the receivers's instance methods
-.all-methods # the keys for the receivers's instance methods and those of all of its superclasses
+.all-methods # the keys for the receiver's instance methods and those of all of its superclasses
 .instance # the receiver's instance methods
 
 

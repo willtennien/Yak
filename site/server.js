@@ -1,1 +1,1 @@
-require('./yak.js').evalFile('./server.yak');
+require('yak-lang').evalFile('./server.yak');

@@ -1,2 +1,41 @@
-fact = {@: if @ is 0 then 1 else 2 * own(@ - 1)}
-#print[fact 0]
+$['body'].css[{
+    .margin: '0'
+}]
+
+width = $['body'].width[]
+height = $['body'].height[]
+
+canvas = $['canvas']
+canvas.attr['width', width]
+canvas.attr['height', height]
+ctx = canvas.get[0].getContext['2d']
+
+ctx.translate[width / 2, height / 2]
+
+pi/3 = Number.pi / 3
+2/3pi = Number.pi / 3 * 2
+fork = {
+    [@x, @y, @r, @ang, 0]: nil
+    [@x, @y, @r, @ang, @n]: 
+        b = {[@ang]: branch[@x, @y, @r, @ang, @n]}
+        b[@ang - 2/3pi]
+        b[@ang - pi/3]
+        b[@ang]
+        b[@ang + pi/3]
+        b[@ang + 2/3pi]
+        b[@ang + Number.pi]
+}
+
+branch = {
+    [@x, @y, @r, @ang, @n]: 
+        new-x = @x + @r * @ang.cos
+        new-y = @y + @r * @ang.sin
+        ctx.beginPath[]
+        ctx.moveTo[@x, @y]
+        ctx.lineTo[new-x, new-y]
+        ctx.stroke[]
+        fork[new-x, new-y, @r / 3, @ang, @n - 1]
+}
+
+
+fork[0, 0, 100, 0 - Number.pi / 2, 5]

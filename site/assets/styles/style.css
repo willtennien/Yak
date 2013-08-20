@@ -65,7 +65,7 @@ code {
     box-shadow: none;
 }
 h2 code,
-h2 code {
+h3 code {
     font-size: 1em;
 }
 header .interpreter {

@@ -1,520 +1,534 @@
-
-    <h1>Learn to Program with Yak</h1>
-
-    <p>Yak is the first language of the funject paradigm. This means that rather than using traditional objects, or functions, Yak combines both concepts into a brand new thing called a funject. funjects are in essence the best parts of objects, the best parts of functions put together with some cool new ideas to make them mesh nicely with each other. For those reading this who are already comfortable with programming, or who are very familiar with another dynamic language, you may wish to skim the first few sections, until you reach the secion on funjects, which is where we begin to explain the concepts that differentiate Yak from other languages.</p>
-
-    <h2>Math</h2>
-    <p>Yak is a dynamic language, and just as in many other existing dynamic languages (Python, Ruby, Javascript, Lua, Smalltalk, etc.) you can perform basic mathematical calculations simply by writing the expression. Here are some examples:</p>
-
-    <pre><code>>> # Before we show you the match examples, this is a quick example of a comment!
-    >> # We're showing you this now because they'll be used a lot in code blocks for explaining things.
-    >> # Anything that comes after a pound sign is a comment. Commends are pieces of code that are completely
-    >> # ignored when the code is run. Yak just skips over them. Comments are used to explain
-    >> # or document pieces of code.
-
-    >> 10 # Entering anything withuout any operands simply evaluates to itself so 10 evaluates to 10! Simple enough, right?
-    10
-    >> # Notice how after doing anything (excepting comments), what it evaluates to is printed on the next line.
-    >> #If it doesnt evaluate to anything, "nil" will be printed on the next line.
-    >> 3 + 2 # Now, for addition
-    5
-    >> 2 + 3 # You can switch the operands like in normal addition
-    5
-    >> 10 - 3
-    7
-    >> 3 - 10
-    -7
-    >> 5 * 4
-    20
-    >> 6 / 3
-    2
-    >> 3 / 6 # The result of the operation can be a decimal
-    0.5
-    >> 2 + 2.5 # Decimal numbers can be used as operands
-    4.25
-    >> 10 % 2 # There's even modulo!
-    0
-    >> # Another note before we move on...
-    >> #|
-    .. Block comments look like this!
-    .. A block comment is a comment that spans multiple lines!
-    .. This is useful for writing long comments without having to add a new comment character ('#')
-    .. at the beginning of every line.
-    .. |#</code></pre>
-
-    <p>Variables are things that can store values, variables can store just about any value, but for now, we'll use the for numbers. To "assign" a value to a variable, use the <code>=</code> operator. <code>=</code> takes the value on its left, and assigns it to the value on the right.</p>
-
-    <pre><code>>> hours = 3
-    3
-    >> hours # Like with numbers, Entering a variable without operands evaluates to its value
-    3
-    >> hours + 4 # You can treat a variable as if it was its value. That means we can add things to the hours variable.
-    7
-    >> seconds = 3 * 10 # You can assign variables to the result of another expression
-    30
-    >> minutes = hours * 60 # Those expressions can contain other variables
-    180
-    >> minutes = minutes + 5 # They can even be self referential!
-    185</code></pre>
-
-    <p>Multiple variables can be defined at once by "chaining" the expression together like so:</p>
-
-    <pre><code>>> a = b = c = d = e = f = 5
-    5
-    >> a
-    5
-    >> b
-    5
-    >> c
-    5
-    >> d
-    5
-    >> e
-    5
-    >> f
-    5</code></pre>
-
-    <p>Note that if you try and use a variable that hasn't already been defined (set to something using the <code>=</code> operator), an error will occur.</p>
-
-    <pre><code>>> speed + 10
-    Undefined variable speed
-    at input:1:1</code></pre>
-
-    <h2>Strings</h2>
-    <p>Strings are the next data type available in funject. Strings represent text. String values can be created by enclosing text in either single or double quotes.</p>
-
-    <pre><code>>> 'This is a string value!'
-    'This is a string value'
-    >> "This is also a string value"
-    'This is also a string value'
-    >> "This is not a string!' # You can't mix single and double quotes, if you start a string with one type, you have to end it with that type.
-    Unterminated string at input:4:1
-    >> 'You can use "double quotes" inside single quoted strings'
-    'You can use "double quote" inside single quoted strings'
-    >> "And you can use 'single quotes' inside double quoted strings"
-    'And you can use \'single quotes\' inside double quoted strings'</code></pre>
-
-    <p>The <code>print</code> funject is used to print values to the console. We haven't learned about funject calls yet, but bear with us, and trust that we will explain in full detail what's going on later, for now, all you need to know is this: The <code>print</code> funject prints a value. When you call the print funject, it will write the string you give it to the console. Here's an example of how to use the print funject:</p>
-
-    <pre><code>>> print['This string will be printed to the console!']
-    This string will be printed to the console!
-    nil
-    >> print['This string is cooler though...']
-    This string is cooler though...
-    nil</code></pre>
-
-    <p>Keep in mind that the <code>nil</code> printed after your string is there because as mentioned earlier, when something doesn't evaluate to anything, it instead writes <code>nil</code> as what it evaluated to. If you're running a yak file rather than using the REPL (Read Evaluate Print Loop, a.k.a. the console version of yak), <code>nil</code> will not show up, as the results of expressions are only printed in the REPL. Note that <code>print</code> can be used for any data type! But for now, we'll just worry about strings. Now we've seen how to make strings and print them, so let's say you want to combine two strings into one string. You would do this using concatenation. You can concatenate strings like this:</p>
-
-    <pre><code>>> print['This string ' + 'will be attached to this string']
-    This string will be attached to this string
-    nil
-    >> # You can also concatenate multiple strings at once like this
-    >> print['This string ' + 'will be attached to this one, AND ' + 'this one!']
-    This string will be attached to this one, AND this one!
-    nil
-    >> # You can even do this:
-    >> fruitSalad = 'apples' + 'and ' + 'oranges ' + 'and ' + 'grapes ' + 'and ' + 'bananas'
-    'apples and oranges and grapes and bananas'
-    >> print[fruitSalad + ' are ' + 'yummy, yummy!']
-    apples and oranges and grapes and bananas are yummy, yummy!
-    nil</code></pre>
-
-    <p>There are also some characters that can't be written in strings. If you want to use them in a string, you instead input the character <code>\</code> followed by the code for the character you want to replace. Heres a list of commonly used escapes:</p>
-    <ul>
-        <li><code>\n</code> is a newline character</li>
-        <li><code>\r</code> is a carriage return character. These are used in windows line endings, but dont worry about them too much, just use <code>\n</code></li>
-        <li><code>\t</code> is a horizontal tab character</li>
-        <li><code>\'</code> escapes a single quote (for use in a single quote encapsulated string)</li>
-        <li><code>\"</code> escapes a double quote (for use in a double quote encapsulated string)</li>
-        <li><code>\\</code> escapes the escape character, so it represents a backslash</li>
-    </ul>
-    <p>Here's an example for the use of each escape character</p>
-
-    <pre><code>>> print['This makes\na new line']
-    This makes
-    a new line
-    nil
-    >> print['\t Makes a tab character']
-    Makes a tab character
-    nil
-    >> print['With escapes, you can use a \'single quote\' inside of a single quoted string']
-    With escapes, you can use a a 'single quote' inside of a double quoted string
-    nil
-    >> print["or \"double quotes\" within a double quoted string"]
-    or "double quotes" within a double quoted string
-    nil
-    >> print['And last but not least, you can use the \\ character by escaping it with itself!']
-    And last but not least, you can use the \ character by escaping it with itself!
-    nil</code></pre>
-
-    <p>Behind the scenes, strings are actually just a bunch of characters strung together. (hence why they're called "strings"). This means that if you want to, you can get an individual character from a string like this:</p>
-
-    <pre><code>>> lyric = 'bananas'
-    'bananas'
-    >> print['This **** is ' + lyric]
-    This **** is bananas
-    nil
-    >> print[lyric[0]]
-    b
-    nil
-    >> print[lyric[1]]
-    a
-    nil
-    >> print[lyric[2]]
-    n
-    nil
-    >> print[lyric[3]]
-    a
-    nil
-    >> print[lyric[4]]
-    n
-    nil
-    >> print[lyric[5]]
-    a
-    nil
-    >> print[lyric[6]]
-    s
-    nil</code></pre>
-
-    <p>If you try and get the character at a negative index, it gives you the character at that index if you were counting from the end! <code>-0</code> is the same as 0, so the last character is indexed at <code>-1</code>.</p>
-
-    <pre><code>>> word = 'hello!'
-    'hello!'
-    >> reversed = word[-1] + word[-2] + word[-3] + word[-4] + word[-5]
-    '!olleh'</code></pre>
-
-    <p>One nice feature of strings is the ability to get their length. This is done using the <code><var>somelist</var>.length</code> property. This is particularly useful, as it allows you to easily determine the index of the last element in the string.</p>
-
-    <pre><code>>> animals = ['cow', 'chicken', 'horse', 'dog', 'cat', 'mouse', 'owl']
-    ['cow', 'chicken', 'horse', 'dog', 'cat', 'mouse', 'owl']
-    >> animals.length
-    7
-    >> animals[animals.length - 1]
-    'owl'</code></pre>
-
-    <p>Finally, because strings are so good at displaying information, you can get the string representation of anything by using <code>.to-string</code>. <code>.to-string</code> can be used like this:</p>
-
-    <pre><code>>> 10.to-string # For example, numbers
-    '10'
-    >> (20 + 30).to-string
-    '50'
-    >> (3 / 2).to-string
-    '1.5'
-    >> 'You can even use to-string on strings! It doesn\'t do much though...'.to-string
-    'You can even use to-string on strings! It doesn\'t do much though...'
-    >> # nil is the special funject that is returned whenever an operation doesn't evalate to anything, and you can even use to-string on it!
-    >> nil.to-string
-    'nil'</code></pre>
-
-    <h2>Lists</h2>
-    <p>Lists are essentially a single data type that can hold other data types. They're exactly like they sound, a way to <em>list</em> or group other values. Note that lists <em>can</em> contain multiple different types, but do not have to. Lists look like this:</p>
-
-    <pre><code>>> tenToPowersAndFruits = ['apples', 10, 'banana', 100, 'starfruit', 10000]
-    ['apples', 10, 'banana', 100, 'starfruit', 1000]</code></pre>
-
-    <p>Unlike strings, lists are mutable. This means that you can change a single element of the list, without reassigning the entire list.</p>
-
-    <pre><code>>> colors = ['red', 'starfruit', 'blue']
-    ['red', 'starfruit', 'blue']
-    >> # Oh no! starfruit isn't a color! Let's change it to green.
-    >> colors[1] = 'green'
-    ['red', 'green', 'blue']
-    >> # Now, when we check the value of colors, we can see that it has changed!
-    >> colors
-    ['red', 'green', 'blue']</code></pre>
-
-    <p>Many of the concepts you learned about strings earlier can also be applied to lists, because strings can be thought of as lists of single characters. (The main difference is that strings are immutable.) Here are some examples of concepts you learned with strings being applied to lists.</p>
-
-    <pre><code># You can concatenate arrays, just like you can strings
-    >> snowsports = ['hockey', 'skiing']
-    ['hockey', 'skiing']
-    >> watersports = ['surfing', 'swimming']
-    ['surfing', 'swimming']
-    >> teamsports = ['football', 'baseball', 'basketball']
-    ['football', 'baseball', 'baskeyball']
-    >> sports = snowsports + watersports + teamsports
-    ['hockey', 'skiing', 'surfing', 'swimming', 'football', 'baseball', 'basketball']
-    # You can also make arrays into strings using the to-string funject, and get their length with the length funject
-    >> users = ['jake', 'lucy', 'katherine']
-    ['jake', 'lucy', 'katherine']
-    >> print['You have ' + users.length.to-string + ' and their names are: ' + users.to-string]
-    You have 3 users and their names are: ['jake', 'lucy', 'katherine']</code></pre>
-
-    <p>Lists can contain any data type, and that includes lists! This means that you can nest lists within each other.</p>
-
-    <pre><code>>> # In this example, coordinates represents a list of lists of x and y coordinates.
-    >> coordinates = [[10, 30], [40, 10], [21, 26], [3, 22]]
-    [[10, 30], [40, 10], [21, 26], [3, 22]]
-    >> # Let's say we want to get the y value of the coordinate pair at the index 2, we would do it like this
-    >> coordinates[2][1]
-    26
-    >> # Here are some other values, simply for demonstration
-    >> coordinates[0][0]
-    10
-    >> coordinates[0][1]
-    30
-    >> coordinates[3, 0]
-    3</code></pre>
-
-    <h2>Funjects</h2>
-    <p>Now that we've gotten through the basic introduction to types, and programming in Yak, we can start to talk about funjects. Tutorials for many other languages would around this point being to explain how functions, and objects work, but Yak replaces both concept with the universal funject, so we have this section instead. Let's get to it!</p>
-
-    <p>The first thing to remember, is that <strong>everything</strong> in Yak is a funject. Because of this, funjects have a lot of cool properties. Let's start by creating an empty funject. funjects in yak are represented by an open curly brace (<code>{</code>), the body of the funject (we'll get to that later), followed a close curly brace (<code>}</code>) which signifies the end of the funject body. So let's start by simply declaring an empty funject.</p>
-
-    <pre><code>>> afunject = {}
-    #&lt;funject>
-    >> # Note that the REPL represents funjects as just #&lt;funject></code></pre>
-
-    <p>So far, nothing too interesting. We set afunject to an empty funject, and it evaluates to <code>{}</code>. Now, we can talk about what funjects interesting: pattern matching. Funjects, like functions, can be used to execute blocks of code with parameters, however the process they go through to do this is different. Consider the following code block. (explanation below)</p>
-
-    <pre><code>>> example = {
-    ..     [0]: 1
-    ..     [5]: 2
-    .. }
-    #&lt;funject>
-    >> example[0]
-    1
-    >> example[5]
-    2</code></pre>
-
-    <p>Here, we define <code>example</code>, a funject with two patterns in it. These two patterns match a list containing only the element 0, and a list containing only the element 5. Then further down, we invoke the funject example with a list containing one element 0, and again with 5. When Yak is given this code, here's what it's doing.</p>
-
-    <p>First, Yak creates a funject and assigns it to <code>example</code>. This funject has two patterns: one that matches <code>[0]</code>, and another that matches <code>[1]</code>. Then, it invokes eample with the argument <code>[0]</code>. When a funject is invoked, Yak goes through the funject and looks for any patterns that match the argument passed. When it finds a pattern that matches the argument, it then evaluates the expression after the colon and returns the result of that expression. In this case, it finds that the argument, <code>[0]</code>, matches the first pattern, evaluates the expression mapped to that, which comes out as 1, and returns that 1. Thus <code>example[0]</code> is 1. Later, Yak does the same thing for <code>example[5]</code>, which matches the pattern <code>[5]</code> and returns 2.</p>
-
-    <p>One thing to note is that you can format your code in two different ways when writing the expression for a pattern match. If you only need one line of code, you might do this:</p>
-
-    <pre><code>>> foo = {
-    ..     ['a']: 3
-    .. }
-    &lt;funject>
-    >> foo['a']
-    3</code></pre>
-
-    <p>But if you wanted the pattern to map to multiple lines of code, you would write it like this:</p>
-
-    <pre><code>>> foo = {
-    ..    ['a']:
-    ..        number = 1 + 1
-    ..        number * 3
-    .. }
-    >> foo['a']
-    6</code></pre>
-
-    <p>If you have a multiple line expression like this, and you don't indent consistently, the Yak interpreter will throw an error. This is because the end of the expression, is signified by unindenting, so proper identation is necessary. Note that with a multiple line expression, the result of the <em>last</em> expression is returned.</p>
-
-    <p>Let's say though we wanted to define a funject that could take a wide range of things as its argument. It would be horrible if you had to explicitly define an output for every single input. So for that, there are parameters. In a pattern, any time you use the <code>@</code> symbol followed by an alphanumeric string to accept anything as input. Consider this code: (also explained below)</p>
-
-    <pre><code>>> addOne = {
-    ..     [@number]: @number + 1
-    .. }
-    &lt;funject>
-    >> addOne[4]
-    5
-    >> addOne[-2]
-    -1
-    >> addOne[9]
-    10</code></pre>
-
-    <p>Here, <code>addOne</code> contains a pattern that matches the parameter @number. When a pattern contains a parameter it allows anything to be in the place of that parameter. It also <strong>binds</strong> the value to that parameter. When a parameter has been bound to a value, the parameter acts like a variable whos value is set to what it was bound to. That's why in the <code>addOne</code> example, the expression <code>@number + 1</code> evaluates to whatever you passed as an argument plus one.</p>
-
-    <p>For those of you new to programming, the idea of recursion might seem foreign to you. Recursion, is invoking one funject from within itself. This is usefull for all sorts of things, and is used a lot in math funjects. In this example, we'll show you how to use recursion, and pattern matching, to make the famous recursive factorial function in Yak.</p>
-
-    <p>Recursive factorial works by first using something called a <strong>base case</strong>, which checks if the input is a certain value, and if it is, returns a fixed value. For factorial the base case is 0, which should always return 1. Because of pattern matching, we can easily make the base case without having to use any control flow as one might in another language. Then, if the argument is anything other than the base case, factorial returns the argument times factorial invoked with the argument being the original argument minus one. The implementation of the funject would look like this.</p>
-
-    <pre><code>>> factorial = {
-    ..     [0]: 1 # Base case, if the argument is zero, factorial will always return one
-    ..     [@number]: @number * factorial(@number - 1)
-    .. }
-    &lt;funject>
-    >> factorial[5]
-    120</code></pre>
-
-    <p>To better understand why this works, here's a list of what the code would do when you call <code>factorial[5]</code>. If you already have a understanding of recursion, you can skip over this.</p>
-
-    <ol>
-        <li>Invokes factorial with the argument <code>[5]</code></li>
-        <li>Takes 5, and multiplies it by <code>factorial[5 - 1]</code> (overall expression: <code>5 * factorial[4]</code>)</li>
-        <li>Takes 4, and multiplies it by <code>factorial[4 - 1]</code> (overall expression: <code>5 * 4 * factorial[3]</code>)</li>
-        <li>Takes 3, and multiplies it by <code>factorial[3 - 1]</code> (overall expression: <code>5 * 4 * 3 * factorial[2]</code>)</li>
-        <li>Takes 2, and multiplies it by <code>factorial[2 - 1]</code> (overall expression: <code>5 * 4 * 3 * 2 * factorial[1]</code>)</li>
-        <li>Takes 1, and multiplies it by <code>factorial[1 - 1]</code> (overall expression: <code>5 * 4 * 3 * 2 * 1 * factorial[0]</code>)</li>
-        <li>Finds that <code>[0]</code> matches the base case, so it evaluates to one</li>
-        <li>This leaves the final expression as <code>5 * 4 * 3 * 2 * 1 * 1</code>, which is exactly what 5! (factorial) does in mathematics!</li>
-    </ol>
-
-    <p>Experienced programmers may now be thinking: "Wait, but isn't this just functional programming with weird syntax?" Well, the answer to that is no. Unlike with functions, you can actually add, and remove patterns from funjects! Let's say you wanted to for some unknown reason, you wanted to add a second base case to factorial after you make it. With functional programming, that's not possible, but with funjectional programming, it is!</p>
-
-    <pre><code>>> factorial[23] = 4
-    4
-    >> factorial[23]
-    4</code></pre>
-
-    <h2>Booelans</h2>
-
-    <p> Most programmers will be isntantly familiar with the concept of a boolean, but new programmers might be intimidated by the use of the woord "Boolean". Well, it's actually a lot simplier than it initially sounds. Booleans are just a type of variable that has either the value <code>true</code> or the value <code>false</code>. It really is that simple. Here's what assigning a boolean would look like.</p>
-
-    <pre><code>>> is-large = true
-    true
-    >> is-fast = false
-    false</code></pre>
-
-    <p> Now, you might be wondering what you can do with these really simplistic statements. Well, it turns out, the answer is a lot. In programming, there's a concept called a "controll flow" block. That basically means that it allows you to execute certain pieces of code only under certain circumstances. This is, for obvious reasons, very usefull! The most simple type (and yak's only type) of control block is the if statement. (Experienced programmers: don't fret! There are loops and the like, however they <em>technically</em> aren't control blocks. We'll get to that later.) If statements will run if the value given to them is <code>true</code>. Another usefull thing about if statements, is something called an else block. If you put an else block directly after an if statement, the else block will run only when the if statement doesnt. The entire construct put together is called an if else statement. So let's take the old example, and make it cooler with an if else statement or two.</p>
-
-    <pre><code>>> # Note that if you want to write multiple lines of code in one go,
-    >> # you can hit shift and enter, and the interpreter will let you keep writing!
-    >> # This is also nice because it will only show a evaluated value once at the end of the piece of code
-    >> animal = 'elephants'
-    'elephants'
-    >> is-large = true
-    true
-    >> is-fast = false
-    false
-    >> # Here's the if statement, the syntax is simple
-    >> if is-large
-    ..     print[animal + ' are large'] # This runs if is-large is true
-    .. else
-    ..     print[animal + ' are small'] # This runs if the above block doesn't run, so if is-large is false
-    .. if is-fast
-    ..     print[animal + 'are slow'] # This runs if is-fast is true
-    .. else
-    ..     print[animal + 'are slow] # This runs if is-fast is false
-    ..
-    Elephants are large
-    Elephants are slow
-    nil</code></pre>
-
-    <p> Let's say you want to check if two things are equal to each other, something that is done quite a lot in programming. Once again, you would make use of if else statements, but you need one more thing to get the job done. This is where the <code>==</code> operator comes in. <code>==</code> is not at all the same as <code>=</code>, rather than assigning, <code>==</code> is more like plus, except with a different outcome. <code>==</code> checks if the left operand is equal to the right operand and if it is, it evaluates to <code>true</code>. If it's not, it evaluates to <code>false</code>. Here's an example.</p>
-
-    <pre><code>>> my-name = 'Sam'
-    'Sam'
-    >> your-name = 'Nathan'
-    'Nathan'
-    >> my-name == your-name
-    false
-    >> # Now, when the two names compared are the same, the output changes!
-    >> your-name = 'Sam'
-    'Sam'
-    >> my-name == your-name
-    true</code></pre>
-
-    <p> There's also an operator for checking if two things are <em>not</em> equal. This operator is called the inequality operator, and looks like this: <code>!=</code>. Here's an example of the inequality operator.</p>
-
-    <pre><code>>> my-name = 'Will'
-    'Will'
-    >> your-name = 'Nathan'
-    'Nathan'
-    >> my-name != your-name
-    true
-    >> your-name = 'Will'
-    'Will'
-    >> my-name != your-name
-    false</code></pre>
-
-    <p> Now, we can use that to check if two things are the same in an if statement! Because if statements just check if the value given to them is <code>true</code> or <code>false</code>, and <code>==</code> give us a boolean value, we can give our if statement an operation that uses <code>==</code> as its condition.</p>
-
-    <pre><code>>> my-name = 'Sam'
-    'Sam'
-    >> your-name = 'Sam'
-    'Sam'
-    >> if my-name == your-name
-    ..     print['That\'s a cool coincidence!']
-    ..
-    That's a cool coincidence!
-    >> # Notice that you can use an if statement without an else statement,
-    >> # you cannot however use an else statement without an if statement presceding it.</code></pre>
-
-    <p>Boolean operations are once again similar to our operations for numbers (I.E. <code>+</code>) that take two values, and give us one value, (the technical name for this is a binary operator) they are different though, because instead of taking numbers, or strings, they take two booleans, and return one boolean. There aren't very many of them, but they're all incredibly usefull, so here they are.</p>
-
-    <ul>
-        <li>The <code>and</code> operator returns true if both its operands are true, otherwise it returns false</li>
-        <li>The <code>or</code> operator returns true if one of its operands is true, otherwise it returns false</li>
-    </ul>
-
-    <p>Here's a quick example of these operators.</p>
-
-    <pre><code>>> true and true
-    true
-    >> true and false
-    false
-    >> false and false
-    false
-    >> # Now for or
-    >> true or true
-    true
-    >> true or false
-    true
-    >> false or false
-    false</code></pre>
-
-    <h2>Brining what we've learned so far together</h2>
-    <p>To summarize what we've learned so far, let's write two Funjects that gives some easy ways to convert between fahrenheit, and celsius. Here's the code for said funjects: (explained below)</p>
-
-    <pre><code>>> f2c = {
-    ..    [@n]: (@n - 32) * (5 / 9)
-    ..}
-    #&lt;funject>
-    >> c2f = {
-    ..    [@n]: (@n * (9 / 5)) + 32
-    .. }
-    &lt;funject>
-    >> f2c[32]
-    0
-    >> c2f[0]
-    32
-    >> # Now, let's make a funject that allows you to compare the two easilly
-    >> temps-equal? = {
-    ..     [@fahrenheit, @celsius]: f2c[@fahrenheit] == @celsius
-    .. }
-    &lt;funject>
-    >> temps-equal?[32, 0]
-    true
-    >> temps-equal?[32, 10]
-    false</code></pre>
-
-    <p>The first two funjects are simply converting the two temperature systems. <code>f2c</code> takes a farenheit temperature as an argument, and returns the temperature in celsius, and <code>c2f</code> does the opposit. Next, we have our <code>temps-equal?</code> funject. <code>temps-equal?</code> matches two values, converts the first from fahrenheit to celsius, and cheks if they're equal. This example is particularly good because it both show how you can make funjects use other funjects, and it shows how we can make use of our boolean logic operators (in this case <code>==</code>) in a funject.</p>
-
-    <h2>Symbols</h2>
-    <p>Symbols are similar to strings, except they're mainly used for accessing properties rather than for declaring a set of characters, and they always begin with a dot. Thus far, we've been using funjects more like functions that objects, but now, we get to see the object-like side of funjects. Symbols, are a nice looking way of attaching values to funjects. Here's an example of this.</p>
-
-    <pre><code>>> some-funject = {
-    ..    .the-number: 1000
-    .. }
-    #&lt;funject>
-    >> some-funject.the-number
-    1000
-    >> some-funject.the-number = 300
-    300
-    >> some-funject.the-number
-    300</code></pre>
-
-    <p>Symbols allow you to add properties to a funject. In the example above, <code>some-funject</code> has the property <code>the-number</code> which is initially set to 1000. If you remember back to when we introduced pattern matching, you'll remember that the brackets in a pattern match aren't <em>necessary</em>, they're just <strong>highly</strong> reccomended for the purpose of making the code more readable. Symbols are the one case in which putting the arguments to a funject inside an array is not reccomended. What the above code is actually doing, is defining a pattern which matches the symbol .the-number, and evaluates to 1000. This is simlar to our orrinal funject example, but uses symbols instead of numbers. Like with patterns, you can assign them using the equals sign.</p>
-
-    <h2>Classes</h2>
-    <p>Similarly to object oriented programming, funjectional programming uses classes. Classes are basically a type of funject that is used primarilly for the purposes of describing a type of thing, or construct, and these classes can have instances. An example of this might be making a class called ball, which discribes all balls, and then making different instances of ball to act as individual balls. Instances of a class can have method that make them different from other instances of the same class. An example might be that all balls have the method color, which gets the color of the ball, but the color can varry from ball to ball.</p>
-
-    <p>Because classes are for the purpose of making a generic outline, or blueprint of sorts, for a type of thing, they need a way to have differences between the instances of the class. For this, they make extensive use of symbols. Symbols allow you to add values to instances of an object. Below is the layout for the ball class mentioned above.</p>
-
-    <pre><code>>> class Ball # Note that class names start with a capitol!
-    ..    instance = {
-    ..        .initialize: {
-    ..            [@self]:
-    ..                 @self.color = 'red'
-    ..                 @self.bounciness = 10 # balls should have a bounciness too! Why not?!
-    ..        }
-    ..    }
-    ..
-    #&lt;funject>
-    >> my-ball = Ball.new # Makes a new instance of Ball, and assigns it to my-ball
-    #&lt;funject>
-    >> my-ball.color
-    'red'
-    >> my-ball.color = 'blue'
-    'blue'
-    >> my-ball.color
-    >> your-ball = Ball.new # Makes another instance of ball, and assigns it to your-ball
-    #&lt;funject>
-    >> your-ball.color # Notice how when i change my-ball.color, it doesn't affect the color of your-ball!
-    'red'
-    'blue'</code></pre>
-
-    <p>This looks very similar at first, to just declaring a funject that has a pattern in it that matches a symbol, with the exception of the strange funject called instance, and the strange pattern matching [@self].
+<head>
+    <link rel="stylesheet" type="text/css" href="/assets/styles/style.css">
+    <title>Learn to Program with Yak</title>
+</head>
+
+<body>
+<div class=container>
+<article>
+<h1>Learn to Program with Yak</h1>
+
+<h2>About this tutorial</h2>
+<p>This is an introduction to programming. You should read it if you have never programmed before, want to re-learn to program, or feel at all shaky on your programming fundementals. This tutorial aims to teach programming in a way that is fun and simple. Let's get started!</p>
+
+<h2>What is a Yak (not the animal)?</h2>
+<p>Yak is the <a href=/>first language of the funject paradigm</a>. This means that rather than using traditional objects, or functions, Yak combines both concepts into a brand new thing called a funject. funjects are in essence the best parts of objects, the best parts of functions put together with some cool new ideas to make them mesh nicely with each other. For those reading this who are already comfortable with programming, or who are very familiar with another dynamic language, you may wish to skim the first few sections, until you reach the secion on funjects, which is where we begin to explain the concepts that differentiate Yak from other languages.</p>
+
+<h2>Math</h2>
+<p>Yak is a dynamic language, and just as in many other existing dynamic languages (Python, Ruby, Javascript, Lua, Smalltalk, etc.) you can perform basic mathematical calculations simply by writing the expression. Here are some examples:</p>
+
+<pre><code>>> # Before we show you the match examples, this is a quick example of a comment!
+>> # We're showing you this now because they'll be used a lot in code blocks for explaining things.
+>> # Anything that comes after a pound sign is a comment. Commends are pieces of code that are completely
+>> # ignored when the code is run. Yak just skips over them. Comments are used to explain
+>> # or document pieces of code.
+
+>> 10 # Entering anything withuout any operands simply evaluates to itself so 10 evaluates to 10! Simple enough, right?
+10
+>> # Notice how after doing anything (excepting comments), what it evaluates to is printed on the next line.
+>> #If it doesnt evaluate to anything, "nil" will be printed on the next line.
+>> 3 + 2 # Now, for addition
+5
+>> 2 + 3 # You can switch the operands like in normal addition
+5
+>> 10 - 3
+7
+>> 3 - 10
+-7
+>> 5 * 4
+20
+>> 6 / 3
+2
+>> 3 / 6 # The result of the operation can be a decimal
+0.5
+>> 2 + 2.5 # Decimal numbers can be used as operands
+4.25
+>> 10 % 2 # There's even modulo!
+0
+>> # Another note before we move on...
+>> #|
+.. Block comments look like this!
+.. A block comment is a comment that spans multiple lines!
+.. This is useful for writing long comments without having to add a new comment character ('#')
+.. at the beginning of every line.
+.. |#</code></pre>
+
+<p>Variables are things that can store values, variables can store just about any value, but for now, we'll use the for numbers. To "assign" a value to a variable, use the <code>=</code> operator. <code>=</code> takes the value on its left, and assigns it to the value on the right.</p>
+
+<pre><code>>> hours = 3
+3
+>> hours # Like with numbers, Entering a variable without operands evaluates to its value
+3
+>> hours + 4 # You can treat a variable as if it was its value. That means we can add things to the hours variable.
+7
+>> seconds = 3 * 10 # You can assign variables to the result of another expression
+30
+>> minutes = hours * 60 # Those expressions can contain other variables
+180
+>> minutes = minutes + 5 # They can even be self referential!
+185</code></pre>
+
+<p>Multiple variables can be defined at once by "chaining" the expression together like so:</p>
+
+<pre><code>>> a = b = c = d = e = f = 5
+5
+>> a
+5
+>> b
+5
+>> c
+5
+>> d
+5
+>> e
+5
+>> f
+5</code></pre>
+
+<p>Note that if you try and use a variable that hasn't already been defined (set to something using the <code>=</code> operator), an error will occur.</p>
+
+<pre><code>>> speed + 10
+Undefined variable speed
+at input:1:1</code></pre>
+
+<h2>Strings</h2>
+<p>Strings are the next data type available in funject. Strings represent text. String values can be created by enclosing text in either single or double quotes.</p>
+
+<pre><code>>> 'This is a string value!'
+'This is a string value'
+>> "This is also a string value"
+'This is also a string value'
+>> "This is not a string!' # You can't mix single and double quotes, if you start a string with one type, you have to end it with that type.
+Unterminated string at input:4:1
+>> 'You can use "double quotes" inside single quoted strings'
+'You can use "double quote" inside single quoted strings'
+>> "And you can use 'single quotes' inside double quoted strings"
+'And you can use \'single quotes\' inside double quoted strings'</code></pre>
+
+<p>The <code>print</code> funject is used to print values to the console. We haven't learned about funject calls yet, but bear with us, and trust that we will explain in full detail what's going on later, for now, all you need to know is this: The <code>print</code> funject prints a value. When you call the print funject, it will write the string you give it to the console. Here's an example of how to use the print funject:</p>
+
+<pre><code>>> print['This string will be printed to the console!']
+This string will be printed to the console!
+nil
+>> print['This string is cooler though...']
+This string is cooler though...
+nil</code></pre>
+
+<p>Keep in mind that the <code>nil</code> printed after your string is there because as mentioned earlier, when something doesn't evaluate to anything, it instead writes <code>nil</code> as what it evaluated to. If you're running a yak file rather than using the REPL (Read Evaluate Print Loop, a.k.a. the console version of yak), <code>nil</code> will not show up, as the results of expressions are only printed in the REPL. Note that <code>print</code> can be used for any data type! But for now, we'll just worry about strings. Now we've seen how to make strings and print them, so let's say you want to combine two strings into one string. You would do this using concatenation. You can concatenate strings like this:</p>
+
+<pre><code>>> print['This string ' + 'will be attached to this string']
+This string will be attached to this string
+nil
+>> # You can also concatenate multiple strings at once like this
+>> print['This string ' + 'will be attached to this one, AND ' + 'this one!']
+This string will be attached to this one, AND this one!
+nil
+>> # You can even do this:
+>> fruitSalad = 'apples' + 'and ' + 'oranges ' + 'and ' + 'grapes ' + 'and ' + 'bananas'
+'apples and oranges and grapes and bananas'
+>> print[fruitSalad + ' are ' + 'yummy, yummy!']
+apples and oranges and grapes and bananas are yummy, yummy!
+nil</code></pre>
+
+<p>There are also some characters that can't be written in strings. If you want to use them in a string, you instead input the character <code>\</code> followed by the code for the character you want to replace. Heres a list of commonly used escapes:</p>
+<ul>
+    <li><code>\n</code> is a newline character</li>
+    <li><code>\r</code> is a carriage return character. These are used in windows line endings, but dont worry about them too much, just use <code>\n</code></li>
+    <li><code>\t</code> is a horizontal tab character</li>
+    <li><code>\'</code> escapes a single quote (for use in a single quote encapsulated string)</li>
+    <li><code>\"</code> escapes a double quote (for use in a double quote encapsulated string)</li>
+    <li><code>\\</code> escapes the escape character, so it represents a backslash</li>
+</ul>
+<p>Here's an example for the use of each escape character</p>
+
+<pre><code>>> print['This makes\na new line']
+This makes
+a new line
+nil
+>> print['\t Makes a tab character']
+Makes a tab character
+nil
+>> print['With escapes, you can use a \'single quote\' inside of a single quoted string']
+With escapes, you can use a a 'single quote' inside of a double quoted string
+nil
+>> print["or \"double quotes\" within a double quoted string"]
+or "double quotes" within a double quoted string
+nil
+>> print['And last but not least, you can use the \\ character by escaping it with itself!']
+And last but not least, you can use the \ character by escaping it with itself!
+nil</code></pre>
+
+<p>Behind the scenes, strings are actually just a bunch of characters strung together. (hence why they're called "strings"). This means that if you want to, you can get an individual character from a string like this:</p>
+
+<pre><code>>> lyric = 'bananas'
+'bananas'
+>> print['This **** is ' + lyric]
+This **** is bananas
+nil
+>> print[lyric[0]]
+b
+nil
+>> print[lyric[1]]
+a
+nil
+>> print[lyric[2]]
+n
+nil
+>> print[lyric[3]]
+a
+nil
+>> print[lyric[4]]
+n
+nil
+>> print[lyric[5]]
+a
+nil
+>> print[lyric[6]]
+s
+nil</code></pre>
+
+<p>If you try and get the character at a negative index, it gives you the character at that index if you were counting from the end! <code>-0</code> is the same as 0, so the last character is indexed at <code>-1</code>.</p>
+
+<pre><code>>> word = 'hello!'
+'hello!'
+>> reversed = word[-1] + word[-2] + word[-3] + word[-4] + word[-5]
+'!olleh'</code></pre>
+
+<p>One nice feature of strings is the ability to get their length. This is done using the <code><var>somelist</var>.length</code> property. This is particularly useful, as it allows you to easily determine the index of the last element in the string.</p>
+
+<pre><code>>> animals = ['cow', 'chicken', 'horse', 'dog', 'cat', 'mouse', 'owl']
+['cow', 'chicken', 'horse', 'dog', 'cat', 'mouse', 'owl']
+>> animals.length
+7
+>> animals[animals.length - 1]
+'owl'</code></pre>
+
+<p>Finally, because strings are so good at displaying information, you can get the string representation of anything by using <code>.to-string</code>. <code>.to-string</code> can be used like this:</p>
+
+<pre><code>>> 10.to-string # For example, numbers
+'10'
+>> (20 + 30).to-string
+'50'
+>> (3 / 2).to-string
+'1.5'
+>> 'You can even use to-string on strings! It doesn\'t do much though...'.to-string
+'You can even use to-string on strings! It doesn\'t do much though...'
+>> # nil is the special funject that is returned whenever an operation doesn't evalate to anything, and you can even use to-string on it!
+>> nil.to-string
+'nil'</code></pre>
+
+<h2>Lists</h2>
+<p>Lists are essentially a single data type that can hold other data types. They're exactly like they sound, a way to <em>list</em> or group other values. Note that lists <em>can</em> contain multiple different types, but do not have to. Lists look like this:</p>
+
+<pre><code>>> tenToPowersAndFruits = ['apples', 10, 'banana', 100, 'starfruit', 10000]
+['apples', 10, 'banana', 100, 'starfruit', 1000]</code></pre>
+
+<p>Unlike strings, lists are mutable. This means that you can change a single element of the list, without reassigning the entire list.</p>
+
+<pre><code>>> colors = ['red', 'starfruit', 'blue']
+['red', 'starfruit', 'blue']
+>> # Oh no! starfruit isn't a color! Let's change it to green.
+>> colors[1] = 'green'
+['red', 'green', 'blue']
+>> # Now, when we check the value of colors, we can see that it has changed!
+>> colors
+['red', 'green', 'blue']</code></pre>
+
+<p>Many of the concepts you learned about strings earlier can also be applied to lists, because strings can be thought of as lists of single characters. (The main difference is that strings are immutable.) Here are some examples of concepts you learned with strings being applied to lists.</p>
+
+<pre><code># You can concatenate arrays, just like you can strings
+>> snowsports = ['hockey', 'skiing']
+['hockey', 'skiing']
+>> watersports = ['surfing', 'swimming']
+['surfing', 'swimming']
+>> teamsports = ['football', 'baseball', 'basketball']
+['football', 'baseball', 'baskeyball']
+>> sports = snowsports + watersports + teamsports
+['hockey', 'skiing', 'surfing', 'swimming', 'football', 'baseball', 'basketball']
+# You can also make arrays into strings using the to-string funject, and get their length with the length funject
+>> users = ['jake', 'lucy', 'katherine']
+['jake', 'lucy', 'katherine']
+>> print['You have ' + users.length.to-string + ' and their names are: ' + users.to-string]
+You have 3 users and their names are: ['jake', 'lucy', 'katherine']</code></pre>
+
+<p>Lists can contain any data type, and that includes lists! This means that you can nest lists within each other.</p>
+
+<pre><code>>> # In this example, coordinates represents a list of lists of x and y coordinates.
+>> coordinates = [[10, 30], [40, 10], [21, 26], [3, 22]]
+[[10, 30], [40, 10], [21, 26], [3, 22]]
+>> # Let's say we want to get the y value of the coordinate pair at the index 2, we would do it like this
+>> coordinates[2][1]
+26
+>> # Here are some other values, simply for demonstration
+>> coordinates[0][0]
+10
+>> coordinates[0][1]
+30
+>> coordinates[3, 0]
+3</code></pre>
+
+<h2>Funjects</h2>
+<p>Now that we've gotten through the basic introduction to types, and programming in Yak, we can start to talk about funjects. Tutorials for many other languages would around this point being to explain how functions, and objects work, but Yak replaces both concept with the universal funject, so we have this section instead. Let's get to it!</p>
+
+<p>The first thing to remember, is that <strong>everything</strong> in Yak is a funject. Because of this, funjects have a lot of cool properties. Let's start by creating an empty funject. funjects in yak are represented by an open curly brace (<code>{</code>), the body of the funject (we'll get to that later), followed a close curly brace (<code>}</code>) which signifies the end of the funject body. So let's start by simply declaring an empty funject.</p>
+
+<pre><code>>> afunject = {}
+#&lt;funject>
+>> # Note that the REPL represents funjects as just #&lt;funject></code></pre>
+
+<p>So far, nothing too interesting. We set afunject to an empty funject, and it evaluates to <code>{}</code>. Now, we can talk about what funjects interesting: pattern matching. Funjects, like functions, can be used to execute blocks of code with parameters, however the process they go through to do this is different. Consider the following code block. (explanation below)</p>
+
+<pre><code>>> example = {
+..     [0]: 1
+..     [5]: 2
+.. }
+#&lt;funject>
+>> example[0]
+1
+>> example[5]
+2</code></pre>
+
+<p>Here, we define <code>example</code>, a funject with two patterns in it. These two patterns match a list containing only the element 0, and a list containing only the element 5. Then further down, we invoke the funject example with a list containing one element 0, and again with 5. When Yak is given this code, here's what it's doing.</p>
+
+<p>First, Yak creates a funject and assigns it to <code>example</code>. This funject has two patterns: one that matches <code>[0]</code>, and another that matches <code>[1]</code>. Then, it invokes eample with the argument <code>[0]</code>. When a funject is invoked, Yak goes through the funject and looks for any patterns that match the argument passed. When it finds a pattern that matches the argument, it then evaluates the expression after the colon and returns the result of that expression. In this case, it finds that the argument, <code>[0]</code>, matches the first pattern, evaluates the expression mapped to that, which comes out as 1, and returns that 1. Thus <code>example[0]</code> is 1. Later, Yak does the same thing for <code>example[5]</code>, which matches the pattern <code>[5]</code> and returns 2.</p>
+
+<p>One thing to note is that you can format your code in two different ways when writing the expression for a pattern match. If you only need one line of code, you might do this:</p>
+
+<pre><code>>> foo = {
+..     ['a']: 3
+.. }
+&lt;funject>
+>> foo['a']
+3</code></pre>
+
+<p>But if you wanted the pattern to map to multiple lines of code, you would write it like this:</p>
+
+<pre><code>>> foo = {
+..    ['a']:
+..        number = 1 + 1
+..        number * 3
+.. }
+>> foo['a']
+6</code></pre>
+
+<p>If you have a multiple line expression like this, and you don't indent consistently, the Yak interpreter will throw an error. This is because the end of the expression, is signified by unindenting, so proper identation is necessary. Note that with a multiple line expression, the result of the <em>last</em> expression is returned.</p>
+
+<p>Let's say though we wanted to define a funject that could take a wide range of things as its argument. It would be horrible if you had to explicitly define an output for every single input. So for that, there are parameters. In a pattern, any time you use the <code>@</code> symbol followed by an alphanumeric string to accept anything as input. Consider this code: (also explained below)</p>
+
+<pre><code>>> addOne = {
+..     [@number]: @number + 1
+.. }
+&lt;funject>
+>> addOne[4]
+5
+>> addOne[-2]
+-1
+>> addOne[9]
+10</code></pre>
+
+<p>Here, <code>addOne</code> contains a pattern that matches the parameter @number. When a pattern contains a parameter it allows anything to be in the place of that parameter. It also <strong>binds</strong> the value to that parameter. When a parameter has been bound to a value, the parameter acts like a variable whos value is set to what it was bound to. That's why in the <code>addOne</code> example, the expression <code>@number + 1</code> evaluates to whatever you passed as an argument plus one.</p>
+
+<p>For those of you new to programming, the idea of recursion might seem foreign to you. Recursion, is invoking one funject from within itself. This is usefull for all sorts of things, and is used a lot in math funjects. In this example, we'll show you how to use recursion, and pattern matching, to make the famous recursive factorial function in Yak.</p>
+
+<p>Recursive factorial works by first using something called a <strong>base case</strong>, which checks if the input is a certain value, and if it is, returns a fixed value. For factorial the base case is 0, which should always return 1. Because of pattern matching, we can easily make the base case without having to use any control flow as one might in another language. Then, if the argument is anything other than the base case, factorial returns the argument times factorial invoked with the argument being the original argument minus one. The implementation of the funject would look like this.</p>
+
+<pre><code>>> factorial = {
+..     [0]: 1 # Base case, if the argument is zero, factorial will always return one
+..     [@number]: @number * factorial(@number - 1)
+.. }
+&lt;funject>
+>> factorial[5]
+120</code></pre>
+
+<p>To better understand why this works, here's a list of what the code would do when you call <code>factorial[5]</code>. If you already have a understanding of recursion, you can skip over this.</p>
+
+<ol>
+    <li>Invokes factorial with the argument <code>[5]</code></li>
+    <li>Takes 5, and multiplies it by <code>factorial[5 - 1]</code> (overall expression: <code>5 * factorial[4]</code>)</li>
+    <li>Takes 4, and multiplies it by <code>factorial[4 - 1]</code> (overall expression: <code>5 * 4 * factorial[3]</code>)</li>
+    <li>Takes 3, and multiplies it by <code>factorial[3 - 1]</code> (overall expression: <code>5 * 4 * 3 * factorial[2]</code>)</li>
+    <li>Takes 2, and multiplies it by <code>factorial[2 - 1]</code> (overall expression: <code>5 * 4 * 3 * 2 * factorial[1]</code>)</li>
+    <li>Takes 1, and multiplies it by <code>factorial[1 - 1]</code> (overall expression: <code>5 * 4 * 3 * 2 * 1 * factorial[0]</code>)</li>
+    <li>Finds that <code>[0]</code> matches the base case, so it evaluates to one</li>
+    <li>This leaves the final expression as <code>5 * 4 * 3 * 2 * 1 * 1</code>, which is exactly what 5! (factorial) does in mathematics!</li>
+</ol>
+
+<p>Experienced programmers may now be thinking: "Wait, but isn't this just functional programming with weird syntax?" Well, the answer to that is no. Unlike with functions, you can actually add, and remove patterns from funjects! Let's say you wanted to for some unknown reason, you wanted to add a second base case to factorial after you make it. With functional programming, that's not possible, but with funjectional programming, it is!</p>
+
+<pre><code>>> factorial[23] = 4
+4
+>> factorial[23]
+4</code></pre>
+
+<h2>Booelans</h2>
+
+<p> Most programmers will be isntantly familiar with the concept of a boolean, but new programmers might be intimidated by the use of the woord "Boolean". Well, it's actually a lot simplier than it initially sounds. Booleans are just a type of variable that has either the value <code>true</code> or the value <code>false</code>. It really is that simple. Here's what assigning a boolean would look like.</p>
+
+<pre><code>>> is-large = true
+true
+>> is-fast = false
+false</code></pre>
+
+<p> Now, you might be wondering what you can do with these really simplistic statements. Well, it turns out, the answer is a lot. In programming, there's a concept called a "controll flow" block. That basically means that it allows you to execute certain pieces of code only under certain circumstances. This is, for obvious reasons, very usefull! The most simple type (and yak's only type) of control block is the if statement. (Experienced programmers: don't fret! There are loops and the like, however they <em>technically</em> aren't control blocks. We'll get to that later.) If statements will run if the value given to them is <code>true</code>. Another usefull thing about if statements, is something called an else block. If you put an else block directly after an if statement, the else block will run only when the if statement doesnt. The entire construct put together is called an if else statement. So let's take the old example, and make it cooler with an if else statement or two.</p>
+
+<pre><code>>> # Note that if you want to write multiple lines of code in one go,
+>> # you can hit shift and enter, and the interpreter will let you keep writing!
+>> # This is also nice because it will only show a evaluated value once at the end of the piece of code
+>> animal = 'elephants'
+'elephants'
+>> is-large = true
+true
+>> is-fast = false
+false
+>> # Here's the if statement, the syntax is simple
+>> if is-large
+..     print[animal + ' are large'] # This runs if is-large is true
+.. else
+..     print[animal + ' are small'] # This runs if the above block doesn't run, so if is-large is false
+.. if is-fast
+..     print[animal + 'are slow'] # This runs if is-fast is true
+.. else
+..     print[animal + 'are slow] # This runs if is-fast is false
+..
+Elephants are large
+Elephants are slow
+nil</code></pre>
+
+<p> Let's say you want to check if two things are equal to each other, something that is done quite a lot in programming. Once again, you would make use of if else statements, but you need one more thing to get the job done. This is where the <code>==</code> operator comes in. <code>==</code> is not at all the same as <code>=</code>, rather than assigning, <code>==</code> is more like plus, except with a different outcome. <code>==</code> checks if the left operand is equal to the right operand and if it is, it evaluates to <code>true</code>. If it's not, it evaluates to <code>false</code>. Here's an example.</p>
+
+<pre><code>>> my-name = 'Sam'
+'Sam'
+>> your-name = 'Nathan'
+'Nathan'
+>> my-name == your-name
+false
+>> # Now, when the two names compared are the same, the output changes!
+>> your-name = 'Sam'
+'Sam'
+>> my-name == your-name
+true</code></pre>
+
+<p> There's also an operator for checking if two things are <em>not</em> equal. This operator is called the inequality operator, and looks like this: <code>!=</code>. Here's an example of the inequality operator.</p>
+
+<pre><code>>> my-name = 'Will'
+'Will'
+>> your-name = 'Nathan'
+'Nathan'
+>> my-name != your-name
+true
+>> your-name = 'Will'
+'Will'
+>> my-name != your-name
+false</code></pre>
+
+<p> Now, we can use that to check if two things are the same in an if statement! Because if statements just check if the value given to them is <code>true</code> or <code>false</code>, and <code>==</code> give us a boolean value, we can give our if statement an operation that uses <code>==</code> as its condition.</p>
+
+<pre><code>>> my-name = 'Sam'
+'Sam'
+>> your-name = 'Sam'
+'Sam'
+>> if my-name == your-name
+..     print['That\'s a cool coincidence!']
+..
+That's a cool coincidence!
+>> # Notice that you can use an if statement without an else statement,
+>> # you cannot however use an else statement without an if statement presceding it.</code></pre>
+
+<p>Boolean operations are once again similar to our operations for numbers (I.E. <code>+</code>) that take two values, and give us one value, (the technical name for this is a binary operator) they are different though, because instead of taking numbers, or strings, they take two booleans, and return one boolean. There aren't very many of them, but they're all incredibly usefull, so here they are.</p>
+
+<ul>
+    <li>The <code>and</code> operator returns true if both its operands are true, otherwise it returns false</li>
+    <li>The <code>or</code> operator returns true if one of its operands is true, otherwise it returns false</li>
+</ul>
+
+<p>Here's a quick example of these operators.</p>
+
+<pre><code>>> true and true
+true
+>> true and false
+false
+>> false and false
+false
+>> # Now for or
+>> true or true
+true
+>> true or false
+true
+>> false or false
+false</code></pre>
+
+<h2>Brining what we've learned so far together</h2>
+<p>To summarize what we've learned so far, let's write two Funjects that gives some easy ways to convert between fahrenheit, and celsius. Here's the code for said funjects: (explained below)</p>
+
+<pre><code>>> f2c = {
+..    [@n]: (@n - 32) * (5 / 9)
+..}
+#&lt;funject>
+>> c2f = {
+..    [@n]: (@n * (9 / 5)) + 32
+.. }
+&lt;funject>
+>> f2c[32]
+0
+>> c2f[0]
+32
+>> # Now, let's make a funject that allows you to compare the two easilly
+>> temps-equal? = {
+..     [@fahrenheit, @celsius]: f2c[@fahrenheit] == @celsius
+.. }
+&lt;funject>
+>> temps-equal?[32, 0]
+true
+>> temps-equal?[32, 10]
+false</code></pre>
+
+<p>The first two funjects are simply converting the two temperature systems. <code>f2c</code> takes a farenheit temperature as an argument, and returns the temperature in celsius, and <code>c2f</code> does the opposit. Next, we have our <code>temps-equal?</code> funject. <code>temps-equal?</code> matches two values, converts the first from fahrenheit to celsius, and cheks if they're equal. This example is particularly good because it both show how you can make funjects use other funjects, and it shows how we can make use of our boolean logic operators (in this case <code>==</code>) in a funject.</p>
+
+<h2>Symbols</h2>
+<p>Symbols are similar to strings, except they're mainly used for accessing properties rather than for declaring a set of characters, and they always begin with a dot. Thus far, we've been using funjects more like functions that objects, but now, we get to see the object-like side of funjects. Symbols, are a nice looking way of attaching values to funjects. Here's an example of this.</p>
+
+<pre><code>>> some-funject = {
+..    .the-number: 1000
+.. }
+#&lt;funject>
+>> some-funject.the-number
+1000
+>> some-funject.the-number = 300
+300
+>> some-funject.the-number
+300</code></pre>
+
+<p>Symbols allow you to add properties to a funject. In the example above, <code>some-funject</code> has the property <code>the-number</code> which is initially set to 1000. If you remember back to when we introduced pattern matching, you'll remember that the brackets in a pattern match aren't <em>necessary</em>, they're just <strong>highly</strong> reccomended for the purpose of making the code more readable. Symbols are the one case in which putting the arguments to a funject inside an array is not reccomended. What the above code is actually doing, is defining a pattern which matches the symbol .the-number, and evaluates to 1000. This is simlar to our orrinal funject example, but uses symbols instead of numbers. Like with patterns, you can assign them using the equals sign.</p>
+
+<h2 id='classes'>Classes</h2>
+<p>Similarly to object oriented programming, funjectional programming uses classes. Classes are basically a type of funject that is used primarilly for the purposes of describing a type of thing, or construct, and these classes can have instances. An example of this might be making a class called ball, which discribes all balls, and then making different instances of ball to act as individual balls. Instances of a class can have method that make them different from other instances of the same class. An example might be that all balls have the method color, which gets the color of the ball, but the color can varry from ball to ball.</p>
+
+<p>Because classes are for the purpose of making a generic outline, or blueprint of sorts, for a type of thing, they need a way to have differences between the instances of the class. For this, they make extensive use of symbols. Symbols allow you to add values to instances of an object. Below is the layout for the ball class mentioned above.</p>
+
+<pre><code>>> class Ball # Note that class names start with a capitol!
+..    instance = {
+..        .initialize: {
+..            [@self]:
+..                 @self.color = 'red'
+..                 @self.bounciness = 10 # balls should have a bounciness too! Why not?!
+..        }
+..    }
+..
+#&lt;funject>
+>> my-ball = Ball.new # Makes a new instance of Ball, and assigns it to my-ball
+#&lt;funject>
+>> my-ball.color
+'red'
+>> my-ball.color = 'blue'
+'blue'
+>> my-ball.color
+>> your-ball = Ball.new # Makes another instance of ball, and assigns it to your-ball
+#&lt;funject>
+>> your-ball.color # Notice how when i change my-ball.color, it doesn't affect the color of your-ball!
+'red'
+'blue'</code></pre>
+
+<p>This looks very similar at first, to just declaring a funject that has a pattern in it that matches a symbol, with the exception of the strange funject called instance, and the strange pattern matching [@self].</p>
+</article>
+</div>
+</body>
