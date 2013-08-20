@@ -2,8 +2,13 @@
 @import url(http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic);
 
 @font-face {
-    font-family: Sabon Roman;
-    src: url("SabonGreek-Roman.otf");
+    font-family: Sabon-Roman;
+    src: url("../fonts/Sabon-Roman.otf");
+}
+
+@font-face {
+    font-family: SabonGreek-Roman;
+    src: url("../fonts/SabonGreek-Roman.ttf");
 }
 
 body {
@@ -31,14 +36,15 @@ header .welcome {
     overflow: hidden;
 }
 header h1 {
-    font: 100px/1 Sabon, Sabon Roman, EB Garamond, serif;
+    font: 100px/1 Sabon-Roman, SabonGreek-Roman, EB Garamond, serif;
     color: #fff;
     text-shadow: 0 1px #000;
     margin: 0 36px 0 0;
     display: inline-block;
 }
 header p {
-    font: 29px/1.5 Sabon, Sabon Roman, EB Garamond, serif;
+    font: 29px/1.5 Sabon-Roman, SabonGreek-Roman, EB Garamond, serif;
+    text-rendering: optimizeLegibility;
     color: #000;
     margin: 0;
     display: inline-block;
