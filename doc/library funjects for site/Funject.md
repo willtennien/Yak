@@ -18,13 +18,13 @@ is x # identity comparison; when one changes, the other changes
 
 .class # returns the class of which the receiver is an instance.
 
-.number?
-.string?
-.boolean?
-.symbol?
-.unknown?
-.nil?
-.list?
+.number? # returns true if the receiver is a number
+.string? # returns true if the receiver is a string.
+.boolean? # returns true if the receiver is a boolean.
+.symbol? # returns true if the receiver is a symbol.
+.unknown? # returns true if the receiver is unknown.
+.nil? # returns true if the receiver is nil.
+.list? # returns true if the receiver is a list.
 
 .integer? # true if the receiver is a number and has no fractional component
 .float? # true if the receiver is a number and has a fractional component
