@@ -63,4 +63,4 @@
 .compact! # removes any elements which are nil
 
 .shuffle! # (as in Underscore.js)
-.reverse! # (as in JavaScript)
+.reverse! # Reverses the elements of the array in place (as in JavaScript).
