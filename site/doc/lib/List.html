@@ -21,7 +21,7 @@
 
 <div class=definition>
  <h3 class=name>* n </h3>
-  an array of n instances of the receiver concatenated together
+  an list of n instances of the receiver concatenated together
 </div>
 <div class=definition>
  <h3 class=name>+ </h3>
@@ -30,7 +30,7 @@
 
 <div class=definition>
  <h3 class=name>[<number>] </h3>
-  array reference; negative indices count from the end
+  list reference; negative indices count from the end
 </div>
 <div class=definition>
  <h3 class=name>[<range>] </h3>
@@ -97,12 +97,12 @@
 
 <div class=definition>
  <h3 class=name>.join[s] </h3>
-  calls .to-string on each element of the array, intersperses s between each element, and concatenates the entire result into a string. (as in JavaScript)
+  calls .to-string on each element of the list, intersperses s between each element, and concatenates the entire result into a string. (as in JavaScript)
 </div>
 
 <div class=definition>
  <h3 class=name>.sort![] </h3>
-  (as in JavaScript)
+  sorts a list of integers (as in JavaScript)
 </div>
 <div class=definition>
  <h3 class=name>.sort![f] </h3>
@@ -111,7 +111,7 @@
 
 <div class=definition>
  <h3 class=name>.map![f, [<number> or <range>]] </h3>
-  copies the array before iterating; if given an index or range, maps over only those elements
+  copies the list before iterating; if given an index or range, maps over only those elements
 </div>
 <div class=definition>
  <h3 class=name>.pluck![key] </h3>
@@ -141,11 +141,11 @@
 </div>
 <div class=definition>
  <h3 class=name>.every </h3>
-  copies the array before iterating
+  copies the list before iterating
 </div>
 <div class=definition>
  <h3 class=name>.any </h3>
-  copies the array before iterating
+  copies the list before iterating
 </div>
 
 <div class=definition>

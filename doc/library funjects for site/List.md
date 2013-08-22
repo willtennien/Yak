@@ -1,9 +1,9 @@
 ##Instance Rules
 
-* n # an array of n instances of the receiver concatenated together
+* n # an list of n instances of the receiver concatenated together
 + # concatenation
 
-[<number>] # array reference; negative indices count from the end
+[<number>] # list reference; negative indices count from the end
 [<range>] # the subset of the receiver within the given range
 
 .length # one greater than the index of the element with the highest index (not necessarily the same as count)
@@ -25,12 +25,12 @@
 .index-of[x] # returns the index of the first occurance of x in the receiver.
 .last-index-of[x] # Like .index-of, but from the end of the list; returns the index of the last occurance of x in the receiver. 
 
-.join[s] # calls .to-string on each element of the array, intersperses s between each element, and concatenates the entire result into a string. (as in JavaScript)
+.join[s] # calls .to-string on each element of the list, intersperses s between each element, and concatenates the entire result into a string. (as in JavaScript)
 
-.sort![] # (as in JavaScript)
+.sort![] # sorts a list of integers (as in JavaScript)
 .sort![f] # takes a funject that returns numbers; an element with a number higher than another should appear after it (as in JavaScript)
 
-.map![f, [<number> or <range>]] # copies the array before iterating; if given an index or range, maps over only those elements
+.map![f, [<number> or <range>]] # copies the list before iterating; if given an index or range, maps over only those elements
 .pluck![key] # (as in Underscore.js)
 .invoke![key] # (as in Underscore.js)
 
@@ -39,8 +39,8 @@
 
 .reduce # (as in JavaScript)
 .reduce-right # (as in JavaScript)
-.every # copies the array before iterating
-.any # copies the array before iterating
+.every # copies the list before iterating
+.any # copies the list before iterating
 
 .first[f, n=0] # the nth element for which f[e] is true
 .first[f, <range>] # the (n..m)th elements for which f[e] is true
