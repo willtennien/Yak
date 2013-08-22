@@ -39,8 +39,8 @@
 
 .reduce # (as in JavaScript)
 .reduce-right # (as in JavaScript)
-.every[f] # .every copies the list before iterating
-.any[f] # .any copies the list before iterating
+.every[f] # .every returns true if for every element x in the receiver, f[x] is true<br>.every copies the list before iterating
+.any[f] # .any returns true if for any element x in the receiver, f[x] is true.<br>compare to .every[f]<br>.any copies the list before iterating
 
 .first[f, n=0] # the nth element for which f[e] is true
 .first[f, <range>] # the (n..m)th elements for which f[e] is true
