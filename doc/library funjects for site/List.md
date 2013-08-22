@@ -53,7 +53,7 @@
 .drop![n] # all but the first n elements
 .drop-while![f] # the first element for which f[e] is false and all subsequent elements
 
-.union! # (as in Underscore.js)
+.union! # replaces the receiver with the set union of the receiver and the elements from any number of other arrays specified in an argument list. (as in Underscore.js)
 .intersection! # (as in Underscore.js)
 .unique! # removes duplicate elements
 
