@@ -35,7 +35,7 @@
 .invoke![key] # (as in Underscore.js)
 
 .filter![f] # returns a list containing only the elements for which f[e] is true
-.reject![f] # returns a list containing only the elements for which f[e] is false
+.reject![f] # The opposite of .filter; returns a list containing only the elements for which f[e] is false
 
 .reduce # (as in JavaScript)
 .reduce-right # (as in JavaScript)
