@@ -34,8 +34,8 @@
 .pluck![key] # (as in Underscore.js)
 .invoke![key] # (as in Underscore.js)
 
-.filter![f] # only the elements for which f[e] is true
-.reject![f] # only the elements for which f[e] is false
+.filter![f] # returns a list containing only the elements for which f[e] is true
+.reject![f] # returns a list containing only the elements for which f[e] is false
 
 .reduce # (as in JavaScript)
 .reduce-right # (as in JavaScript)
