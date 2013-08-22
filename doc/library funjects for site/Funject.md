@@ -18,13 +18,13 @@ is x # identity comparison; when one changes, the other changes
 
 .class # returns the class of which the receiver is an instance.
 
-.number? # returns true if the receiver is a number
-.string? # returns true if the receiver is a string.
-.boolean? # returns true if the receiver is a boolean.
-.symbol? # returns true if the receiver is a symbol.
-.unknown? # returns true if the receiver is unknown.
-.nil? # returns true if the receiver is nil.
-.list? # returns true if the receiver is a list.
+.number? # returns true if the receiver is a <a href='/doc/lib/Number.html'>number</a>
+.string? # returns true if the receiver is a <a href='/doc/lib/String.html'>string</a>.
+.boolean? # returns true if the receiver is a <a href='/doc/lib/Boolean.html'>boolean</a>.
+.symbol? # returns true if the receiver is a <a href='/doc/lib/Symbol.html'>symbol</a>.
+.unknown? # returns true if the receiver is <a href='/doc/lib/Unknown.html'>unknown</a>.
+.nil? # returns true if the receiver is <a href='/doc/lib/Nil.html'>nil</a>.
+.list? # returns true if the receiver is a <a href='/doc/lib/List.html'>list</a>.
 
 .integer? # true if the receiver is a number and has no fractional component
 .float? # true if the receiver is a number and has a fractional component
