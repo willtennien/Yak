@@ -23,7 +23,7 @@
 .unshift! # returns the receiver (as in JavaScript)
 
 .index-of[x] # returns the index of the first occurance of x in the receiver.
-.last-index-of[x]
+.last-index-of[x] # returns the index of the last occurance of x in the receiver. 
 
 .join[s] # (as in JavaScript)
 
