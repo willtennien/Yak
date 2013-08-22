@@ -25,7 +25,7 @@
 .index-of[x] # returns the index of the first occurance of x in the receiver.
 .last-index-of[x] # Like .index-of, but from the end of the list; returns the index of the last occurance of x in the receiver. 
 
-.join[s] # calls .to-string on each element of the array, and concatenates the entire result into a string with s between each element. (as in JavaScript)
+.join[s] # calls .to-string on each element of the array, intersperses s between each element, and concatenates the entire result into a string. (as in JavaScript)
 
 .sort![] # (as in JavaScript)
 .sort![f] # takes a funject that returns numbers; an element with a number higher than another should appear after it (as in JavaScript)
