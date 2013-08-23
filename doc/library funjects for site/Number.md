@@ -30,7 +30,7 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 
 .sin # the <a href=http://en.wikipedia.org/wiki/Sine>sine of the receiver in radians</a>.
 .cos # the <a href=http://en.wikipedia.org/wiki/Cosine#Sine.2C_cosine.2C_and_tangent>cosine</a> of the receiver in radians.
-.tan # the tangent of the receiver in radians.
+.tan # the <a href=http://en.wikipedia.org/wiki/Trigonometric_functions#Sine.2C_cosine_and_tangent>tangent</a> of the receiver in radians.
 .sec # the secant of the receiver in radians.
 .csc # the cosecant of the receiver in radians.
 .cot # the cotangent of the receiver in radians.
