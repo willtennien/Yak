@@ -28,7 +28,7 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 .ln # returns the natural logarithm (base e) of the receiver.
 .log[b] # the log base b of the receiver
 
-.sin # the <a href=http://en.wikipedia.org/wiki/Sine>sine of the receiver in radians</a>.
+.sin # the <a href=http://en.wikipedia.org/wiki/Sine>sine</a> of the receiver in radians.
 .cos # the <a href=http://en.wikipedia.org/wiki/Trigonometric_functions#Sine.2C_cosine.2C_and_tangent>cosine</a> of the receiver in radians.
 .tan # the <a href=http://en.wikipedia.org/wiki/Trigonometric_functions#Sine.2C_cosine_and_tangent>tangent</a> of the receiver in radians.
 .sec # the <a href=http://en.wikipedia.org/wiki/Trigonometric_functions#Reciprocal_functions>secant</a> of the receiver in radians.
