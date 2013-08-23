@@ -6,7 +6,7 @@
 [<number>] # a single-length string representing the character at the given zero-based index; negative indices count from the end
 [<range>] # the substring of the receiver in the given range
 
-.length # the length of the string
+.length # the number of characters in the string
 
 .contains?[s] # true if the receiver contains the substring s
 .begins-with?[s]
