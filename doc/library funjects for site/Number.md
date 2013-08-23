@@ -28,8 +28,8 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 .ln # returns the natural logarithm (base e) of the receiver.
 .log[b] # the log base b of the receiver
 
-.sin # the sin of an angle
-.cos # the cosine of an angle.
+.sin # the sin of an angle in radians.
+.cos # the cosine of an angle in radians.
 .tan
 .sec
 .csc
