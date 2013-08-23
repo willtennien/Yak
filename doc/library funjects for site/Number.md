@@ -4,7 +4,7 @@ Number.e # <a href=http://en.wikipedia.org/wiki/E_(mathematical_constant)>euler'
 Number.pi # <a href=http://en.wikipedia.org/wiki/Pi>π</a>—the circumference of a circle divided by its radius. 
 
 Number.random[] # a random number on the range [0, 1)
-Number.random[n] # a random integer between 0 and n - 1
+Number.random[n] # a random integer between 0 and n - 1, including 0 and n - 1.
 Number.random[a, b] # a random integer between that a and b - 1; signals an error if b <= a
 
 ##Instance Rules
@@ -28,7 +28,7 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 .ln # returns the natural logarithm (base e) of the receiver.
 .log[b] # the log base b of the receiver
 
-.sin
+.sin # the sin of an angle
 .cos
 .tan
 .sec
