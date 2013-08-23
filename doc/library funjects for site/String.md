@@ -9,8 +9,8 @@
 .length # the number of characters in the string
 
 .contains?[s] # true if the receiver contains the substring s
-.begins-with?[s]
-.ends-with?[s]
+.begins-with?[s] # returns true of the receiver begins with the string s
+.ends-with?[s] # returns true if the receiver ends with s
 
 .index-of[s]
 .last-index-of[s]
