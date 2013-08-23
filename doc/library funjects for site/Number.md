@@ -37,7 +37,7 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 .asin # the <a href=http://en.wikipedia.org/wiki/Arcsin>arcsin</a> of the receiver; returns an angle in radians.
 .acos # the <a href=http://en.wikipedia.org/wiki/Arcsin>arccos</a> of the receiver; returns an angle in radians.
 .atan # the <a href=http://en.wikipedia.org/wiki/Arcsin>arctangent</a> of the receiver; returns an angle in radians.
-.atan/[n] # a.tan/[b] is (a / b).atan; this allows us to include that <code>a.atan/[0]</code> is <code>1</code> without using a fake number to represent 'infinity'.
+.atan/[n] # <code>a.tan/[b]</code> is <code>(a / b).atan</code>; this allows us to include that <code>a.atan/[0]</code> is <code>1</code> without using a fake number to represent 'infinity'.
 
 .abs # also a prefix operator
 
