@@ -21,7 +21,7 @@
 .replace[search-for, replace-with] # replaces all occurrences of the string search-for with the string replace-with in the receiver
 .replace-first[search-for, replace-with] # replaces the first occurrence of the string search-for with the string replace-with in the receiver
 
-.repeat[n] # Returns a string containing the reciever repeated n times
+.repeat[n] # returns a string containing the reciever repeated n times
 
 .uppercase # returns a copy of the receiver containing every letter in uppercase. Leaves non-alpha characters unaltered.
 .lowercase # returns a copy of the receiver containing every letter in lowercase. Leaves non-alpha characters unaltered.
