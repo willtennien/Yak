@@ -1,6 +1,6 @@
 ##Class Rules
 
-Number.e # euler's number.
+Number.e # <a href=http://en.wikipedia.org/wiki/E_(mathematical_constant)>euler's number.</a>
 Number.pi # the circumference of a circle divided by its radius.
 
 Number.random[] # a random number on the range [0, 1)
