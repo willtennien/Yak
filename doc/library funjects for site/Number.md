@@ -29,7 +29,7 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 .log[b] # the log base b of the receiver
 
 .sin # the sin of an angle
-.cos
+.cos # the cosine of an angle.
 .tan
 .sec
 .csc
