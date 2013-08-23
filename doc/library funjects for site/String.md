@@ -4,7 +4,7 @@
 + s # concatenation
 
 [&lt;number&gt;] # a single-length string representing the character at the given zero-based index; negative indices count from the end
-[&lt;range&gt;] # the substring of the receiver in the given range
+> <!--[&lt;range&gt;] # the substring of the receiver in the given range-->
 
 .length # the number of characters in the string
 
