@@ -30,7 +30,7 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 
 .sin # the sin of an angle in radians.
 .cos # the cosine of an angle in radians.
-.tan
+.tan # the tangent of an angle in radians.
 .sec
 .csc
 .cot
