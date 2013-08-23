@@ -12,8 +12,8 @@
 .begins-with?[s] # returns true of the receiver begins with the string s
 .ends-with?[s] # returns true if the receiver ends with s
 
-.index-of[s] # returns the index of the first occurance of s in the receiver.
-.last-index-of[s] # returns the index of the last occurance of s in the receiver.
+.index-of[s] # returns the index of the first occurance of s in the receiver.<br>returns nil if s does not appear in the receiver.
+.last-index-of[s] # returns the index of the last occurance of s in the receiver.<br>returns nil if s does not appear in the receiver.
 
 .split[s] # splits the receiver at occurances of <code>s</code> (as in JavaScript).
 .substring[start, end]
