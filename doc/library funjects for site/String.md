@@ -16,7 +16,7 @@
 .last-index-of[s] # returns the index of the last occurance of s in the receiver.<br>returns <code>nil</code> if s does not appear in the receiver.
 
 .split[s] # splits the receiver at occurances of <code>s</code> (as in JavaScript).
-.substring[start, end] # returns all characters beginning at index start and ending just before end.
+.substring[start, end] # returns all characters beginning at the <code>start</code> index and ending just before the <code>end</code> index.
 
 .replace[search-for, replace-with] # replaces all occurrences of the string search-for with the string replace-with in the receiver
 .replace-first[search-for, replace-with] # replaces the first occurrence of the string search-for with the string replace-with in the receiver
