@@ -23,8 +23,8 @@
 
 .repeat[n] # Returns a string containing the reciever repeated n times
 
-.uppercase # returns a copy of the receiver containing every letter in uppercase.
-.lowercase # returns a copy of the receiver containing every letter in lowercase.
-.swapcase # replaces every letter with the letter of the opposite case.
-.capitalize # returns a copy of the receiver but with every word capitalized.
-.titlecase # returns a copy of the receiver with every major word (not of, the, etc.) capitalized.
+.uppercase # returns a copy of the receiver containing every letter in uppercase. Leaves non-alpha characters unaltered.
+.lowercase # returns a copy of the receiver containing every letter in lowercase. Leaves non-alpha characters unaltered.
+.swapcase # replaces every letter with the letter of the opposite case. Leaves non-alpha characters unaltered.
+.capitalize # returns a copy of the receiver but with every word capitalized. Leaves non-alpha characters unaltered.
+.titlecase # returns a copy of the receiver with every major word (not of, the, etc.) capitalized. Leaves non-alpha characters unaltered.
