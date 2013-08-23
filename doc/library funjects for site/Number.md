@@ -34,9 +34,9 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 .sec # the secant of the receiver in radians.
 .csc # the cosecant of the receiver in radians.
 .cot # the cotangent of the receiver in radians.
-.asin
-.acos
-.atan
+.asin # the arcsin of the receiver.
+.acos # the arccos of the receiver.
+.atan # the arctangent of the receiver.
 .atan/[n] # a.tan/[b] is (a / b).atan; this allows us to note that a.atan/[0] is 1 without using Infinity
 
 .abs # also a prefix operator
