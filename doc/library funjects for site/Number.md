@@ -34,9 +34,9 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 .sec # the <a href=http://en.wikipedia.org/wiki/Trigonometric_functions#Reciprocal_functions>secant</a> of the receiver in radians.
 .csc # the <a href=http://en.wikipedia.org/wiki/Trigonometric_functions#Reciprocal_functions>cosecant</a> of the receiver in radians.
 .cot # the <a href=http://en.wikipedia.org/wiki/Trigonometric_functions#Reciprocal_functions>cotangent</a> of the receiver in radians.
-.asin # the arcsin of the receiver; returns an angle in radians.
-.acos # the arccos of the receiver; returns an angle in radians.
-.atan # the arctangent of the receiver; returns an angle in radians.
+.asin # the <a href=http://en.wikipedia.org/wiki/Arcsin>arcsin</a> of the receiver; returns an angle in radians.
+.acos # the <a href=http://en.wikipedia.org/wiki/Arcsin>arccos</a> of the receiver; returns an angle in radians.
+.atan # the <a href=http://en.wikipedia.org/wiki/Arcsin>arctangent</a> of the receiver; returns an angle in radians.
 .atan/[n] # a.tan/[b] is (a / b).atan; this allows us to include that <code>a.atan/[0]</code> is <code>1</code> without using a fake number to represent 'infinity'.
 
 .abs # also a prefix operator
