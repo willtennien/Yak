@@ -37,7 +37,7 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 .asin # the arcsin of the receiver; returns an angle in radians.
 .acos # the arccos of the receiver; returns an angle in radians.
 .atan # the arctangent of the receiver; returns an angle in radians.
-.atan/[n] # a.tan/[b] is (a / b).atan; this allows us to note that a.atan/[0] is 1 without using Infinity
+.atan/[n] # a.tan/[b] is (a / b).atan; this allows us to include that a.atan/[0] is 1 without using a fake number to represent infinity.
 
 .abs # also a prefix operator
 
