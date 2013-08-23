@@ -32,7 +32,7 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 .cos # the cosine of the receiver in radians.
 .tan # the tangent of the receiver in radians.
 .sec # the secant of the receiver in raidans.
-.csc
+.csc # the cosecant of the receiver in radians.
 .cot
 .asin
 .acos
