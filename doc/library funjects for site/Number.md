@@ -1,7 +1,7 @@
 ##Class Rules
 
 Number.e # <a href=http://en.wikipedia.org/wiki/E_(mathematical_constant)>euler's number.</a>
-Number.pi # <a href=http://en.wikipedia.org/wiki/Pi>π</a>—the circumference of a circle divided by its radius. 
+Number.pi # <a href=http://en.wikipedia.org/wiki/Pi>\u03C0</a>—the circumference of a circle divided by its radius. 
 
 Number.random[] # a random number on the range [0, 1)
 Number.random[n] # a random integer between 0 and n - 1, including 0 and n - 1.
