@@ -3,7 +3,7 @@
 * n # an list of n instances of the receiver concatenated together
 + # concatenation
 
-[i] # returns the ith element of the receiver, counting from the end; negative indices count from the end
+[i] # returns the ith element of the receiver, where 0 is the first element of the list; negative indices count from the end.
 > <!--[<range>] # the subset of the receiver within the given range-->
 
 .length # one greater than the index of the element with the highest index (not necessarily the same as count)
