@@ -17,7 +17,7 @@
 
 .insert![i, x, n=1] # inserts x n times at i
 
-.pop! # (as in JavaScript)
+.pop! # Removes and returns the last element of the list. (as in JavaScript)
 .push! # returns the receiver (as in Ruby)
 .shift! # (as in JavaScript)
 .unshift! # returns the receiver (as in JavaScript)
