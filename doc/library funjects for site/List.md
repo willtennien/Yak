@@ -12,8 +12,8 @@
 .empty? # (as in Scheme, Ruby)
 .contains?[x] # Ruby
 
-.delete-at![i] # deletes an element of the receiver
-.delete-at![i] # deletes a subset of the receiver
+.delete-at![i] # deletes the ith element of the receiver
+> <!--.delete-at![<range>] # deletes a subset of the receiver-->
 
 .insert![i, x, n=1] # inserts x n times at i
 
