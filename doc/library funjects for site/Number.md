@@ -41,8 +41,8 @@ Number.random[a, b] # a random integer between that a and b - 1; signals an erro
 
 .abs # also a prefix operator
 
-.ceil
-.floor
-.round
+.ceil   # returns the receiver rounded up.
+.floor  # returns the receiver rounded down.
+.round  # returns the receiver rounded to the nearest whole number.
 
-.times[f] # invokes f[0]..f[receiver - 1] and returns a list of the results; signals an error if the receiver is not an integer
+.times[f] # invokes f[0]..f[receiver - 1] and returns a list of the results; signals an error if the receiver is not an integer.
