@@ -3,8 +3,8 @@
 * n # an list of n instances of the receiver concatenated together
 + # concatenation
 
-[<number>] # list reference; negative indices count from the end
-[<range>] # the subset of the receiver within the given range
+[i] # list reference; negative indices count from the end
+> <!--[<range>] # the subset of the receiver within the given range-->
 
 .length # one greater than the index of the element with the highest index (not necessarily the same as count)
 .count # the number of elements the programmer explicitly set (not necessarily the same as length)
