@@ -1,6 +1,6 @@
 ##Instance Rules
 
-.and x # returns true if the receiver and other are true. short-circuiting; also an infix operator
+.and x # returns <code>true</code> if the receiver and <code>x</code> are true. short-circuiting; also an infix operator
 .or # short-circuiting; also an infix operator
 .xor # the exclusive or operator
 .not # also a prefix operator
