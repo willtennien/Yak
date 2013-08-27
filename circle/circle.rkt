@@ -10,6 +10,31 @@
   (syntax-id-rules ()
     [self% this%]))
 
+(define-syntax to-conses
+  (syntax-rules ()
+    [(to-conses ()) 
+     '()]
+    [(to-conses (a . b))
+     (cons a 
+           (to-conses b))]
+    [(to-conses a) 
+     a]))
+
+(define-syntax-rule (funject (args 
+                              conseq)
+                             ...)
+  (lambda vals
+    (match vals
+      ((to-conses args)
+       conseq)
+      ...)))
+
+;(define (token-brace-open) ...)
+(struct token-brace-open () #:transparent)
+
+;(define (token-brace-close) ...)
+(struct token-brace-close () #:transparent)
+
 ;(define (token-newline) ...)
 (struct token-newline () #:transparent)
 
@@ -120,6 +145,20 @@
           [else
            (error "Logic failed.")])))
 
+(define transform
+  (lambda (tokens)
+    (apply (funject
+            [((token-indent) . rest)
+             (cons (token-brace-open)
+                   (transform rest))]
+            [((token-oudent) . rest)
+             (cond (token-brace-close)
+                   (transform rest))]
+            [(other . rest)
+             (cons other
+                   (transform rest))])
+           tokens)))
+
 (define (parse str)
   (let ((tokens (tokenize str)))
-    tokens))
+    (transform tokens)))
