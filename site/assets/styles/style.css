@@ -249,6 +249,7 @@ article a:active {
 
 footer {
     background: bottom right url(/assets/images/yak-outlined-1.png) no-repeat;
+    background-color: rgb(118, 170, 214);
     width: 100%;
     height: 200px;
 }
