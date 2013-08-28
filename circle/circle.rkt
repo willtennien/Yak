@@ -37,6 +37,9 @@
 ;(define (token-brace-close) ...)
 (struct token-brace-close () #:transparent)
 
+;(define (token-semicolon) ...)
+(struct token-semicolon () #:transparent)
+
 ;(define (token-newline) ...)
 (struct token-newline () #:transparent)
 
@@ -185,6 +188,13 @@
     (cons (token-brace-close)
           (cons (token-newline)
                 (transform rest)))]
+   [((cons (token-newline) rest))
+    (if (or (token-indent? (car rest)))
+        (cons (token-newline)
+              (transform rest))
+        (cons (token-semicolon)
+              (cons (token-newline)
+                    (transform rest))))]
    [((cons other rest))
     (cons other
           (transform rest))]
@@ -193,7 +203,7 @@
 
 (define (token->string token)
   (cond
-    [(token-brace-open? token) 
+    [(token-brace-open? token) ; replace with is-a?
      "{"]
     [(token-brace-close? token) 
      "}"]
@@ -205,6 +215,8 @@
      "}"]
     [(token-space? token)
      (token-space-source token)]
+    [(token-semicolon? token)
+     ";"]
     [(token-keyword? token)
      (string-append " "
                     (token-keyword-name token)
