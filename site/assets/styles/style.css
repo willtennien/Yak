@@ -248,7 +248,7 @@ article a:active {
 }
 
 footer {
-    background: url(/assets/images/yak-outlined-1.png) no-repeat;
+    background-image: bottom right url(/assets/images/yak-outlined-1.png) no-repeat;
     width: 100%;
     height: 100px;
 }
