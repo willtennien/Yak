@@ -31,17 +31,34 @@
        conseq)
       ...)))
 
+(define token%
+  (class object%
+    (init source ->string)
+    (define src source)
+    (define ->str ->string)
+    (super-new)
+    (define/public (get-source)
+      src)
+    (define/public (token->string)
+      ->str)))
+
+(define (literal-token str)
+  (class token%
+    (init)
+    (super-new [source str]
+               [->string str])))
+
 ;(define (token-brace-open) ...)
-(struct token-brace-open () #:transparent)
+(define token-brace-open% (literal-token "{"))
 
 ;(define (token-brace-close) ...)
-(struct token-brace-close () #:transparent)
+(define token-brace-close% (literal-token "}"))
 
 ;(define (token-semicolon) ...)
-(struct token-semicolon () #:transparent)
+(define token-semicolon% (literal-token ";"))
 
 ;(define (token-newline) ...)
-(struct token-newline () #:transparent)
+(define token-semicolon% (literal-token "\n"))
 
 ;(define (token-space source) ...)
 (struct token-space (source) #:transparent)
