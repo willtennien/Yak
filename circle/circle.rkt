@@ -1,4 +1,6 @@
 #lang racket
+(require racket/match)
+
 (define-syntax-rule (list-contents xs f)
   (apply (lambda . f) xs))
 
@@ -20,12 +22,12 @@
     [(to-conses a) 
      a]))
 
-(define-syntax-rule (funject (args 
+(define-syntax-rule (funject ((arg ...) 
                               conseq)
                              ...)
-  (lambda vals
-    (match vals
-      ((to-conses args)
+  (lambda args
+    (match args
+      ((list arg ...)
        conseq)
       ...)))
 
@@ -49,6 +51,34 @@
 
 ;(define (token-other source) ...)
 (struct token-other (source) #:transparent)
+
+;(define (token-<keyword> source) ...) for <keyword> in (if else unless ...)
+(struct token-keyword (name) #:transparent)
+
+;(define-syntax-rule (define-token-keyword name keyword)
+;  (begin (struct name token-keyword () #:transparent #:constructor-name foo)
+;         (define (bar)
+;            (foo keyword))))
+
+;(define-token-keyword token-if "if")
+;(define-token-keyword token-else "else")
+;(define-token-keyword token-until "until")
+;(define-token-keyword token-unless "unless")
+;(define-token-keyword token-while "while")
+;(define-token-keyword token-for "for")
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (define-syntax-rule (define-patterns name 
                       (args body 
@@ -146,19 +176,50 @@
            (error "Logic failed.")])))
 
 (define transform
-  (lambda (tokens) 
-    (apply (funject
-            [((token-indent) . rest)
-             (cons (token-brace-open)
-                   (transform rest))]
-            [((token-oudent) . rest)
-             (cond (token-brace-close)
-                   (transform rest))]
-            [(other . rest)
-             (cons other
-                   (transform rest))])
-           tokens)))
+  (funject
+   [((cons (token-indent) rest))
+    (cons (token-brace-open)
+          (cons (token-newline)
+                (transform rest)))]
+   [((cons (token-outdent) rest))
+    (cons (token-brace-close)
+          (cons (token-newline)
+                (transform rest)))]
+   [((cons other rest))
+    (cons other
+          (transform rest))]
+   [(empty)
+    '()]))
+
+(define (token->string token)
+  (cond
+    [(token-brace-open? token) 
+     "{"]
+    [(token-brace-close? token) 
+     "}"]
+    [(token-newline? token) 
+     "\n"]
+    [(token-indent? token) 
+     "{"]
+    [(token-outdent? token) 
+     "}"]
+    [(token-space? token)
+     (token-space-source token)]
+    [(token-keyword? token)
+     (string-append " "
+                    (token-keyword-name token)
+                    " ")]
+    [(token-other? token)
+     (token-other-source token)]))
 
 (define (parse str)
   (let ((tokens (tokenize str)))
     (transform tokens)))
+
+(define (compile str)
+  (foldl (lambda (a b)
+           (string-append b a))
+         ""
+         (map token->string
+              (parse str))))
+
