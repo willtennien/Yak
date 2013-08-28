@@ -246,3 +246,7 @@ article a:hover {
 article a:active {
     color: #028;
 }
+
+footer {
+    background: bottom right url(/assets/images/yak-outlined-1.png) no-repeat;
+}
