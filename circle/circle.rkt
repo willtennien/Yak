@@ -39,7 +39,7 @@
     (super-new)
     (define/public (get-source)
       src)
-    (define/public (get->string)
+    (define/public (token->string)
       ->str)))
 
 (define (literal-token str)
@@ -158,7 +158,7 @@
                  body 
                  ...) 
                ...))
-       (define (name xs . rest)
+       (define (name xs . tail)
          (cond 
            [(or (and (string? xs)
                      (= 0 
@@ -173,7 +173,7 @@
                 [(empty? patterns)
                  (error "I cannot match " xs)]
                 [else
-                 (or (apply (car patterns) (cons xs rest))
+                 (or (apply (car patterns) (cons xs tail))
                      (iter (cdr patterns)))]))
             (iter patterns)]))
        name))))
@@ -182,6 +182,9 @@
 (define tokenize
   ((lambda ()
      (define-patterns tokenize-with-indents
+       ((str indents)
+        (and (= 0 (string-length str))
+             '()))
        ((str indents)
         (if (not (equal? "\n" (substring str 0 1)))
             #f
@@ -197,14 +200,17 @@
                (cons (token-space (car matches))
                      (tokenize-with-indents (substring str 
                                                        (cdar (regexp-match-positions pattern
-                                                                                         str)))
+                                                                                     str)))
                                             indents)))))
        ((str indents)
         (define pattern #px"^[^\n]+")
         (cons (token-other (car (regexp-match pattern str)))
               (tokenize-with-indents (substring str 
                                                 (cdar (regexp-match-positions pattern str)))
-                                     indents))))
+                                     indents)))
+       ((str indents)
+        (and (= 0 (string-length str))
+             '())))
      (lambda (str)
        (tokenize-with-indents str '(""))))))
 
@@ -242,51 +248,41 @@
           [else
            (error "Logic failed.")])))
 
-(define transform
-  (funject
-   [((cons (token-indent) rest))
-    (cons (token-brace-open)
-          (cons (token-newline)
-                (transform rest)))]
-   [((cons (token-outdent) rest))
-    (cons (token-brace-close)
-          (cons (token-newline)
-                (transform rest)))]
-   [((cons (token-newline) rest))
-    (if (or (token-indent? (car rest)))
-        (cons (token-newline)
-              (transform rest))
-        (cons (token-semicolon)
+(define-patterns transform
+  [(tokens)
+   (and (is-a? (car tokens)
+               token-indent%)
+        (cons (token-brace-open)
               (cons (token-newline)
-                    (transform rest))))]
-   [((cons other rest))
-    (cons other
-          (transform rest))]
-   [(empty)
-    '()]))
+                    (transform (cdr tokens)))))]
+  [(tokens)
+   (and (is-a? (car tokens)
+               token-outdent%)
+        (cons (token-brace-close)
+              (cons (token-newline)
+                    (transform (cdr tokens)))))]
+  [(tokens)
+   (and (is-a? (car tokens)
+               token-newline%)
+        (let ([tail (cdr tokens)])
+          (if (and (not (empty? tail))
+                   (is-a? (car tail)
+                          token-indent%))
+              (cons (token-newline)
+                    (transform tail))
+              (cons (token-semicolon)
+                    (cons (token-newline)
+                          (transform tail))))))]
+  [(tokens)
+   (cons (car tokens)
+         (transform (cdr tokens)))]
+  [(tokens)
+   (and (empty? tokens)
+        (list (token-semicolon)))])
+       
 
 (define (token->string token)
-  (cond
-    [(token-brace-open? token) ; replace with is-a?
-     "{"]
-    [(token-brace-close? token) 
-     "}"]
-    [(token-newline? token) 
-     "\n"]
-    [(token-indent? token) 
-     "{"]
-    [(token-outdent? token) 
-     "}"]
-    [(token-space? token)
-     (token-space-source token)]
-    [(token-semicolon? token)
-     ";"]
-    [(token-keyword? token)
-     (string-append " "
-                    (token-keyword-name token)
-                    " ")]
-    [(token-other? token)
-     (token-other-source token)]))
+  (send token token->string))
 
 (define (parse str)
   (let ((tokens (tokenize str)))
