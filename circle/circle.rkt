@@ -346,6 +346,11 @@
                               (list token-newline%
                                     token-space%
                                     token-newline%
+                                    token-indent%)))
+            (and (<= 3 (length tokens))
+                 (tokens-are? (take tokens 3)
+                              (list token-outdent%
+                                    token-newline%
                                     token-indent%))))
         (raise-user-error "Syntax error: inconsistent indentation."))]
   [(tokens)
