@@ -1,5 +1,6 @@
 #lang racket
 (require racket/match)
+(require racket/list)
 
 (define-syntax-rule (list-contents xs f)
   (apply (lambda . f) xs))
@@ -31,6 +32,40 @@
        conseq)
       ...)))
 
+(define (takef f xs)
+  (cond
+    [(empty? xs)
+     '()]
+    [(f (car xs))
+     (cons (car xs)
+           (takef f (cdr xs)))]
+    [else
+     '()]))
+
+(define (dropf f xs)
+  (cond
+    [(empty? xs)
+     '()]
+    [(f (car xs))
+     (dropf f (cdr xs))]
+    [else
+     xs]))
+
+(define isnt-a? (compose not is-a?))
+
+(define (tokens-are? tokens klasses)
+  (cond 
+    [(or (empty? tokens)
+         (empty? klasses))
+     (and (empty? tokens)
+          (empty? klasses))]
+    [(is-a? (car tokens)
+            (car klasses))
+     (tokens-are? (cdr tokens)
+                  (cdr klasses))]
+    [else
+     #f]))
+
 (define token%
   (class object%
     (init source ->string)
@@ -40,11 +75,18 @@
     (define/public (get-source)
       src)
     (define/public (token->string)
-      ->str)))
+      ->str)
+    (define/public (type)
+      'token)))
 
 (define (literal-token str)
   (class token%
     (init)
+    (define/override (type)
+      (string->symbol (string-append "token-"
+                                     (if (equal? str "\n") 
+                                         "\\n" 
+                                         str))))
     (super-new [source str]
                [->string str])))
 
@@ -53,6 +95,9 @@
     (init source)
     (super-new [source source]
                [->string source])))
+
+(define-syntax-rule (sqr-matrix (x ...) ...)
+  (list (list x ...) ...))
 
 ;(define (token-brace-open) ...)
 (define token-brace-open% (literal-token "{"))
@@ -63,6 +108,16 @@
 (define token-brace-close% (literal-token "}"))
 (define (token-brace-close)
   (new token-brace-close%))
+
+;(define (token-paren-open) ...)
+(define token-paren-open% (literal-token "("))
+(define (token-paren-open)
+  (new token-paren-open%))
+
+;(define (token-paren-close) ...)
+(define token-paren-close% (literal-token ")"))
+(define (token-paren-close)
+  (new token-paren-close%))
 
 ;(define (token-semicolon) ...)
 (define token-semicolon% (literal-token ";"))
@@ -103,9 +158,17 @@
   (new token-other% [source source]))
 
 ;(define (token-<keyword> source) ...) for <keyword> in (if else unless ...)
-(define (generate-token-keyword% keyword)
+(define token-keyword%
   (class token%
+    (super-new)
+    (define/override (type)
+      'token-keyword)))
+(define (generate-token-keyword% keyword)
+  (class token-keyword%
     (init)
+    (define/override (type)
+      (string->symbol (string-append "token-"
+                                     keyword)))
     (super-new [source keyword]
                [->string (string-append " "
                                         keyword
@@ -123,6 +186,18 @@
 (define (token-until) (new token-until%))
 (define token-for% (generate-token-keyword% "for"))
 (define (token-for) (new token-for%))
+
+(define (token-keyword-positive? x)
+  (ormap (lambda (klass)
+           (is-a? x klass))
+         (list token-if%
+               token-while%
+               token-for%)))
+
+(define (token-except-newline? token)
+     (isnt-a? token
+              token-newline%))
+                                
 
 ;(define-syntax-rule (define-token-keyword name keyword)
 ;  (begin (struct name token-keyword () #:transparent #:constructor-name foo)
@@ -159,23 +234,14 @@
                  ...) 
                ...))
        (define (name xs . tail)
-         (cond 
-           [(or (and (string? xs)
-                     (= 0 
-                        (string-length xs)))
-                (and (list? xs)
-                     (= 0
-                        (length xs))))
-            '()]
-           [else
-            (define (iter patterns)
-              (cond 
-                [(empty? patterns)
-                 (error "I cannot match " xs)]
-                [else
-                 (or (apply (car patterns) (cons xs tail))
-                     (iter (cdr patterns)))]))
-            (iter patterns)]))
+         (define (iter patterns)
+           (cond 
+             [(empty? patterns)
+              (error "I cannot match " xs)]
+             [else
+              (or (apply (car patterns) (cons xs tail))
+                  (iter (cdr patterns)))]))
+         (iter patterns))
        name))))
 
 ;Precondition: all patterns receive a string of at least one character and a list of at least one indent.
@@ -186,13 +252,12 @@
         (and (= 0 (string-length str))
              '()))
        ((str indents)
-        (if (not (equal? "\n" (substring str 0 1)))
-            #f
-            (list-contents (try-dent (substring str 1) indents)
-                           ((dents str indents)
-                            (append (list (token-newline))
-                                    dents
-                                    (tokenize-with-indents str indents))))))
+        (and (equal? "\n" (substring str 0 1))
+             (list-contents (try-dent (substring str 1) indents)
+                            ((dents str indents)
+                             (append (list (token-newline))
+                                     dents
+                                     (tokenize-with-indents str indents))))))
        ((str indents)
         (define pattern #px"^ +")
         (let ((matches (regexp-match pattern str)))
@@ -203,7 +268,25 @@
                                                                                      str)))
                                             indents)))))
        ((str indents)
-        (define pattern #px"^[^\n]+")
+        (define (iter keywords)
+          (and (not (empty? keywords))
+               (list-contents (car keywords)
+                              ((pattern conseq)
+                                (if (regexp-match pattern str)
+                                    (cons (conseq)
+                                          (tokenize-with-indents (substring str
+                                                                            (cdar (regexp-match-positions pattern str)))
+                                                                 indents))
+                                    (iter (cdr keywords)))))))
+        (iter (sqr-matrix 
+               [#px"^if\\W" token-if]
+               [#px"^else\\W" token-else]
+               [#px"^unless\\W" token-unless]
+               [#px"^while\\W" token-while]
+               [#px"^until\\W" token-until]
+               [#px"^for\\W" token-for])))
+       ((str indents)
+        (define pattern #px"^(.(?!\\Wif\\W|\\Welse\\W|\\Wunless\\W|\\Wwhile\\W|\\Wuntil\\W|\\Wfor\\W|\n| ))*.")
         (cons (token-other (car (regexp-match pattern str)))
               (tokenize-with-indents (substring str 
                                                 (cdar (regexp-match-positions pattern str)))
@@ -250,6 +333,53 @@
 
 (define-patterns transform
   [(tokens)
+   (and (empty? tokens)
+        '())]
+  [(tokens)
+   (and (or (and (<= 3 (length tokens))
+                 (tokens-are? (take tokens 3)
+                              (list token-newline%
+                                    token-newline%
+                                    token-indent%)))
+            (and (<= 4 (length tokens))
+                 (tokens-are? (take tokens 4)
+                              (list token-newline%
+                                    token-space%
+                                    token-newline%
+                                    token-indent%))))
+        (raise-user-error "Syntax error: inconsistent indentation."))]
+  [(tokens)
+   (and (is-a? (car tokens)
+               token-unless%)
+        (append (list (token-if)
+                      (token-paren-open)
+                      (token-other "! "))
+                (takef token-except-newline? 
+                       (cdr tokens))
+                (cons (token-paren-close)
+                      (transform (dropf token-except-newline? 
+                                        tokens)))))]
+  [(tokens)
+   (and (is-a? (car tokens)
+               token-until%)
+        (append (list (token-while)
+                      (token-paren-open)
+                      (token-other "! "))
+                (takef token-except-newline? 
+                       (cdr tokens))
+                (cons (token-paren-close)
+                      (transform (dropf token-except-newline? 
+                                        tokens)))))]
+  [(tokens)
+   (and (token-keyword-positive? (car tokens))
+        (append (list (car tokens)
+                      (token-paren-open))
+                (takef token-except-newline? 
+                       (cdr tokens))
+                (cons (token-paren-close)
+                      (transform (dropf token-except-newline? 
+                                        tokens)))))]
+  [(tokens)
    (and (is-a? (car tokens)
                token-indent%)
         (cons (token-brace-open)
@@ -275,10 +405,7 @@
                           (transform tail))))))]
   [(tokens)
    (cons (car tokens)
-         (transform (cdr tokens)))]
-  [(tokens)
-   (and (empty? tokens)
-        (list (token-semicolon)))])
+         (transform (cdr tokens)))])
        
 
 (define (token->string token)
