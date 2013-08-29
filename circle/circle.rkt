@@ -39,7 +39,7 @@
     (super-new)
     (define/public (get-source)
       src)
-    (define/public (token->string)
+    (define/public (get->string)
       ->str)))
 
 (define (literal-token str)
@@ -48,32 +48,81 @@
     (super-new [source str]
                [->string str])))
 
+(define (generate-token-identity%)
+  (class token%
+    (init source)
+    (super-new [source source]
+               [->string source])))
+
 ;(define (token-brace-open) ...)
 (define token-brace-open% (literal-token "{"))
+(define (token-brace-open)
+  (new token-brace-open%))
 
 ;(define (token-brace-close) ...)
 (define token-brace-close% (literal-token "}"))
+(define (token-brace-close)
+  (new token-brace-close%))
 
 ;(define (token-semicolon) ...)
 (define token-semicolon% (literal-token ";"))
+(define (token-semicolon)
+  (new token-semicolon%))
 
 ;(define (token-newline) ...)
-(define token-semicolon% (literal-token "\n"))
+(define token-newline% (literal-token "\n"))
+(define (token-newline)
+  (new token-newline%))
 
 ;(define (token-space source) ...)
-(struct token-space (source) #:transparent)
+(define token-space% (generate-token-identity%))
+(define (token-space source)
+  (new token-space% [source source]))
 
 ;(define (token-indent) ...)
-(struct token-indent () #:transparent)
+(define token-indent%
+  (class token%
+    (init)
+    (super-new [source ""]
+               [->string "{"])))
+(define (token-indent)
+  (new token-indent%))
 
 ;(define (token-outdent) ...)
-(struct token-outdent () #:transparent)
+(define token-outdent%
+  (class token%
+    (init)
+    (super-new [source ""]
+               [->string "}"])))
+(define (token-outdent)
+  (new token-outdent%))
 
 ;(define (token-other source) ...)
-(struct token-other (source) #:transparent)
+(define token-other% (generate-token-identity%))
+(define (token-other source)
+  (new token-other% [source source]))
 
 ;(define (token-<keyword> source) ...) for <keyword> in (if else unless ...)
-(struct token-keyword (name) #:transparent)
+(define (generate-token-keyword% keyword)
+  (class token%
+    (init)
+    (super-new [source keyword]
+               [->string (string-append " "
+                                        keyword
+                                        " ")])))
+
+(define token-if% (generate-token-keyword% "if"))
+(define (token-if) (new token-if%))
+(define token-unless% (generate-token-keyword% "unless"))
+(define (token-unless) (new token-unless%))
+(define token-else% (generate-token-keyword% "else"))
+(define (token-else) (new token-else%))
+(define token-while% (generate-token-keyword% "while"))
+(define (token-while) (new token-while%))
+(define token-until% (generate-token-keyword% "until"))
+(define (token-until) (new token-until%))
+(define token-for% (generate-token-keyword% "for"))
+(define (token-for) (new token-for%))
 
 ;(define-syntax-rule (define-token-keyword name keyword)
 ;  (begin (struct name token-keyword () #:transparent #:constructor-name foo)
@@ -86,8 +135,6 @@
 ;(define-token-keyword token-unless "unless")
 ;(define-token-keyword token-while "while")
 ;(define-token-keyword token-for "for")
-
-
 
 
 
@@ -251,4 +298,3 @@
          ""
          (map token->string
               (parse str))))
-
