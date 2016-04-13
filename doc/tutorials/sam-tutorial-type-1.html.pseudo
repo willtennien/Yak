@@ -13,11 +13,11 @@
         <code>
         	>> # Before we show you the match examples, this is a quick example of a comment!
         	>> # We're showing you this now because they'll be used a lot in code blocks for explaining things.
-        	>> # Anything that comes after a pound sign is a comment. Commends are pieces of code that are completely
+        	>> # Anything that comes after a pound sign is a comment. Comments are pieces of code that are completely
         	>> # ignored when the code is run. Yak just skips over them. Comments are used to explain
         	>> # or document pieces of code.
 
-        	>> 10 # Entering anything withuout any operands simply evaluates to itself so 10 evaluates to 10! Simple enough, right?
+        	>> 10 # Entering anything without any operands simply evaluates to itself so 10 evaluates to 10! Simple enough, right?
         	10
         	>> # Notice how after doing anything (excepting comments), what it evaluates to is printed on the next line.
         	>> #If it doesnt evaluate to anything, "nil" will be printed on the next line.
@@ -368,7 +368,7 @@
         	10
         </code>
         <p>
-        	Here, addOne contains a pattern that matches the parameter @number. When a pattern contains a parameter, it allows anything to in the place of that parameter, <bold>and</bold> it then "binds" the value to that paramater. When a parameter has been bound to a value, the parameter acts like a variable whos value is set to what it was bound to.
+        	Here, addOne contains a pattern that matches the parameter @number. When a pattern contains a parameter, it allows anything to in the place of that parameter, <bold>and</bold> it then "binds" the value to that paramater. When a parameter has been bound to a value, the parameter acts like a variable whose value is set to what it was bound to.
         	That's why in the addOne example, the expression @number + 1 evaluates to whatever you passed as an argument plus one.
         </p>
         <p>
