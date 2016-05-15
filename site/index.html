@@ -1,5 +1,5 @@
 <!doctype html>
-<meta charset=utf-8>
+<meta charset=utf-8 content="Yak is a remarkably powerful scripting language that leverages the new concept of a funject—a programmatic construct with properties of both functions and objects.">
 <title>Yak Programming Language</title>
 <link rel="stylesheet" type="text/css" href="/assets/styles/style.css">
 <div class=header-fill></div>
@@ -33,7 +33,7 @@ factorial[5]</textarea></div>
 <div class=bookmark id="install"></div>
 <p>The simplist way to get Yak is to include the following line in your HTML:</p>
 
-<pre><code>&lt;script type=text/javascript src=//yak-lang.org/yak.js&gt;&lt;/script&gt;</code></pre>
+<pre><code>&lt;script type=text/javascript src=http://yak-lang.org/yak.js&gt;&lt;/script&gt;</code></pre>
 
 <p>This will interpret all <code>&lt;script&gt;</code> tags written after it that contain the attribute <code>type=text/yak</code>. Any libraries you include (such as jQuery) you can access from Yak<!--using our simple <a href='doc/js-bridge'>bridging pattern</a>-->.</p>
 
@@ -585,7 +585,7 @@ Number::+[4, 3]</code></pre>
 <div class='bookmark' id='source'></div>
 
 <p>
-    You can find the <a href=https://github.com/williamtmurphy/yak>source</a> on <a href=https://github.com/williamtmurphy>my Github</a>. That repository contains the source for the Racket interpreter, for the JavaScript interpreter, and for this website (which I wrote in Yak itself).
+    You can find the <a href=https://github.com/williamtmurphy/yak>source</a> on my <a href=https://github.com/williamtmurphy>Github</a>. The repo contains the source for the Racket interpreter, for the JavaScript interpreter, and for this website (which was written in Yak itself).
 </p>
 
 <h1>Colophon</h1>
@@ -607,4 +607,12 @@ Number::+[4, 3]</code></pre>
     <footer></footer>
 </div>
 <script src=site-yak.js></script>
- 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-55672874-1', 'auto');
+  ga('send', 'pageview');
+</script>

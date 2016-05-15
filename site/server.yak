@@ -1,7 +1,7 @@
 http = require['http']
 fs = require['fs']
 
-port = if process.env.has?[.VCAP_SERVICES_PORT] then process.env.VCAP_SERVICES_PORT else 3000
+port = if process.env.has?[.VCAP_SERVICES_PORT] then process.env.VCAP_SERVICES_PORT else process.env.PORT # set to 3000 for development
 
 notFound = {[@res]:
     @res.writeHead[404]
@@ -20,7 +20,6 @@ http.Server[{[@req, @res]:
                     notFound[@res]
                 [@err, @data]:
                     if @err.nil?
-                        console.log[@data.length]
                         @res.writeHead[200]
                         @res.end[@data]
                     else
